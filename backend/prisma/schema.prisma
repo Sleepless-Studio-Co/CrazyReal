@@ -1,0 +1,24 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Challenge {
+  id        Int      @id @default(autoincrement())
+  content   String
+  isActive  Boolean  @default(true)
+  posts     Post[]
+}
+
+model Post {
+  id          Int       @id @default(autoincrement())
+  photoUrl    String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  challengeId Int
+}
