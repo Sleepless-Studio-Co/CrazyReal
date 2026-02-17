@@ -1,6 +1,6 @@
 name: 🐞 Bug Report
 description: Report a bug or an issue
-title: "bug:"
+title: " "
 labels: ["bug"]
 body:
   - type: textarea

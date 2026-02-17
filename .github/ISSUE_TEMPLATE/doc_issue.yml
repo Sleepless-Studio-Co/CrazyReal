@@ -1,6 +1,6 @@
 name: 📖 Documentation
 description: Improve or add documentation
-title: "doc:"
+title: " "
 labels: ["documentation"]
 body:
   - type: textarea
