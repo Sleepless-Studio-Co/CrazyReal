@@ -3,6 +3,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { PrismaClient } from '@prisma/client';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { readdirSync } from 'fs';
+import { join } from 'path';
 
 const prisma = new PrismaClient();
 
@@ -47,5 +49,13 @@ export class AppController {
     });
 
     return post;
+  }
+
+  // --- Partie 3 : Lister les photos uploadées ---
+  @Get('uploads')
+  async getUploads() {
+    const uploadsDir = join(process.cwd(), 'uploads');
+    const files = readdirSync(uploadsDir);
+    return { files: files.map(file => `http://10.0.2.2:3000/uploads/${file}`) }; // Utilise 10.0.2.2 pour l'émulateur Android
   }
 }
