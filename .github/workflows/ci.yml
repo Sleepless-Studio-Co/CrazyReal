@@ -1,0 +1,204 @@
+# CrazyReal CI Workflow
+
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*.*.*'
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+  pull_request:
+    branches: [ "*" ]
+  workflow_dispatch:
+
+jobs:
+  # -----------------------------
+  # Detect Changes
+  # -----------------------------
+  check-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+      ci: ${{ steps.filter.outputs.ci }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Filter paths
+        uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            mobile:
+              - 'mobile/**'
+            ci:
+              - '.github/workflows/**'
+
+  # -----------------------------
+  # Build Backend (NestJS)
+  # -----------------------------
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    needs: check-changes
+    if: >
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      (needs.check-changes.result != 'failure' && needs.check-changes.outputs.backend == 'true')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Verify build output
+        working-directory: backend
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "ERROR: Build output directory not found"
+            exit 1
+          fi
+          echo "Backend build successful!"
+
+  # -----------------------------
+  # Build Mobile (Android)
+  # -----------------------------
+  build-mobile-android:
+    name: Build Mobile (Android)
+    runs-on: ubuntu-latest
+    needs: check-changes
+    if: >
+      startsWith(github.ref, 'refs/tags/v') ||
+      github.event_name == 'workflow_dispatch' ||
+      (needs.check-changes.result != 'failure' && needs.check-changes.outputs.mobile == 'true')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        working-directory: mobile
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: mobile
+        run: flutter build apk --release
+
+      - name: Prepare APK artifact
+        run: |
+          mkdir -p dist
+          cp mobile/build/app/outputs/flutter-apk/app-release.apk dist/crazyreal-android.apk
+
+      - name: Upload Android APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crazyreal-Android
+          path: dist/crazyreal-android.apk
+          if-no-files-found: error
+
+  # -----------------------------
+  # Semantic Release
+  # -----------------------------
+  semantic-release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    needs: [build-backend, build-mobile-android]
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      needs.build-backend.result == 'success' &&
+      needs.build-mobile-android.result == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install semantic-release
+        run: npm install -g semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/github
+
+      - name: Run semantic-release
+        run: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
+
+  # -----------------------------
+  # Upload Release Assets
+  # -----------------------------
+  upload-release-assets:
+    name: Upload Release Assets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [build-mobile-android]
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: crazyreal-Android
+          path: ./artifacts/
+
+      - name: Check downloaded artifacts
+        run: |
+          echo "Checking downloaded artifacts..."
+          find ./artifacts/ -type f
+          test -f ./artifacts/crazyreal-android.apk
+
+      - name: Upload binaries to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./artifacts/crazyreal-android.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
