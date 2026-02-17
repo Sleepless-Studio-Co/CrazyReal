@@ -1,6 +1,6 @@
 name: 📋 Task
 description: Describe a specific task to complete
-title: "[TASK]: "
+title: "task:"
 labels: ["task"]
 body:
   - type: textarea
