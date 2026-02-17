@@ -1,0 +1,23 @@
+name: 🚀 Feature Request
+description: Suggest a new idea or improvement
+title: "[FEATURE]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    attributes:
+      label: Context
+      description: Why is this feature useful?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Proposed Solution
+      description: Describe your ideal solution.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Alternatives
+      description: Are there any other possible solutions?

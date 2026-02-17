@@ -1,0 +1,16 @@
+name: 📖 Documentation
+description: Improve or add documentation
+title: "[DOC]: "
+labels: ["documentation"]
+body:
+  - type: textarea
+    attributes:
+      label: Affected Section
+      description: Which part of the docs does this affect?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Content to Add/Update
+      description: Explain what should be added or modified.

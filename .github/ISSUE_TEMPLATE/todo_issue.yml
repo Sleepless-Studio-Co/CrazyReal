@@ -1,0 +1,19 @@
+name: 📋 Task
+description: Describe a specific task to complete
+title: "[TASK]: "
+labels: ["task"]
+body:
+  - type: textarea
+    attributes:
+      label: Goal
+      description: What needs to be accomplished?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps
+      description: List the actions required.
+      placeholder: |
+        - [ ] Step 1
+        - [ ] Step 2
