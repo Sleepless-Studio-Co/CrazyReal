@@ -1,6 +1,6 @@
 name: 🚀 Feature Request
 description: Suggest a new idea or improvement
-title: "[FEATURE]: "
+title: " "
 labels: ["enhancement"]
 body:
   - type: textarea
