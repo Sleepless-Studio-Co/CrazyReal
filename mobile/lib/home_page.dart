@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 // URL DE TON API
-const String baseUrl = "http://10.0.2.2:3000";
+const String baseUrl = "http://192.168.1.174:3000";
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
