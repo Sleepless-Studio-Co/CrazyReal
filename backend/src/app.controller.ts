@@ -56,6 +56,8 @@ export class AppController {
   async getUploads() {
     const uploadsDir = join(process.cwd(), 'uploads');
     const files = readdirSync(uploadsDir);
-    return { files: files.map(file => `http://10.0.2.2:3000/uploads/${file}`) }; // Utilise 10.0.2.2 pour l'émulateur Android
+    const apiHost = process.env.API_HOST || 'localhost';
+    const apiPort = process.env.API_PORT || '3000';
+    return { files: files.map(file => `http://${apiHost}:${apiPort}/uploads/${file}`) }; // Utilise 10.0.2.2 pour l'émulateur Android
   }
 }

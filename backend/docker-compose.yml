@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  # Ton backend (NOUVEAU)
+  api:
+    build: .
+    command: sh -c "npx prisma generate && npx prisma db push && npm run start:dev"
+    ports:
+      - "3000:3000" # Ajuste si ton backend utilise un autre port
+    volumes:
+      # Synchronise ton dossier local avec le conteneur pour le Hot Reload
+      - .:/app:z
+      # Empêche d'écraser le dossier node_modules du conteneur avec celui de ta machine
+      - /app/node_modules
+    environment:
+      # L'URL de connexion à la base de données (utilise le nom du service "db" comme hôte)
+      - DATABASE_URL=postgresql://crazyuser:crazypassword@db:5432/crazydb?schema=public
+    depends_on:
+      - db
+
+  # Ta base de données actuelle
   db:
     image: postgres:15-alpine
     restart: always
@@ -13,13 +31,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # Ton interface pgAdmin actuelle
   pgadmin:
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@crazyreal.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "5050:80" # PGADMIN via http://localhost:5050
+      - "5050:80"
     depends_on:
       - db
 
