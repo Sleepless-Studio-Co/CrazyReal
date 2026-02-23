@@ -8,7 +8,8 @@ import 'package:path_provider/path_provider.dart';
 // URL DE TON API
 // ⚠️ ATTENTION : Sur l'émulateur Android, localhost s'écrit "10.0.2.2"
 // Si tu es sur iOS ou Web, c'est "localhost" ou ton IP locale.
-const String baseUrl = "http://192.168.1.174:3000";
+// L'URL est maintenant configurée via .env
+const String baseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
 class NewPage extends StatefulWidget {
   const NewPage({super.key});
 
