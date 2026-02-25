@@ -116,6 +116,11 @@ jobs:
         working-directory: mobile
         run: flutter pub get
 
+      - name: Create .env file
+        working-directory: mobile
+        run: |
+          echo "API_URL=${{ secrets.API_URL }}" > .env
+
       - name: Build APK
         working-directory: mobile
         run: flutter build apk --release
