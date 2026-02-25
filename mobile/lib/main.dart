@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'home_page.dart';
 import 'friend_page.dart';
-import 'new_page.dart';
+import 'new_post_page.dart';
 import 'setting_page.dart';
 import 'account_page.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -18,6 +20,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        scaffoldBackgroundColor: const Color(0xFFF7EBD1),
       ),
       home: const MainScreen(),
     );
@@ -76,8 +79,10 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        unselectedItemColor: Colors.grey[600],
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey[500],
+        backgroundColor: const Color(0xFFF7EBD1),
+        type: BottomNavigationBarType.fixed,
         onTap: _onItemTapped,
       ),
     );
