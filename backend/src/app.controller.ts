@@ -11,7 +11,6 @@ const prisma = new PrismaClient();
 @Controller()
 export class AppController {
 
-  // --- Partie 1 : Récupérer le défi (Déjà fait) ---
   @Get('challenge/current')
   async getCurrentChallenge() {
     let challenge = await prisma.challenge.findUnique({ where: { id: 1 } });
@@ -23,13 +22,11 @@ export class AppController {
     return challenge;
   }
 
-  // --- Partie 2 : Uploader une photo (NOUVEAU) ---
   @Post('posts')
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
-      destination: './uploads', // On enregistre dans ce dossier
+      destination: './uploads',
       filename: (req, file, callback) => {
-        // On génère un nom unique (ex: image-123456789.jpg)
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = extname(file.originalname);
         callback(null, `image-${uniqueSuffix}${ext}`);
@@ -39,25 +36,25 @@ export class AppController {
   async uploadPhoto(@UploadedFile() file: Express.Multer.File) {
     console.log("Fichier reçu :", file.filename);
 
-    // On crée le post dans la base de données
-    // (Assure-toi que ton Challenge n°1 existe bien)
+    const apiHost = process.env.API_HOST || 'localhost';
+    const apiPort = process.env.API_PORT || '3000';
+    
     const post = await prisma.post.create({
       data: {
-        photoUrl: `http://localhost:3000/uploads/${file.filename}`, // L'URL locale
-        challengeId: 1, // On lie ça au défi n°1 pour le test
+        photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
+        challengeId: 1,
       },
     });
 
     return post;
   }
 
-  // --- Partie 3 : Lister les photos uploadées ---
   @Get('uploads')
   async getUploads() {
     const uploadsDir = join(process.cwd(), 'uploads');
     const files = readdirSync(uploadsDir);
     const apiHost = process.env.API_HOST || 'localhost';
     const apiPort = process.env.API_PORT || '3000';
-    return { files: files.map(file => `http://${apiHost}:${apiPort}/uploads/${file}`) }; // Utilise 10.0.2.2 pour l'émulateur Android
+    return { files: files.map(file => `http://${apiHost}:${apiPort}/uploads/${file}`) };
   }
 }

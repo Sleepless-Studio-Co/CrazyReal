@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// URL DE TON API
-// L'URL est maintenant configurée via .env
-const String baseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
+final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -31,7 +30,6 @@ class _HomePageState extends State<HomePage> {
           imageUrls = List<String>.from(data['files']);
         });
       } else {
-        // Gérer l'erreur
         print('Erreur lors du chargement des images');
       }
     } catch (e) {
