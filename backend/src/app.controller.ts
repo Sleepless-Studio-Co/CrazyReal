@@ -43,6 +43,7 @@ export class AppController {
       data: {
         photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
         challengeId: 1,
+        userId: 1, // TODO: Remplacer par l'ID de l'utilisateur connecté après implémentation de l'auth
       },
     });
 
