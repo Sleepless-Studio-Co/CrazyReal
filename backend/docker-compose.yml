@@ -4,7 +4,7 @@ services:
   # Ton backend (NOUVEAU)
   api:
     build: .
-    command: sh -c "npx prisma generate && npx prisma db push && npm run start:dev"
+    command: sh -c "npx prisma migrate deploy && npm run start:dev"
     ports:
       - "3000:3000" # Ajuste si ton backend utilise un autre port
     volumes:
