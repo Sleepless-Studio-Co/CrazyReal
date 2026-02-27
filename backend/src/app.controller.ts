@@ -6,6 +6,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { readdirSync } from 'fs';
 import { join } from 'path';
+import { I18n, I18nContext } from 'nestjs-i18n';
 
 const prisma = new PrismaClient();
 
@@ -16,11 +17,15 @@ export class AppController {
   @Get('challenge/current')
   @ApiOperation({ summary: 'Récupérer le challenge actuel' })
   @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
-  async getCurrentChallenge() {
+  async getCurrentChallenge(@I18n() i18n: I18nContext) {
     let challenge = await prisma.challenge.findUnique({ where: { id: 1 } });
     if (!challenge) {
       challenge = await prisma.challenge.create({
-        data: { id: 1, content: "Fais une grimace ! 🤪", isActive: true },
+        data: { 
+          id: 1, 
+          content: await i18n.t('post.newPost'),
+          isActive: true 
+        },
       });
     }
     return challenge;
@@ -51,8 +56,8 @@ export class AppController {
       },
     }),
   }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File) {
-    console.log("Fichier reçu :", file.filename);
+  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @I18n() i18n: I18nContext) {
+    console.log(await i18n.t('common.loading'), file.filename);
 
     const apiHost = process.env.API_HOST || 'localhost';
     const apiPort = process.env.API_PORT || '3000';
