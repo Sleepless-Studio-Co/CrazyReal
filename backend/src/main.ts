@@ -44,8 +44,11 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
-  // Créer l'utilisateur par défaut au démarrage
-  await createDefaultUser();
+  try {
+    await createDefaultUser();
+  } catch (error) {
+    console.warn('Impossible de créer l’utilisateur par défaut au démarrage :', error);
+  }
 
   await app.listen(3000, '0.0.0.0');
   console.log('🚀 API démarrée sur http://0.0.0.0:3000');
