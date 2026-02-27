@@ -153,8 +153,8 @@ jobs:
       always() &&
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
-      needs.build-backend.result == 'success' &&
-      needs.build-mobile-android.result == 'success'
+      (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
+      (needs.build-mobile-android.result == 'success' || needs.build-mobile-android.result == 'skipped')
 
     steps:
       - name: Checkout code
