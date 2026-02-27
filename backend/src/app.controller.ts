@@ -1,5 +1,6 @@
 import { Controller, Get, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { PrismaClient } from '@prisma/client';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -8,10 +9,13 @@ import { join } from 'path';
 
 const prisma = new PrismaClient();
 
+@ApiTags('CrazyReal')
 @Controller()
 export class AppController {
 
   @Get('challenge/current')
+  @ApiOperation({ summary: 'Récupérer le challenge actuel' })
+  @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
   async getCurrentChallenge() {
     let challenge = await prisma.challenge.findUnique({ where: { id: 1 } });
     if (!challenge) {
@@ -23,6 +27,20 @@ export class AppController {
   }
 
   @Post('posts')
+  @ApiOperation({ summary: 'Upload une photo pour le challenge' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Photo uploadée avec succès' })
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
       destination: './uploads',
