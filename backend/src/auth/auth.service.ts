@@ -31,18 +31,27 @@ export class AuthService {
       throw new ConflictException('mail already in use');
     }
 
-    const newUser = await this.usersService.create(email, password, username);
+    try {
+      const newUser = await this.usersService.create(email, password, username);
 
-    const payload = { email: newUser.email, sub: newUser.id, username: newUser.username };
+      const payload = { email: newUser.email, sub: newUser.id, username: newUser.username };
 
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        username: newUser.username,
-      },
-    };
+      return {
+        access_token: this.jwtService.sign(payload),
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          username: newUser.username,
+        },
+      };
+    } catch (error) {
+      // Handle Prisma unique constraint violation (P2002)
+      if (error.code === 'P2002') {
+        throw new ConflictException('mail already in use');
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   async login(email: string, password: string) {
