@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'l10n/app_localizations.dart';
 
 final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
@@ -30,21 +31,26 @@ class _HomePageState extends State<HomePage> {
           imageUrls = List<String>.from(data['files']);
         });
       } else {
-        print('Erreur lors du chargement des images');
+        if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
+          print(l10n.loadingImagesError);
+        }
       }
     } catch (e) {
-      print('Erreur: $e');
+      print('${AppLocalizations.of(context)?.error ?? "Error"}: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CrazyReal Photos'),
+        title: Text(l10n.appTitle),
       ),
       body: imageUrls.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: Text(l10n.loading))
           : ListView.builder(
               itemCount: imageUrls.length,
               itemBuilder: (context, index) {
