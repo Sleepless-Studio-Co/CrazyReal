@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, ForbiddenException, ParseIntPipe } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -14,14 +14,13 @@ export class UsersController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id') id: string, @CurrentUser() user: any) {
-    const requestedUserId = +id;
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     const authenticatedUserId = user.userId;
 
-    if (requestedUserId !== authenticatedUserId) {
+    if (id !== authenticatedUserId) {
       throw new ForbiddenException('You can only access your own profile');
     }
 
-    return this.usersService.findById(requestedUserId);
+    return this.usersService.findById(id);
   }
 }
