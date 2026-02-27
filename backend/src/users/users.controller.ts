@@ -1,5 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -11,7 +13,15 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findById(+id);
+  @UseGuards(JwtAuthGuard)
+  findOne(@Param('id') id: string, @CurrentUser() user: any) {
+    const requestedUserId = +id;
+    const authenticatedUserId = user.userId;
+
+    if (requestedUserId !== authenticatedUserId) {
+      throw new ForbiddenException('You can only access your own profile');
+    }
+
+    return this.usersService.findById(requestedUserId);
   }
 }
