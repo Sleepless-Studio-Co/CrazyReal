@@ -7,22 +7,37 @@ import { PrismaService } from './prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 
 async function createDefaultUser(prisma: PrismaService) {
+  const shouldBootstrapAdmin = process.env.BOOTSTRAP_ADMIN === 'true';
+  if (!shouldBootstrapAdmin) {
+    return;
+  }
+
+  const adminEmail = process.env.BOOTSTRAP_ADMIN_EMAIL;
+  const adminPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD;
+  const adminUsername = process.env.BOOTSTRAP_ADMIN_USERNAME ?? 'admin';
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      'BOOTSTRAP_ADMIN=true requires BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD',
+    );
+  }
+
   const existingUser = await prisma.user.findUnique({
-    where: { email: 'crazyadmin' },
+    where: { email: adminEmail },
   });
 
   if (!existingUser) {
-    const hashedPassword = await bcrypt.hash('crazyadmin', 10);
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
     await prisma.user.create({
       data: {
-        email: 'crazyadmin',
+        email: adminEmail,
         password: hashedPassword,
-        username: 'crazyadmin',
+        username: adminUsername,
       },
     });
-    console.log('Utilisateur par défaut créé : crazyadmin / crazyadmin');
+    console.log(`Admin bootstrap user created: ${adminEmail}`);
   } else {
-    console.log('Utilisateur crazyadmin existe déjà');
+    console.log(`Admin bootstrap user already exists: ${adminEmail}`);
   }
 }
 
@@ -47,7 +62,7 @@ async function bootstrap() {
   try {
     await createDefaultUser(prisma);
   } catch (error) {
-    console.warn('Impossible de créer l’utilisateur par défaut au démarrage :', error);
+    console.warn('Admin bootstrap failed on startup:', error);
   }
 
   await app.listen(3000, '0.0.0.0');
