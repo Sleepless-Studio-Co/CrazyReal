@@ -1,31 +1,26 @@
 import { Controller, Get, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from './prisma/prisma.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { I18n, I18nContext } from 'nestjs-i18n';
 
-const prisma = new PrismaClient();
-
 @ApiTags('CrazyReal')
 @Controller()
 export class AppController {
+  constructor(private readonly prisma: PrismaService) {}
 
   @Get('challenge/current')
   @ApiOperation({ summary: 'Récupérer le challenge actuel' })
   @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
   async getCurrentChallenge(@I18n() i18n: I18nContext) {
-    let challenge = await prisma.challenge.findUnique({ where: { id: 1 } });
+    let challenge = await this.prisma.challenge.findUnique({ where: { id: 1 } });
     if (!challenge) {
-      challenge = await prisma.challenge.create({
-        data: { 
-          id: 1, 
-          content: await i18n.t('post.newPost'),
-          isActive: true 
-        },
+      challenge = await this.prisma.challenge.create({
+        data: { id: 1, content: "Fais une grimace ! 🤪", isActive: true },
       });
     }
     return challenge;
@@ -61,11 +56,12 @@ export class AppController {
 
     const apiHost = process.env.API_HOST || 'localhost';
     const apiPort = process.env.API_PORT || '3000';
-    
-    const post = await prisma.post.create({
+
+    const post = await this.prisma.post.create({
       data: {
         photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
         challengeId: 1,
+        userId: 1,
       },
     });
 

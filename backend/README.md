@@ -44,6 +44,25 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## Admin bootstrap (secure)
+
+No default admin credentials are hardcoded in source code.
+
+To create an admin user automatically on startup, you must explicitly opt in with environment variables:
+
+```bash
+export BOOTSTRAP_ADMIN=true
+export BOOTSTRAP_ADMIN_EMAIL='admin@example.com'
+export BOOTSTRAP_ADMIN_PASSWORD='change-this-now'
+export BOOTSTRAP_ADMIN_USERNAME='admin'
+```
+
+Important:
+
+- Never commit real credentials to version control.
+- Use this bootstrap only for initial setup.
+- Disable it after first successful creation (`BOOTSTRAP_ADMIN=false` or unset it).
+
 ## Run tests
 
 ```bash
