@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { AdminBootstrapService } from './bootstrap/admin-bootstrap.service';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { APP_GUARD } from '@nestjs/core';
   controllers: [AppController],
   providers: [
     AppService,
+    AdminBootstrapService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
