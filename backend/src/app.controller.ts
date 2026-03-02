@@ -61,7 +61,6 @@ export class AppController {
       data: {
         photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
         challengeId: 1,
-        userId: 1,
       },
     });
 
