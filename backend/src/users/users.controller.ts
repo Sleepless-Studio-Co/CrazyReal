@@ -7,11 +7,6 @@ import { CurrentUser } from '../auth/current-user.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
-  }
-
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
