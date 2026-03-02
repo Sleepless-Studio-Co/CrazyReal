@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { AuthUser, AuthUserWithPassword } from './interfaces/auth-user.interface';
 
 @Injectable()
 export class AuthService {
@@ -16,8 +17,8 @@ export class AuthService {
     private prisma: PrismaService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findByEmailWithPassword(email);
+  async validateUser(email: string, password: string): Promise<AuthUser | null> {
+    const user: AuthUserWithPassword | null = await this.usersService.findByEmailWithPassword(email);
     if (!user) {
       return null;
     }
@@ -27,7 +28,7 @@ export class AuthService {
       return null;
     }
 
-    const { password: _, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
@@ -48,7 +49,7 @@ export class AuthService {
     return token;
   }
 
-  private generateAccessToken(user: any): string {
+  private generateAccessToken(user: Pick<AuthUser, 'id' | 'email' | 'username'>): string {
     const payload: JwtPayload = { email: user.email, sub: user.id, username: user.username };
     return this.jwtService.sign(payload);
   }
