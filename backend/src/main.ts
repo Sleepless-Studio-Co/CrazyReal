@@ -26,7 +26,7 @@ async function bootstrap() {
   try {
     await adminBootstrapService.createDefaultUser();
   } catch (error) {
-    console.warn('Admin bootstrap failed on startup:', error);
+    console.warn('Admin bootstrap failed on startup.');
   }
 
   await app.listen(3000, '0.0.0.0');

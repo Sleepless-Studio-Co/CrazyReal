@@ -55,12 +55,12 @@ export class AppController {
 
     const apiHost = process.env.API_HOST || 'localhost';
     const apiPort = process.env.API_PORT || '3000';
-    
+
     const post = await this.prisma.post.create({
       data: {
         photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
         challengeId: 1,
-        userId: 1, // TODO: Remplacer par l'ID de l'utilisateur connecté après implémentation de l'auth
+        userId: 1,
       },
     });
 
