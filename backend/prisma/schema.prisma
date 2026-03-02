@@ -19,7 +19,29 @@ model Challenge {
 
 model Post {
   id          Int       @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
   photoUrl    String
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId Int
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password      String
+  username      String         @unique
+  createdAt     DateTime       @default(now())
+  posts         Post[]
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  isRevoked Boolean  @default(false)
 }
