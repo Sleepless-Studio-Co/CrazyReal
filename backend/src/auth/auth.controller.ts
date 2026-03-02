@@ -26,6 +26,19 @@ export class AuthController {
     return this.authService.login(loginDto.email, loginDto.password);
   }
 
+  @Post('refresh')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async refresh(@Body() body: { refresh_token: string }) {
+    return this.authService.refresh(body.refresh_token);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@Body() body: { refresh_token: string }) {
+    await this.authService.revokeRefreshToken(body.refresh_token);
+    return { message: 'Logged out successfully' };
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   getProfile(@CurrentUser() user: any) {
