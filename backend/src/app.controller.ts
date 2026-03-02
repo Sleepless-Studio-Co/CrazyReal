@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
@@ -7,6 +7,8 @@ import { extname } from 'path';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { I18n, I18nContext } from 'nestjs-i18n';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { CurrentUser } from './auth/current-user.decorator';
 
 @ApiTags('CrazyReal')
 @Controller()
@@ -27,6 +29,7 @@ export class AppController {
   }
 
   @Post('posts')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Upload une photo pour le challenge' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -51,7 +54,7 @@ export class AppController {
       },
     }),
   }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @I18n() i18n: I18nContext) {
+  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any, @I18n() i18n: I18nContext) {
     console.log(await i18n.t('common.loading'), file.filename);
 
     const apiHost = process.env.API_HOST || 'localhost';
@@ -61,6 +64,7 @@ export class AppController {
       data: {
         photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
         challengeId: 1,
+        userId: user.id,
       },
     });
 
