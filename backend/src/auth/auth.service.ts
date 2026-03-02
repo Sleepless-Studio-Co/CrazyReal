@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -48,7 +49,7 @@ export class AuthService {
   }
 
   private generateAccessToken(user: any): string {
-    const payload = { email: user.email, sub: user.id, username: user.username };
+    const payload: JwtPayload = { email: user.email, sub: user.id, username: user.username };
     return this.jwtService.sign(payload);
   }
 
