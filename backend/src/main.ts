@@ -3,12 +3,10 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { join } from 'path';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from './prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
-
-async function createDefaultUser() {
+async function createDefaultUser(prisma: PrismaService) {
   const existingUser = await prisma.user.findUnique({
     where: { email: 'crazyadmin' },
   });
@@ -44,8 +42,10 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  const prisma = app.get(PrismaService);
+
   try {
-    await createDefaultUser();
+    await createDefaultUser(prisma);
   } catch (error) {
     console.warn('Impossible de créer l’utilisateur par défaut au démarrage :', error);
   }
