@@ -1,0 +1,47 @@
+{
+  "common": {
+    "hello": "Bonjour",
+    "welcome": "Bienvenue",
+    "goodbye": "Au revoir",
+    "yes": "Oui",
+    "no": "Non",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "success": "Opération réussie"
+  },
+  "errors": {
+    "notFound": "Ressource introuvable",
+    "unauthorized": "Accès non autorisé",
+    "forbidden": "Accès interdit",
+    "badRequest": "Requête invalide",
+    "internalError": "Erreur interne du serveur",
+    "validationFailed": "Échec de la validation"
+  },
+  "user": {
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "email": "Email",
+    "password": "Mot de passe",
+    "username": "Nom d'utilisateur"
+  },
+  "post": {
+    "newPost": "Nouveau Post",
+    "createPost": "Créer un Post",
+    "editPost": "Modifier le Post",
+    "deletePost": "Supprimer le Post",
+    "title": "Titre",
+    "content": "Contenu",
+    "author": "Auteur",
+    "createdAt": "Créé le"
+  }
+}

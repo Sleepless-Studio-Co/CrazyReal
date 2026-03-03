@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'l10n/app_localizations.dart';
 
 final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
@@ -18,7 +19,7 @@ class NewPage extends StatefulWidget {
 class _NewPageState extends State<NewPage> {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
-  String challengeText = "Chargement du défi...";
+  String? challengeText;
   bool isUploading = false;
   List<CameraDescription> _cameras = [];
   int _currentCameraIndex = 0;
@@ -46,8 +47,9 @@ class _NewPageState extends State<NewPage> {
 
   Future<void> _switchCamera() async {
     if (_cameras.length < 2) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Une seule caméra disponible')),
+        SnackBar(content: Text(l10n.onlyOneCamera)),
       );
       return;
     }
@@ -107,17 +109,25 @@ class _NewPageState extends State<NewPage> {
           challengeText = data['content'];
         });
       } else {
-        setState(() => challengeText = "Erreur serveur: ${response.statusCode}");
+        if (mounted) {
+          final l10n = AppLocalizations.of(context)!;
+          setState(() => challengeText = l10n.serverError('${response.statusCode}').replaceAll('{code}', '${response.statusCode}'));
+        }
       }
     } catch (e) {
-      setState(() => challengeText = "Erreur connexion: $e");
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        setState(() => challengeText = l10n.connectionError('$e'));
+      }
     }
   }
 
   Future<void> takeAndUploadPicture() async {
+    final l10n = AppLocalizations.of(context)!;
+    
     if (_controller == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Caméra non disponible !')),
+        SnackBar(content: Text(l10n.cameraNotAvailable)),
       );
       return;
     }
@@ -133,11 +143,11 @@ class _NewPageState extends State<NewPage> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo envoyée dans ton Feed !')),
+          SnackBar(content: Text(l10n.photoSentToFeed)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Erreur lors de l\'envoi de la photo')),
+          SnackBar(content: Text(l10n.errorSendingPhoto)),
         );
       }
     } catch (e) {
@@ -155,6 +165,8 @@ class _NewPageState extends State<NewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: Column(
         children: [
@@ -166,7 +178,7 @@ class _NewPageState extends State<NewPage> {
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Text(
-                challengeText,
+                challengeText ?? l10n.loadingChallenge,
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
                 textAlign: TextAlign.center,
               ),
@@ -183,10 +195,10 @@ class _NewPageState extends State<NewPage> {
               ),
               clipBehavior: Clip.hardEdge,
               child: _controller == null
-                ? const Center(
+                ? Center(
                     child: Text(
-                      '📱 Caméra disponible uniquement sur iOS/Android',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                      l10n.cameraOnlyMobile,
+                      style: const TextStyle(fontSize: 16, color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
                   )
