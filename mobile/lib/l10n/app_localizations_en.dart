@@ -149,4 +149,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loadingImagesError => 'Error loading images';
+
+  @override
+  String get register => 'Register';
+
+  @override
+  String get confirmPassword => 'Confirm Password';
+
+  @override
+  String get pleaseEnterUsername => 'Please enter a username';
+
+  @override
+  String get usernameTooShort => 'Username must be at least 3 characters';
+
+  @override
+  String get pleaseEnterEmail => 'Please enter your email';
+
+  @override
+  String get pleaseEnterValidEmail => 'Please enter a valid email';
+
+  @override
+  String get pleaseEnterPassword => 'Please enter a password';
+
+  @override
+  String get passwordTooShort => 'Password must be at least 6 characters';
+
+  @override
+  String get pleaseConfirmPassword => 'Please confirm your password';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account? Login';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account? Register';
+
+  @override
+  String get usernameLabel => 'Username: ';
+
+  @override
+  String get emailLabel => 'Email: ';
+
+  @override
+  String get pleaseLoginOrRegister => 'Please login or register to continue';
 }

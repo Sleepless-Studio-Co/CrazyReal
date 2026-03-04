@@ -151,4 +151,52 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get loadingImagesError => 'Erreur lors du chargement des images';
+
+  @override
+  String get register => 'S\'inscrire';
+
+  @override
+  String get confirmPassword => 'Confirmer le mot de passe';
+
+  @override
+  String get pleaseEnterUsername => 'Veuillez entrer un nom d\'utilisateur';
+
+  @override
+  String get usernameTooShort =>
+      'Le nom d\'utilisateur doit contenir au moins 3 caractères';
+
+  @override
+  String get pleaseEnterEmail => 'Veuillez entrer votre email';
+
+  @override
+  String get pleaseEnterValidEmail => 'Veuillez entrer un email valide';
+
+  @override
+  String get pleaseEnterPassword => 'Veuillez entrer un mot de passe';
+
+  @override
+  String get passwordTooShort =>
+      'Le mot de passe doit contenir au moins 6 caractères';
+
+  @override
+  String get pleaseConfirmPassword => 'Veuillez confirmer votre mot de passe';
+
+  @override
+  String get passwordsDoNotMatch => 'Les mots de passe ne correspondent pas';
+
+  @override
+  String get alreadyHaveAccount => 'Vous avez déjà un compte ? Connexion';
+
+  @override
+  String get dontHaveAccount => 'Vous n\'avez pas de compte ? S\'inscrire';
+
+  @override
+  String get usernameLabel => 'Nom d\'utilisateur : ';
+
+  @override
+  String get emailLabel => 'Email : ';
+
+  @override
+  String get pleaseLoginOrRegister =>
+      'Veuillez vous connecter ou vous inscrire pour continuer';
 }

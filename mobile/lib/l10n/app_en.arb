@@ -238,5 +238,80 @@
   "loadingImagesError": "Error loading images",
   "@loadingImagesError": {
     "description": "Error loading images message"
+  },
+
+  "register": "Register",
+  "@register": {
+    "description": "Register button"
+  },
+
+  "confirmPassword": "Confirm Password",
+  "@confirmPassword": {
+    "description": "Confirm password field label"
+  },
+
+  "pleaseEnterUsername": "Please enter a username",
+  "@pleaseEnterUsername": {
+    "description": "Validation message for username"
+  },
+
+  "usernameTooShort": "Username must be at least 3 characters",
+  "@usernameTooShort": {
+    "description": "Validation message for short username"
+  },
+
+  "pleaseEnterEmail": "Please enter your email",
+  "@pleaseEnterEmail": {
+    "description": "Validation message for email"
+  },
+
+  "pleaseEnterValidEmail": "Please enter a valid email",
+  "@pleaseEnterValidEmail": {
+    "description": "Validation message for invalid email"
+  },
+
+  "pleaseEnterPassword": "Please enter a password",
+  "@pleaseEnterPassword": {
+    "description": "Validation message for password"
+  },
+
+  "passwordTooShort": "Password must be at least 6 characters",
+  "@passwordTooShort": {
+    "description": "Validation message for short password"
+  },
+
+  "pleaseConfirmPassword": "Please confirm your password",
+  "@pleaseConfirmPassword": {
+    "description": "Validation message for confirm password"
+  },
+
+  "passwordsDoNotMatch": "Passwords do not match",
+  "@passwordsDoNotMatch": {
+    "description": "Validation message for mismatched passwords"
+  },
+
+  "alreadyHaveAccount": "Already have an account? Login",
+  "@alreadyHaveAccount": {
+    "description": "Link to login from register page"
+  },
+
+  "dontHaveAccount": "Don't have an account? Register",
+  "@dontHaveAccount": {
+    "description": "Link to register from login page"
+  },
+
+  "usernameLabel": "Username: ",
+  "@usernameLabel": {
+    "description": "Label for username in profile"
+  },
+
+  "emailLabel": "Email: ",
+  "@emailLabel": {
+    "description": "Label for email in profile"
+  },
+
+  "pleaseLoginOrRegister": "Please login or register to continue",
+  "@pleaseLoginOrRegister": {
+    "description": "Message to prompt login or register"
   }
 }
