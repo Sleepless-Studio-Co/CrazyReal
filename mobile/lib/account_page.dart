@@ -69,7 +69,7 @@ class _AccountPageState extends State<AccountPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Account'),
+        title: Text(AppLocalizations.of(context)!.account),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -82,13 +82,13 @@ class _AccountPageState extends State<AccountPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Profile',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        Text(
+          AppLocalizations.of(context)!.profile,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        Text('Username: ${_user!['username']}'),
-        Text('Email: ${_user!['email']}'),
+        Text('${AppLocalizations.of(context)!.usernameLabel}${_user!['username']}'),
+        Text('${AppLocalizations.of(context)!.emailLabel}${_user!['email']}'),
         const SizedBox(height: 40),
         SizedBox(
           width: double.infinity,
@@ -97,7 +97,7 @@ class _AccountPageState extends State<AccountPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
             ),
-            child: const Text('Logout'),
+            child: Text(AppLocalizations.of(context)!.logout),
           ),
         ),
       ],
@@ -109,18 +109,18 @@ class _AccountPageState extends State<AccountPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'Welcome to CrazyReal',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context)!.welcomeMessage,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
-          const Text('Please login or register to continue'),
+          Text(AppLocalizations.of(context)!.pleaseLoginOrRegister),
           const SizedBox(height: 40),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _navigateToLogin,
-              child: const Text('Login'),
+              child: Text(AppLocalizations.of(context)!.login),
             ),
           ),
           const SizedBox(height: 16),
@@ -128,7 +128,7 @@ class _AccountPageState extends State<AccountPage> {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: _navigateToRegister,
-              child: const Text('Register'),
+              child: Text(AppLocalizations.of(context)!.register),
             ),
           ),
         ],
