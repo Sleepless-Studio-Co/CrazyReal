@@ -373,6 +373,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error loading images'**
   String get loadingImagesError;
+
+  /// Register button
+  ///
+  /// In en, this message translates to:
+  /// **'Register'**
+  String get register;
+
+  /// Confirm password field label
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get confirmPassword;
+
+  /// Validation message for username
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a username'**
+  String get pleaseEnterUsername;
+
+  /// Validation message for short username
+  ///
+  /// In en, this message translates to:
+  /// **'Username must be at least 3 characters'**
+  String get usernameTooShort;
+
+  /// Validation message for email
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email'**
+  String get pleaseEnterEmail;
+
+  /// Validation message for invalid email
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get pleaseEnterValidEmail;
+
+  /// Validation message for password
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a password'**
+  String get pleaseEnterPassword;
+
+  /// Validation message for short password
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordTooShort;
+
+  /// Validation message for confirm password
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your password'**
+  String get pleaseConfirmPassword;
+
+  /// Validation message for mismatched passwords
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// Link to login from register page
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Login'**
+  String get alreadyHaveAccount;
+
+  /// Link to register from login page
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? Register'**
+  String get dontHaveAccount;
+
+  /// Label for username in profile
+  ///
+  /// In en, this message translates to:
+  /// **'Username: '**
+  String get usernameLabel;
+
+  /// Label for email in profile
+  ///
+  /// In en, this message translates to:
+  /// **'Email: '**
+  String get emailLabel;
+
+  /// Message to prompt login or register
+  ///
+  /// In en, this message translates to:
+  /// **'Please login or register to continue'**
+  String get pleaseLoginOrRegister;
 }
 
 class _AppLocalizationsDelegate
