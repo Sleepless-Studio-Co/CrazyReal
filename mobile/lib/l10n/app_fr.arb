@@ -238,5 +238,80 @@
   "loadingImagesError": "Erreur lors du chargement des images",
   "@loadingImagesError": {
     "description": "Message d'erreur de chargement des images"
+  },
+
+  "register": "S'inscrire",
+  "@register": {
+    "description": "Bouton d'inscription"
+  },
+
+  "confirmPassword": "Confirmer le mot de passe",
+  "@confirmPassword": {
+    "description": "Label du champ confirmer mot de passe"
+  },
+
+  "pleaseEnterUsername": "Veuillez entrer un nom d'utilisateur",
+  "@pleaseEnterUsername": {
+    "description": "Message de validation pour nom d'utilisateur"
+  },
+
+  "usernameTooShort": "Le nom d'utilisateur doit contenir au moins 3 caractères",
+  "@usernameTooShort": {
+    "description": "Message de validation pour nom d'utilisateur court"
+  },
+
+  "pleaseEnterEmail": "Veuillez entrer votre email",
+  "@pleaseEnterEmail": {
+    "description": "Message de validation pour email"
+  },
+
+  "pleaseEnterValidEmail": "Veuillez entrer un email valide",
+  "@pleaseEnterValidEmail": {
+    "description": "Message de validation pour email invalide"
+  },
+
+  "pleaseEnterPassword": "Veuillez entrer un mot de passe",
+  "@pleaseEnterPassword": {
+    "description": "Message de validation pour mot de passe"
+  },
+
+  "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
+  "@passwordTooShort": {
+    "description": "Message de validation pour mot de passe court"
+  },
+
+  "pleaseConfirmPassword": "Veuillez confirmer votre mot de passe",
+  "@pleaseConfirmPassword": {
+    "description": "Message de validation pour confirmer mot de passe"
+  },
+
+  "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+  "@passwordsDoNotMatch": {
+    "description": "Message de validation pour mots de passe non correspondants"
+  },
+
+  "alreadyHaveAccount": "Vous avez déjà un compte ? Connexion",
+  "@alreadyHaveAccount": {
+    "description": "Lien vers connexion depuis la page d'inscription"
+  },
+
+  "dontHaveAccount": "Vous n'avez pas de compte ? S'inscrire",
+  "@dontHaveAccount": {
+    "description": "Lien vers inscription depuis la page de connexion"
+  },
+
+  "usernameLabel": "Nom d'utilisateur : ",
+  "@usernameLabel": {
+    "description": "Label pour nom d'utilisateur dans le profil"
+  },
+
+  "emailLabel": "Email : ",
+  "@emailLabel": {
+    "description": "Label pour email dans le profil"
+  },
+
+  "pleaseLoginOrRegister": "Veuillez vous connecter ou vous inscrire pour continuer",
+  "@pleaseLoginOrRegister": {
+    "description": "Message pour inviter à se connecter ou s'inscrire"
   }
 }
