@@ -135,6 +135,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorSendingPhoto => '❌ Error sending photo';
 
   @override
+  String get pleaseLoginFirst => '🔒 Please login first';
+
+  @override
   String get cameraOnlyMobile => '📱 Camera available only on iOS/Android';
 
   @override

@@ -350,6 +350,12 @@ abstract class AppLocalizations {
   /// **'❌ Error sending photo'**
   String get errorSendingPhoto;
 
+  /// Message asking to login
+  ///
+  /// In en, this message translates to:
+  /// **'🔒 Please login first'**
+  String get pleaseLoginFirst;
+
   /// Message when camera is not available on platform
   ///
   /// In en, this message translates to:
