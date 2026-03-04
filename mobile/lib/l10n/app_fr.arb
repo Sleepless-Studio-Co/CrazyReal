@@ -210,6 +210,11 @@
     "description": "Message d'erreur lors de l'envoi de la photo"
   },
   
+  "pleaseLoginFirst": "🔒 Veuillez vous connecter d'abord",
+  "@pleaseLoginFirst": {
+    "description": "Message demandant de se connecter"
+  },
+  
   "cameraOnlyMobile": "📱 Caméra disponible uniquement sur iOS/Android",
   "@cameraOnlyMobile": {
     "description": "Message quand la caméra n'est pas disponible sur la plateforme"

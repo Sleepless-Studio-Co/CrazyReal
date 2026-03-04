@@ -136,6 +136,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorSendingPhoto => '❌ Erreur lors de l\'envoi de la photo';
 
   @override
+  String get pleaseLoginFirst => '🔒 Veuillez vous connecter d\'abord';
+
+  @override
   String get cameraOnlyMobile =>
       '📱 Caméra disponible uniquement sur iOS/Android';
 

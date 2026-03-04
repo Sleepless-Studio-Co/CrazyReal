@@ -210,6 +210,11 @@
     "description": "Error message when photo send fails"
   },
   
+  "pleaseLoginFirst": "🔒 Please login first",
+  "@pleaseLoginFirst": {
+    "description": "Message asking to login"
+  },
+  
   "cameraOnlyMobile": "📱 Camera available only on iOS/Android",
   "@cameraOnlyMobile": {
     "description": "Message when camera is not available on platform"

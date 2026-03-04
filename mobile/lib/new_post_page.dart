@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'l10n/app_localizations.dart';
+import 'auth/auth_service.dart';
 
 final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
@@ -136,24 +137,55 @@ class _NewPageState extends State<NewPage> {
       await _initializeControllerFuture;
       setState(() => isUploading = true);
 
+      final authService = AuthService();
+      final token = await authService.getAccessToken();
+      
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.pleaseLoginFirst ?? 'Veuillez vous connecter d\'abord')),
+        );
+        setState(() => isUploading = false);
+        return;
+      }
+
       final image = await _controller!.takePicture();
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/posts'));
+      
+      request.headers['Authorization'] = 'Bearer $token';
+      
       request.files.add(await http.MultipartFile.fromPath('file', image.path));
       var response = await request.send();
 
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.photoSentToFeed)),
-        );
+      print('Upload response status: ${response.statusCode}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        print('Upload successful: $responseBody');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.photoSentToFeed)),
+          );
+        }
       } else {
+        final responseBody = await response.stream.bytesToString();
+        print('Error uploading photo: ${response.statusCode} - $responseBody');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.errorSendingPhoto)),
+          );
+        }
+      }
+    } catch (e) {
+      print('Exception during upload: $e');
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.errorSendingPhoto)),
         );
       }
-    } catch (e) {
-      print(e);
     } finally {
-      setState(() => isUploading = false);
+      if (mounted) {
+        setState(() => isUploading = false);
+      }
     }
   }
 
