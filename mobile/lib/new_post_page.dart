@@ -218,33 +218,33 @@ class _NewPageState extends State<NewPage> {
           ),
 
           // LA CAMÉRA
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                color: Colors.black,
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: _controller == null
-                ? Center(
-                    child: Text(
-                      l10n.cameraOnlyMobile,
-                      style: const TextStyle(fontSize: 16, color: Colors.white),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                : FutureBuilder<void>(
-                    future: _initializeControllerFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        return CameraPreview(_controller!);
-                      } else {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                    },
-                  ),
+          Container(
+            height: 600,
+            width: double.infinity,
+            margin: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(25),
+              color: Colors.black,
             ),
+            clipBehavior: Clip.hardEdge,
+            child: _controller == null
+              ? Center(
+                  child: Text(
+                    l10n.cameraOnlyMobile,
+                    style: const TextStyle(fontSize: 16, color: Colors.white),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : FutureBuilder<void>(
+                  future: _initializeControllerFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      return CameraPreview(_controller!);
+                    } else {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                  },
+                ),
           ),
         ],
       ),
