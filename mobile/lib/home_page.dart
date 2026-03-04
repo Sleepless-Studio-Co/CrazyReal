@@ -14,23 +14,25 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<String> imageUrls = [];
+  List<dynamic> posts = [];
 
   @override
   void initState() {
     super.initState();
-    fetchImages();
+    fetchPosts();
   }
 
-  Future<void> fetchImages() async {
+  Future<void> fetchPosts() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/uploads'));
+      final response = await http.get(Uri.parse('$baseUrl/posts'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          imageUrls = List<String>.from(data['files']);
+          posts = data;
         });
       } else {
+        print('Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           print(l10n.loadingImagesError);
@@ -49,12 +51,29 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text(l10n.appTitle),
       ),
-      body: imageUrls.isEmpty
+      body: posts.isEmpty
           ? Center(child: Text(l10n.loading))
           : ListView.builder(
-              itemCount: imageUrls.length,
+              itemCount: posts.length,
               itemBuilder: (context, index) {
-                return Image.network(imageUrls[index]);
+                final post = posts[index];
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post['user']['username'],
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Image.network(post['photoUrl']),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
     );
