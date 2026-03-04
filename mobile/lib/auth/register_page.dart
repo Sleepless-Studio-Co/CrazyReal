@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'auth_service.dart';
 import 'login_page.dart';
+import '../l10n/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -62,7 +63,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register'),
+        title: Text(AppLocalizations.of(context)!.register),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -74,16 +75,16 @@ class _RegisterPageState extends State<RegisterPage> {
               children: [
                 TextFormField(
                   controller: _usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.username,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a username';
+                      return AppLocalizations.of(context)!.pleaseEnterUsername;
                     }
                     if (value.length < 3) {
-                      return 'Username must be at least 3 characters';
+                      return AppLocalizations.of(context)!.usernameTooShort;
                     }
                     return null;
                   },
@@ -91,17 +92,17 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.email,
+                    border: const OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return AppLocalizations.of(context)!.pleaseEnterEmail;
                     }
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                      return 'Please enter a valid email';
+                      return AppLocalizations.of(context)!.pleaseEnterValidEmail;
                     }
                     return null;
                   },
@@ -109,17 +110,17 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.password,
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
+                      return AppLocalizations.of(context)!.pleaseEnterPassword;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return AppLocalizations.of(context)!.passwordTooShort;
                     }
                     return null;
                   },
@@ -127,17 +128,17 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _confirmPasswordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.confirmPassword,
+                    border: const OutlineInputBorder(),
                   ),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
+                      return AppLocalizations.of(context)!.pleaseConfirmPassword;
                     }
                     if (value != _passwordController.text) {
-                      return 'Passwords do not match';
+                      return AppLocalizations.of(context)!.passwordsDoNotMatch;
                     }
                     return null;
                   },
@@ -155,7 +156,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     onPressed: _isLoading ? null : _register,
                     child: _isLoading
                         ? const CircularProgressIndicator()
-                        : const Text('Register'),
+                        : Text(AppLocalizations.of(context)!.register),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -165,7 +166,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       MaterialPageRoute(builder: (context) => LoginPage()),
                     );
                   },
-                  child: const Text('Already have an account? Login'),
+                  child: Text(AppLocalizations.of(context)!.alreadyHaveAccount),
                 ),
               ],
             ),
