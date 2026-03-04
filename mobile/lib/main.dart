@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'home_page.dart';
 import 'friend_page.dart';
 import 'new_post_page.dart';
@@ -17,11 +19,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'CrazyReal',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         scaffoldBackgroundColor: const Color(0xFFF7EBD1),
       ),
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('fr', ''),
+      ],
       home: const MainScreen(),
     );
   }
@@ -53,29 +65,31 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home),
+            label: l10n.home,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Friend',
+            icon: const Icon(Icons.people),
+            label: l10n.friends,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_box_outlined),
-            label: 'New',
+            icon: const Icon(Icons.add_box_outlined),
+            label: l10n.newPost,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Setting',
+            icon: const Icon(Icons.settings),
+            label: l10n.settings,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: 'Account',
+            icon: const Icon(Icons.account_circle),
+            label: l10n.account,
           ),
         ],
         currentIndex: _selectedIndex,

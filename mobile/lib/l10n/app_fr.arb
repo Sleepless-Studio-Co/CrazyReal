@@ -1,0 +1,242 @@
+{
+  "@@locale": "fr",
+  "appTitle": "CrazyReal",
+  "@appTitle": {
+    "description": "Le titre de l'application"
+  },
+  
+  "home": "Accueil",
+  "@home": {
+    "description": "Label de l'onglet d'accueil"
+  },
+  
+  "friends": "Amis",
+  "@friends": {
+    "description": "Label de l'onglet des amis"
+  },
+  
+  "newPost": "Nouveau Post",
+  "@newPost": {
+    "description": "Label de l'onglet nouveau post"
+  },
+  
+  "settings": "Paramètres",
+  "@settings": {
+    "description": "Label de l'onglet paramètres"
+  },
+  
+  "account": "Compte",
+  "@account": {
+    "description": "Label de l'onglet compte"
+  },
+  
+  "currentChallenge": "Challenge Actuel",
+  "@currentChallenge": {
+    "description": "Titre de la section challenge actuel"
+  },
+  
+  "takePhoto": "Prendre une Photo",
+  "@takePhoto": {
+    "description": "Bouton pour prendre une photo"
+  },
+  
+  "uploadPhoto": "Télécharger une Photo",
+  "@uploadPhoto": {
+    "description": "Bouton pour télécharger une photo"
+  },
+  
+  "loading": "Chargement...",
+  "@loading": {
+    "description": "Message de chargement"
+  },
+  
+  "error": "Une erreur s'est produite",
+  "@error": {
+    "description": "Message d'erreur générique"
+  },
+  
+  "success": "Succès !",
+  "@success": {
+    "description": "Message de succès"
+  },
+  
+  "cancel": "Annuler",
+  "@cancel": {
+    "description": "Bouton annuler"
+  },
+  
+  "save": "Enregistrer",
+  "@save": {
+    "description": "Bouton enregistrer"
+  },
+  
+  "delete": "Supprimer",
+  "@delete": {
+    "description": "Bouton supprimer"
+  },
+  
+  "edit": "Modifier",
+  "@edit": {
+    "description": "Bouton modifier"
+  },
+  
+  "profile": "Profil",
+  "@profile": {
+    "description": "Label profil"
+  },
+  
+  "logout": "Déconnexion",
+  "@logout": {
+    "description": "Bouton de déconnexion"
+  },
+  
+  "login": "Connexion",
+  "@login": {
+    "description": "Bouton de connexion"
+  },
+  
+  "email": "Email",
+  "@email": {
+    "description": "Label du champ email"
+  },
+  
+  "password": "Mot de passe",
+  "@password": {
+    "description": "Label du champ mot de passe"
+  },
+  
+  "username": "Nom d'utilisateur",
+  "@username": {
+    "description": "Label du champ nom d'utilisateur"
+  },
+  
+  "welcomeMessage": "Bienvenue sur CrazyReal !",
+  "@welcomeMessage": {
+    "description": "Message de bienvenue sur l'écran d'accueil"
+  },
+  
+  "noPostsYet": "Aucun post pour le moment",
+  "@noPostsYet": {
+    "description": "Message quand il n'y a pas de posts"
+  },
+  
+  "photoUploadSuccess": "Photo téléchargée avec succès !",
+  "@photoUploadSuccess": {
+    "description": "Message de succès après le téléchargement d'une photo"
+  },
+  
+  "photoUploadError": "Échec du téléchargement de la photo",
+  "@photoUploadError": {
+    "description": "Message d'erreur lors de l'échec du téléchargement"
+  },
+  
+  "cameraPermissionRequired": "La permission de la caméra est requise",
+  "@cameraPermissionRequired": {
+    "description": "Message quand la permission de la caméra est nécessaire"
+  },
+  
+  "retryUpload": "Réessayer",
+  "@retryUpload": {
+    "description": "Bouton pour réessayer le téléchargement"
+  },
+  
+  "selectLanguage": "Sélectionner la langue",
+  "@selectLanguage": {
+    "description": "Label pour la sélection de langue"
+  },
+  
+  "english": "Anglais",
+  "@english": {
+    "description": "Option de langue anglaise"
+  },
+  
+  "french": "Français",
+  "@french": {
+    "description": "Option de langue française"
+  },
+  
+  "friendPage": "Page Amis",
+  "@friendPage": {
+    "description": "Titre de la page amis"
+  },
+  
+  "thisFriendPage": "Ceci est la page des amis",
+  "@thisFriendPage": {
+    "description": "Contenu de la page amis"
+  },
+  
+  "settingPage": "Page Paramètres",
+  "@settingPage": {
+    "description": "Titre de la page paramètres"
+  },
+  
+  "thisSettingPage": "Ceci est la page des paramètres",
+  "@thisSettingPage": {
+    "description": "Contenu de la page paramètres"
+  },
+  
+  "accountPage": "Page Compte",
+  "@accountPage": {
+    "description": "Titre de la page compte"
+  },
+  
+  "thisAccountPage": "Ceci est la page du compte",
+  "@thisAccountPage": {
+    "description": "Contenu de la page compte"
+  },
+  
+  "loadingChallenge": "Chargement du défi...",
+  "@loadingChallenge": {
+    "description": "Message de chargement du défi"
+  },
+  
+  "onlyOneCamera": "Une seule caméra disponible",
+  "@onlyOneCamera": {
+    "description": "Message quand une seule caméra est disponible"
+  },
+  
+  "cameraNotAvailable": "Caméra non disponible !",
+  "@cameraNotAvailable": {
+    "description": "Message de caméra non disponible"
+  },
+  
+  "photoSentToFeed": "Photo envoyée dans ton Feed !",
+  "@photoSentToFeed": {
+    "description": "Message de succès quand la photo est envoyée"
+  },
+  
+  "errorSendingPhoto": "❌ Erreur lors de l'envoi de la photo",
+  "@errorSendingPhoto": {
+    "description": "Message d'erreur lors de l'envoi de la photo"
+  },
+  
+  "cameraOnlyMobile": "📱 Caméra disponible uniquement sur iOS/Android",
+  "@cameraOnlyMobile": {
+    "description": "Message quand la caméra n'est pas disponible sur la plateforme"
+  },
+  
+  "serverError": "Erreur serveur: {code}",
+  "@serverError": {
+    "description": "Message d'erreur serveur",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "connectionError": "Erreur connexion: {error}",
+  "@connectionError": {
+    "description": "Message d'erreur de connexion",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "loadingImagesError": "Erreur lors du chargement des images",
+  "@loadingImagesError": {
+    "description": "Message d'erreur de chargement des images"
+  }
+}

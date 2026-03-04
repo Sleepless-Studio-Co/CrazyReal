@@ -1,0 +1,242 @@
+{
+  "@@locale": "en",
+  "appTitle": "CrazyReal",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  
+  "home": "Home",
+  "@home": {
+    "description": "Home tab label"
+  },
+  
+  "friends": "Friends",
+  "@friends": {
+    "description": "Friends tab label"
+  },
+  
+  "newPost": "New Post",
+  "@newPost": {
+    "description": "New post tab label"
+  },
+  
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings tab label"
+  },
+  
+  "account": "Account",
+  "@account": {
+    "description": "Account tab label"
+  },
+  
+  "currentChallenge": "Current Challenge",
+  "@currentChallenge": {
+    "description": "Title for current challenge section"
+  },
+  
+  "takePhoto": "Take Photo",
+  "@takePhoto": {
+    "description": "Button to take a photo"
+  },
+  
+  "uploadPhoto": "Upload Photo",
+  "@uploadPhoto": {
+    "description": "Button to upload a photo"
+  },
+  
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading message"
+  },
+  
+  "error": "An error occurred",
+  "@error": {
+    "description": "Generic error message"
+  },
+  
+  "success": "Success!",
+  "@success": {
+    "description": "Success message"
+  },
+  
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+  
+  "save": "Save",
+  "@save": {
+    "description": "Save button"
+  },
+  
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button"
+  },
+  
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button"
+  },
+  
+  "profile": "Profile",
+  "@profile": {
+    "description": "Profile label"
+  },
+  
+  "logout": "Logout",
+  "@logout": {
+    "description": "Logout button"
+  },
+  
+  "login": "Login",
+  "@login": {
+    "description": "Login button"
+  },
+  
+  "email": "Email",
+  "@email": {
+    "description": "Email field label"
+  },
+  
+  "password": "Password",
+  "@password": {
+    "description": "Password field label"
+  },
+  
+  "username": "Username",
+  "@username": {
+    "description": "Username field label"
+  },
+  
+  "welcomeMessage": "Welcome to CrazyReal!",
+  "@welcomeMessage": {
+    "description": "Welcome message on home screen"
+  },
+  
+  "noPostsYet": "No posts yet",
+  "@noPostsYet": {
+    "description": "Message when there are no posts"
+  },
+  
+  "photoUploadSuccess": "Photo uploaded successfully!",
+  "@photoUploadSuccess": {
+    "description": "Success message after photo upload"
+  },
+  
+  "photoUploadError": "Failed to upload photo",
+  "@photoUploadError": {
+    "description": "Error message when photo upload fails"
+  },
+  
+  "cameraPermissionRequired": "Camera permission is required",
+  "@cameraPermissionRequired": {
+    "description": "Message when camera permission is needed"
+  },
+  
+  "retryUpload": "Retry Upload",
+  "@retryUpload": {
+    "description": "Button to retry upload"
+  },
+  
+  "selectLanguage": "Select Language",
+  "@selectLanguage": {
+    "description": "Label for language selection"
+  },
+  
+  "english": "English",
+  "@english": {
+    "description": "English language option"
+  },
+  
+  "french": "French",
+  "@french": {
+    "description": "French language option"
+  },
+  
+  "friendPage": "Friend Page",
+  "@friendPage": {
+    "description": "Friend page title"
+  },
+  
+  "thisFriendPage": "This is the friend page",
+  "@thisFriendPage": {
+    "description": "Friend page content"
+  },
+  
+  "settingPage": "Setting Page",
+  "@settingPage": {
+    "description": "Setting page title"
+  },
+  
+  "thisSettingPage": "This is the setting page",
+  "@thisSettingPage": {
+    "description": "Setting page content"
+  },
+  
+  "accountPage": "Account Page",
+  "@accountPage": {
+    "description": "Account page title"
+  },
+  
+  "thisAccountPage": "This is the account page",
+  "@thisAccountPage": {
+    "description": "Account page content"
+  },
+  
+  "loadingChallenge": "Loading challenge...",
+  "@loadingChallenge": {
+    "description": "Loading challenge message"
+  },
+  
+  "onlyOneCamera": "Only one camera available",
+  "@onlyOneCamera": {
+    "description": "Message when only one camera is available"
+  },
+  
+  "cameraNotAvailable": "Camera not available!",
+  "@cameraNotAvailable": {
+    "description": "Camera not available message"
+  },
+  
+  "photoSentToFeed": "Photo sent to your Feed!",
+  "@photoSentToFeed": {
+    "description": "Success message when photo is sent"
+  },
+  
+  "errorSendingPhoto": "❌ Error sending photo",
+  "@errorSendingPhoto": {
+    "description": "Error message when photo send fails"
+  },
+  
+  "cameraOnlyMobile": "📱 Camera available only on iOS/Android",
+  "@cameraOnlyMobile": {
+    "description": "Message when camera is not available on platform"
+  },
+  
+  "serverError": "Server error: {code}",
+  "@serverError": {
+    "description": "Server error message",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "connectionError": "Connection error: {error}",
+  "@connectionError": {
+    "description": "Connection error message",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "loadingImagesError": "Error loading images",
+  "@loadingImagesError": {
+    "description": "Error loading images message"
+  }
+}

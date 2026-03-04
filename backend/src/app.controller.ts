@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
@@ -6,6 +6,9 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { readdirSync } from 'fs';
 import { join } from 'path';
+import { I18n, I18nContext } from 'nestjs-i18n';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { CurrentUser } from './auth/current-user.decorator';
 
 @ApiTags('CrazyReal')
 @Controller()
@@ -15,7 +18,7 @@ export class AppController {
   @Get('challenge/current')
   @ApiOperation({ summary: 'Récupérer le challenge actuel' })
   @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
-  async getCurrentChallenge() {
+  async getCurrentChallenge(@I18n() i18n: I18nContext) {
     let challenge = await this.prisma.challenge.findUnique({ where: { id: 1 } });
     if (!challenge) {
       challenge = await this.prisma.challenge.create({
@@ -26,6 +29,7 @@ export class AppController {
   }
 
   @Post('posts')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Upload une photo pour le challenge' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -50,8 +54,8 @@ export class AppController {
       },
     }),
   }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File) {
-    console.log("Fichier reçu :", file.filename);
+  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any, @I18n() i18n: I18nContext) {
+    console.log(await i18n.t('common.loading'), file.filename);
 
     const apiHost = process.env.API_HOST || 'localhost';
     const apiPort = process.env.API_PORT || '3000';
@@ -60,7 +64,7 @@ export class AppController {
       data: {
         photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
         challengeId: 1,
-        userId: 1,
+        userId: user.id,
       },
     });
 

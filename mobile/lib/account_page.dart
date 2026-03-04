@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
 import 'auth/register_page.dart';
+import 'l10n/app_localizations.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});

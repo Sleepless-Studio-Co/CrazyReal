@@ -1,0 +1,47 @@
+{
+  "common": {
+    "hello": "Hello",
+    "welcome": "Welcome",
+    "goodbye": "Goodbye",
+    "yes": "Yes",
+    "no": "No",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Operation successful"
+  },
+  "errors": {
+    "notFound": "Resource not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden",
+    "badRequest": "Bad request",
+    "internalError": "Internal server error",
+    "validationFailed": "Validation failed"
+  },
+  "user": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username"
+  },
+  "post": {
+    "newPost": "New Post",
+    "createPost": "Create Post",
+    "editPost": "Edit Post",
+    "deletePost": "Delete Post",
+    "title": "Title",
+    "content": "Content",
+    "author": "Author",
+    "createdAt": "Created At"
+  }
+}
