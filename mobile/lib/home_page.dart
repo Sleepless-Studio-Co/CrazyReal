@@ -62,14 +62,34 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        post['user']['username'],
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 30.0),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.account_circle, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              post['user']['username'],
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Image.network(post['photoUrl']),
+                        height: 600,
+                        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(25),
+                          child: Image.network(
+                            post['photoUrl'],
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ],
                   ),
