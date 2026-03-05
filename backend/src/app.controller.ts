@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, UploadedFile, UseInterceptors, UseGuards, Param } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
@@ -94,5 +94,22 @@ export class AppController {
       },
     });
     return posts;
+  }
+
+  @Get('posts/:id')
+  @ApiOperation({ summary: 'Récupérer un post par ID' })
+  @ApiResponse({ status: 200, description: 'Post récupéré avec succès' })
+  async getPost(@Param('id') id: string) {
+    const post = await this.prisma.post.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+    return post;
   }
 }
