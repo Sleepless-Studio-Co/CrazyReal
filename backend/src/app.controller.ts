@@ -79,4 +79,20 @@ export class AppController {
     const apiPort = process.env.API_PORT || '3000';
     return { files: files.map(file => `http://${apiHost}:${apiPort}/uploads/${file}`) };
   }
+
+  @Get('posts')
+  @ApiOperation({ summary: 'Récupérer tous les posts avec les utilisateurs' })
+  @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
+  async getPosts() {
+    const posts = await this.prisma.post.findMany({
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+    return posts;
+  }
 }
