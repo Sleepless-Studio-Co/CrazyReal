@@ -120,6 +120,7 @@ class _NewPageState extends State<NewPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        if (!mounted) return;
         setState(() {
           challengeText = data['content'];
         });
