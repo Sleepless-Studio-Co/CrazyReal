@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'l10n/app_localizations.dart';
+import 'auth/auth_service.dart';
 
 final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required this.onUnauthorized});
+
+  final VoidCallback onUnauthorized;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -15,6 +18,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<dynamic> posts = [];
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -24,12 +28,29 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchPosts() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/posts'));
+      final token = await _authService.getAccessToken();
+
+      if (token == null) {
+        if (mounted) {
+          widget.onUnauthorized();
+        }
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/posts'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
           posts = data;
         });
+      } else if (response.statusCode == 401) {
+        if (mounted) {
+          widget.onUnauthorized();
+        }
       } else {
         print('Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
