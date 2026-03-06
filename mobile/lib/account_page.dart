@@ -43,6 +43,7 @@ class _AccountPageState extends State<AccountPage> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
