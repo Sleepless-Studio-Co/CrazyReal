@@ -19,6 +19,15 @@ async function bootstrap() {
     .setDescription('The CrazyReal API documentation')
     .setVersion('1.0')
     .addTag('crazyreal')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header',
+      },
+      'access-token',
+    )
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

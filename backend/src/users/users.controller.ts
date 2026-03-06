@@ -2,6 +2,7 @@ import { Controller, Get, Param, UseGuards, ForbiddenException, ParseIntPipe } f
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {
@@ -9,6 +10,7 @@ export class UsersController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
   findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     const authenticatedUserId = user.userId;
 
