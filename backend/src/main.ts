@@ -8,6 +8,12 @@ import { AdminBootstrapService } from './bootstrap/admin-bootstrap.service';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  app.enableCors({
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   const config = new DocumentBuilder()
     .setTitle('CrazyReal API')
     .setDescription('The CrazyReal API documentation')
