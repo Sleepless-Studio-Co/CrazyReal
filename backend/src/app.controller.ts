@@ -12,6 +12,7 @@ import { CurrentUser } from './auth/current-user.decorator';
 
 @ApiTags('CrazyReal')
 @Controller()
+@UseGuards(JwtAuthGuard)
 export class AppController {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -29,7 +30,6 @@ export class AppController {
   }
 
   @Post('posts')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Upload une photo pour le challenge' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

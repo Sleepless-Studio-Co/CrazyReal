@@ -1,9 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'l10n/app_localizations.dart';
 import 'auth/auth_service.dart';
@@ -11,7 +9,9 @@ import 'auth/auth_service.dart';
 final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
 class NewPage extends StatefulWidget {
-  const NewPage({super.key});
+  const NewPage({super.key, required this.onUnauthorized});
+
+  final VoidCallback onUnauthorized;
 
   @override
   State<NewPage> createState() => _NewPageState();
@@ -103,12 +103,30 @@ class _NewPageState extends State<NewPage> {
 
   Future<void> fetchChallenge() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/challenge/current'));
+      final authService = AuthService();
+      final token = await authService.getAccessToken();
+
+      if (token == null) {
+        if (mounted) {
+          widget.onUnauthorized();
+        }
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/challenge/current'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
           challengeText = data['content'];
         });
+      } else if (response.statusCode == 401) {
+        if (mounted) {
+          widget.onUnauthorized();
+        }
       } else {
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
@@ -141,9 +159,7 @@ class _NewPageState extends State<NewPage> {
       final token = await authService.getAccessToken();
       
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.pleaseLoginFirst ?? 'Veuillez vous connecter d\'abord')),
-        );
+        widget.onUnauthorized();
         setState(() => isUploading = false);
         return;
       }
@@ -165,6 +181,10 @@ class _NewPageState extends State<NewPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.photoSentToFeed)),
           );
+        }
+      } else if (response.statusCode == 401) {
+        if (mounted) {
+          widget.onUnauthorized();
         }
       } else {
         final responseBody = await response.stream.bytesToString();

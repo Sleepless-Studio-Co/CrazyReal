@@ -61,11 +61,15 @@ class AuthService {
 
   Future<void> logout() async {
     final refreshToken = await getRefreshToken();
+    final accessToken = await getAccessToken();
     if (refreshToken != null) {
       try {
         await http.post(
           Uri.parse('$baseUrl/auth/logout'),
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            if (accessToken != null) 'Authorization': 'Bearer $accessToken',
+          },
           body: jsonEncode({'refresh_token': refreshToken}),
         );
       } catch (e) {
