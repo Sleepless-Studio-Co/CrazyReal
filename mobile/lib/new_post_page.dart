@@ -159,8 +159,8 @@ class _NewPageState extends State<NewPage> {
       final token = await authService.getAccessToken();
       
       if (token == null) {
+        if (!mounted) return;
         widget.onUnauthorized();
-        setState(() => isUploading = false);
         return;
       }
 
