@@ -36,6 +36,8 @@ model User {
   refreshTokens RefreshToken[]
   sentRequests Friendship[] @relation("SentRequests")
   receivedRequests Friendship[] @relation("ReceivedRequests")
+  participants     Participant[]
+  messages         Message[]
 }
 
 model RefreshToken {
@@ -60,4 +62,38 @@ model Friendship {
   receiver  User @relation("ReceivedRequests", fields: [friendId], references: [id])
 
   @@unique([userId, friendId])
+}
+
+model Conversation {
+  id        Int      @id @default(autoincrement())
+  isGroup   Boolean  @default(false)
+  name      String?  // Utilisé uniquement pour donner un nom au groupe
+  createdAt DateTime @default(now())
+
+  messages     Message[]
+  participants Participant[]
+}
+
+model Participant {
+  id             Int          @id @default(autoincrement())
+  userId         Int
+  conversationId Int
+  joinedAt       DateTime     @default(now())
+
+  user           User         @relation(fields: [userId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // Un utilisateur ne peut être qu'une seule fois dans une même conversation
+  @@unique([userId, conversationId])
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  content        String
+  createdAt      DateTime     @default(now())
+  senderId       Int
+  conversationId Int
+  
+  sender         User         @relation(fields: [senderId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }
