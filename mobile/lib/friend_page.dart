@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 import 'services/friend_service.dart';
+// N'oublie pas cet import pour que la page de création de groupe soit reconnue
+import 'chat/create_group_page.dart'; 
+import 'chat/chat_list_page.dart';
 
 class FriendPage extends StatefulWidget {
   const FriendPage({super.key});
@@ -13,20 +16,18 @@ class _FriendPageState extends State<FriendPage> {
   final FriendService _friendService = FriendService();
   
   List<dynamic> _friends = [];
-  List<dynamic> _pendingRequests = []; // Nouvelle liste pour les requêtes
+  List<dynamic> _pendingRequests = []; 
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadData(); // On charge les deux listes au démarrage
+    _loadData(); 
   }
 
-  // Charge les amis ET les requêtes en attente
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    // On exécute les deux appels API en parallèle pour gagner du temps
     final results = await Future.wait([
       _friendService.getFriends(),
       _friendService.getPendingRequests(),
@@ -41,11 +42,10 @@ class _FriendPageState extends State<FriendPage> {
     }
   }
 
-  // Fonction pour accepter une demande
   Future<void> _acceptRequest(int requestId) async {
     final success = await _friendService.acceptRequest(requestId);
     if (success) {
-      _loadData(); // Recharge les listes pour déplacer l'utilisateur de "Demandes" à "Amis"
+      _loadData(); 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -57,7 +57,6 @@ class _FriendPageState extends State<FriendPage> {
     }
   }
 
-  // Modale pour ajouter un ami
   void _showAddFriendDialog() {
     final TextEditingController usernameController = TextEditingController();
     final scaffoldContext = context;
@@ -105,19 +104,26 @@ class _FriendPageState extends State<FriendPage> {
 
   @override
   Widget build(BuildContext context) {
-    // DefaultTabController permet de gérer la navigation entre onglets automatiquement
     return DefaultTabController(
-      length: 2, // Nombre d'onglets
+      length: 2, 
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Mes Amis'), // Tu peux utiliser ton l10n.friendPage ici si tu préfères
+          title: const Text('Mes Amis'), 
           actions: [
+            IconButton(
+              icon: const Icon(Icons.chat),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ChatListPage()),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.person_add),
               onPressed: _showAddFriendDialog,
             ),
           ],
-          // La barre d'onglets en bas de l'AppBar
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Mes Amis'),
@@ -128,7 +134,6 @@ class _FriendPageState extends State<FriendPage> {
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : TabBarView(
-                // Contenu de chaque onglet dans le même ordre que les Tabs
                 children: [
                   // --- ONGLET 1 : LA LISTE D'AMIS ---
                   RefreshIndicator(
@@ -177,6 +182,16 @@ class _FriendPageState extends State<FriendPage> {
                   ),
                 ],
               ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CreateGroupPage()),
+            );
+          },
+          label: const Text('Groupe'),
+          icon: const Icon(Icons.group_add),
+        ),
       ),
     );
   }
