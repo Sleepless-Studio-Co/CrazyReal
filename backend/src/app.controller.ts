@@ -1,6 +1,6 @@
 import { Controller, Get, Post, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -11,7 +11,9 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CurrentUser } from './auth/current-user.decorator';
 
 @ApiTags('CrazyReal')
+@ApiBearerAuth('access-token')
 @Controller()
+@UseGuards(JwtAuthGuard)
 export class AppController {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -29,7 +31,6 @@ export class AppController {
   }
 
   @Post('posts')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Upload une photo pour le challenge' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

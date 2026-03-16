@@ -4,7 +4,9 @@ import 'login_page.dart';
 import '../l10n/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  const RegisterPage({super.key, this.onAuthSuccess});
+
+  final VoidCallback? onAuthSuccess;
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -44,7 +46,12 @@ class _RegisterPageState extends State<RegisterPage> {
         _usernameController.text.trim(),
       );
       if (mounted) {
-        Navigator.of(context).pop(true); // Return true to indicate success
+        if (widget.onAuthSuccess != null) {
+          widget.onAuthSuccess!();
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        } else {
+          Navigator.of(context).pop(true);
+        }
       }
     } catch (e) {
       setState(() {
@@ -162,8 +169,17 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                      return;
+                    }
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => LoginPage(
+                          onAuthSuccess: widget.onAuthSuccess,
+                        ),
+                      ),
                     );
                   },
                   child: Text(AppLocalizations.of(context)!.alreadyHaveAccount),
