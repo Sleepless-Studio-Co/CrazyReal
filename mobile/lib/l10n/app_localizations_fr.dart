@@ -202,4 +202,46 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get pleaseLoginOrRegister =>
       'Veuillez vous connecter ou vous inscrire pour continuer';
+
+  @override
+  String get friendRequestAccepted => 'Demande acceptée !';
+
+  @override
+  String get addFriend => 'Ajouter un ami';
+
+  @override
+  String get friendUsernameLabel => 'Pseudo de l\'utilisateur';
+
+  @override
+  String get friendUsernameHint => 'Ex: johndoe';
+
+  @override
+  String get send => 'Envoyer';
+
+  @override
+  String friendRequestSent(String username) {
+    return 'Demande envoyée à $username !';
+  }
+
+  @override
+  String get friendRequestError =>
+      'Erreur : Utilisateur introuvable ou demande existante.';
+
+  @override
+  String get myFriends => 'Mes Amis';
+
+  @override
+  String get requests => 'Demandes';
+
+  @override
+  String get noFriendsYet => 'Tu n\'as pas encore d\'amis.';
+
+  @override
+  String get noPendingRequests => 'Aucune demande en attente.';
+
+  @override
+  String get wantsToBeYourFriend => 'Veut être ton ami(e)';
+
+  @override
+  String get group => 'Groupe';
 }

@@ -469,6 +469,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please login or register to continue'**
   String get pleaseLoginOrRegister;
+
+  /// Message shown when a friend request is accepted
+  ///
+  /// In en, this message translates to:
+  /// **'Request accepted!'**
+  String get friendRequestAccepted;
+
+  /// Dialog title to add a friend
+  ///
+  /// In en, this message translates to:
+  /// **'Add a friend'**
+  String get addFriend;
+
+  /// Username field label in add friend dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get friendUsernameLabel;
+
+  /// Username field hint in add friend dialog
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. johndoe'**
+  String get friendUsernameHint;
+
+  /// Button to send an action
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// Message shown when a friend request is sent
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent to {username}!'**
+  String friendRequestSent(String username);
+
+  /// Error message for an invalid friend request
+  ///
+  /// In en, this message translates to:
+  /// **'Error: User not found or request already exists.'**
+  String get friendRequestError;
+
+  /// Title and tab label for friend list
+  ///
+  /// In en, this message translates to:
+  /// **'My Friends'**
+  String get myFriends;
+
+  /// Tab label for friend requests
+  ///
+  /// In en, this message translates to:
+  /// **'Requests'**
+  String get requests;
+
+  /// Message shown when friend list is empty
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have any friends yet.'**
+  String get noFriendsYet;
+
+  /// Message shown when there are no pending requests
+  ///
+  /// In en, this message translates to:
+  /// **'No pending requests.'**
+  String get noPendingRequests;
+
+  /// Subtitle displayed for incoming friend requests
+  ///
+  /// In en, this message translates to:
+  /// **'Wants to be your friend'**
+  String get wantsToBeYourFriend;
+
+  /// Label for the floating action button to create a group
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get group;
 }
 
 class _AppLocalizationsDelegate

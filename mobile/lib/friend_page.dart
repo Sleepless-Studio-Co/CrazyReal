@@ -42,13 +42,14 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   Future<void> _acceptRequest(int requestId) async {
+    final l10n = AppLocalizations.of(context)!;
     final success = await _friendService.acceptRequest(requestId);
     if (success) {
       _loadData(); 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Demande acceptée !'),
+          SnackBar(
+            content: Text(l10n.friendRequestAccepted),
             backgroundColor: Colors.green,
           ),
         );
@@ -57,24 +58,25 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showAddFriendDialog() {
+    final l10n = AppLocalizations.of(context)!;
     final TextEditingController usernameController = TextEditingController();
     final scaffoldContext = context;
     
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Ajouter un ami'),
+        title: Text(l10n.addFriend),
         content: TextField(
           controller: usernameController,
-          decoration: const InputDecoration(
-            labelText: "Pseudo de l'utilisateur",
-            hintText: 'Ex: johndoe',
+          decoration: InputDecoration(
+            labelText: l10n.friendUsernameLabel,
+            hintText: l10n.friendUsernameHint,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Annuler'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -86,15 +88,15 @@ class _FriendPageState extends State<FriendPage> {
                   ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                     SnackBar(
                       content: Text(success 
-                        ? 'Demande envoyée à $username !' 
-                        : 'Erreur : Utilisateur introuvable ou demande existante.'),
+                        ? l10n.friendRequestSent(username)
+                        : l10n.friendRequestError),
                       backgroundColor: success ? Colors.green : Colors.red,
                     ),
                   );
                 }
               }
             },
-            child: const Text('Envoyer'),
+            child: Text(l10n.send),
           ),
         ],
       ),
@@ -103,11 +105,12 @@ class _FriendPageState extends State<FriendPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return DefaultTabController(
       length: 2, 
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Mes Amis'), 
+          title: Text(l10n.myFriends), 
           actions: [
             IconButton(
               icon: const Icon(Icons.chat),
@@ -123,10 +126,10 @@ class _FriendPageState extends State<FriendPage> {
               onPressed: _showAddFriendDialog,
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Mes Amis'),
-              Tab(text: 'Demandes'),
+              Tab(text: l10n.myFriends),
+              Tab(text: l10n.requests),
             ],
           ),
         ),
@@ -138,7 +141,7 @@ class _FriendPageState extends State<FriendPage> {
                   RefreshIndicator(
                     onRefresh: _loadData,
                     child: _friends.isEmpty
-                        ? ListView(children: const [Center(child: Padding(padding: EdgeInsets.all(20.0), child: Text("Tu n'as pas encore d'amis.")))])
+                        ? ListView(children: [Center(child: Padding(padding: const EdgeInsets.all(20.0), child: Text(l10n.noFriendsYet)))])
                         : ListView.builder(
                             itemCount: _friends.length,
                             itemBuilder: (context, index) {
@@ -157,7 +160,7 @@ class _FriendPageState extends State<FriendPage> {
                   RefreshIndicator(
                     onRefresh: _loadData,
                     child: _pendingRequests.isEmpty
-                        ? ListView(children: const [Center(child: Padding(padding: EdgeInsets.all(20.0), child: Text("Aucune demande en attente.")))])
+                        ? ListView(children: [Center(child: Padding(padding: const EdgeInsets.all(20.0), child: Text(l10n.noPendingRequests)))])
                         : ListView.builder(
                             itemCount: _pendingRequests.length,
                             itemBuilder: (context, index) {
@@ -169,7 +172,7 @@ class _FriendPageState extends State<FriendPage> {
                                   child: Text(requester['username'].toString().substring(0, 1).toUpperCase()),
                                 ),
                                 title: Text(requester['username']),
-                                subtitle: const Text('Veut être ton ami(e)'),
+                                subtitle: Text(l10n.wantsToBeYourFriend),
                                 trailing: IconButton(
                                   icon: const Icon(Icons.check_circle, color: Colors.green, size: 30),
                                   onPressed: () => _acceptRequest(request['requestId']),
@@ -187,7 +190,7 @@ class _FriendPageState extends State<FriendPage> {
               MaterialPageRoute(builder: (context) => const CreateGroupPage()),
             );
           },
-          label: const Text('Groupe'),
+          label: Text(l10n.group),
           icon: const Icon(Icons.group_add),
         ),
       ),
