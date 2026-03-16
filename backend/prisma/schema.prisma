@@ -34,6 +34,8 @@ model User {
   createdAt     DateTime       @default(now())
   posts         Post[]
   refreshTokens RefreshToken[]
+  sentRequests Friendship[] @relation("SentRequests")
+  receivedRequests Friendship[] @relation("ReceivedRequests")
 }
 
 model RefreshToken {
@@ -44,4 +46,18 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
   isRevoked Boolean  @default(false)
+}
+
+model Friendship {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  friendId  Int
+  status    String   @default("PENDING") // Can be : PENDING, ACCEPTED, BLOCKED
+  createdAt DateTime @default(now())
+
+  // Relations
+  requester User @relation("SentRequests", fields: [userId], references: [id])
+  receiver  User @relation("ReceivedRequests", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
 }
