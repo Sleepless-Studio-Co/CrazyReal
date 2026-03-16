@@ -42,6 +42,8 @@ class _HomePageState extends State<HomePage> {
         headers: {'Authorization': 'Bearer $token'},
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
