@@ -12,12 +12,10 @@ class FriendService {
     return token ?? '';
   }
 
-  // 1. Envoyer une demande d'ami via le pseudo
-  Future<bool> sendRequest(String username) async { // <-- Changement : String au lieu de int
+  Future<bool> sendRequest(String username) async {
     try {
       final token = await _getToken();
       final response = await http.post(
-        // On passe directement le pseudo dans l'URL
         Uri.parse('$baseUrl/request/$username'), 
         headers: {
           'Authorization': 'Bearer $token',
@@ -72,12 +70,10 @@ class FriendService {
     }
   }
 
-  // 4. Récupérer les demandes en attente
   Future<List<dynamic>> getPendingRequests() async {
     try {
       final token = await _getToken();
       final response = await http.get(
-        // On interroge la nouvelle route backend
         Uri.parse('$baseUrl/requests'), 
         headers: {
           'Authorization': 'Bearer $token',

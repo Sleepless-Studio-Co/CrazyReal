@@ -9,7 +9,6 @@ import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
 export class FriendsController {
   constructor(private readonly friendsService: FriendsService) {}
 
-  // Route pour envoyer une demande d'ami
   @Post('request/:username')
   sendRequest(
     @CurrentUser() user: ValidatedUser,
@@ -18,24 +17,19 @@ export class FriendsController {
     return this.friendsService.sendFriendRequest(user.userId, username);
   }
 
-  // Route pour accepter une demande
   @Patch('accept/:requestId')
   acceptRequest(
     @CurrentUser() user: ValidatedUser,
     @Param('requestId', ParseIntPipe) requestId: number,
   ) {
-    // C'était ici le problème : on remplace user.id par user.userId
     return this.friendsService.acceptFriendRequest(user.userId, requestId);
   }
 
-  // Route pour lister ses amis
   @Get()
   getFriends(@CurrentUser() user: ValidatedUser) {
-    // Ici aussi, on sécurise avec user.userId
     return this.friendsService.getFriends(user.userId);
   }
 
-  // Route pour lister ses demandes en attente
   @Get('requests')
   getPendingRequests(@CurrentUser() user: ValidatedUser) {
     return this.friendsService.getPendingRequests(user.userId);

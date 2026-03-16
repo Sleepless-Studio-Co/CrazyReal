@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 import 'services/friend_service.dart';
-// N'oublie pas cet import pour que la page de création de groupe soit reconnue
 import 'chat/create_group_page.dart'; 
 import 'chat/chat_list_page.dart';
 
@@ -155,7 +154,6 @@ class _FriendPageState extends State<FriendPage> {
                           ),
                   ),
 
-                  // --- ONGLET 2 : LES DEMANDES EN ATTENTE ---
                   RefreshIndicator(
                     onRefresh: _loadData,
                     child: _pendingRequests.isEmpty

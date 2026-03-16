@@ -12,7 +12,6 @@ class ChatService {
     return token ?? '';
   }
 
-  // Créer un groupe
   Future<bool> createGroup(String name, List<int> memberIds) async {
     try {
       final token = await _getToken();
@@ -35,12 +34,10 @@ class ChatService {
     }
   }
 
-  // Récupérer la liste des conversations (groupes et privées)
   Future<List<dynamic>> getConversations() async {
     try {
       final token = await _getToken();
       final response = await http.get(
-        // Le baseUrl est déjà configuré sur '/chat', donc on l'appelle directement
         Uri.parse(baseUrl), 
         headers: {
           'Authorization': 'Bearer $token',
@@ -59,7 +56,6 @@ class ChatService {
     }
   }
 
-  // Récupérer l'historique des messages d'une conversation
   Future<List<dynamic>> getMessages(int conversationId) async {
     try {
       final token = await _getToken();
@@ -81,7 +77,6 @@ class ChatService {
     }
   }
 
-  // Envoyer un nouveau message
   Future<bool> sendMessage(int conversationId, String content) async {
     try {
       final token = await _getToken();

@@ -37,7 +37,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       if (_selectedUserIds.contains(userId)) {
         _selectedUserIds.remove(userId);
       } else {
-        if (_selectedUserIds.length < 49) { // 49 + créateur = 50 max
+        if (_selectedUserIds.length < 49) {
           _selectedUserIds.add(userId);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -50,7 +50,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
 
   Future<void> _submit() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty || _selectedUserIds.length < 1) { // 1 ami min + moi = 2
+    if (name.isEmpty || _selectedUserIds.length < 1) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nom requis et au moins 1 ami sélectionné')),
       );

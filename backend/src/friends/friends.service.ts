@@ -80,23 +80,21 @@ export class FriendsService {
     });
   }
 
-  // 4. Récupérer les demandes d'amis en attente (reçues)
   async getPendingRequests(userId: number) {
     const requests = await this.prisma.friendship.findMany({
       where: {
-        friendId: userId, // On cherche les demandes qui t'ont été envoyées
+        friendId: userId,
         status: 'PENDING',
       },
       include: {
-        requester: true, // On récupère les infos de la personne qui a fait la demande
+        requester: true,
       },
     });
 
-    // On formate la réponse proprement et on cache le mot de passe
     return requests.map((req) => {
       const { password, ...requesterData } = req.requester;
       return {
-        requestId: req.id, // L'ID de la relation Friendship (très important pour pouvoir l'accepter ensuite)
+        requestId: req.id,
         requester: requesterData,
         createdAt: req.createdAt,
       };

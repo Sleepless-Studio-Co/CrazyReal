@@ -57,10 +57,8 @@ class _ChatListPageState extends State<ChatListPage> {
                       itemBuilder: (context, index) {
                         final conv = _conversations[index];
                         final isGroup = conv['isGroup'] == true;
-                        // Si c'est un groupe, on affiche son nom, sinon on met un texte par défaut
                         final name = conv['name'] ?? 'Discussion privée';
                         
-                        // On compte le nombre de participants
                         final participants = conv['participants'] as List;
                         final participantCount = participants.length;
 

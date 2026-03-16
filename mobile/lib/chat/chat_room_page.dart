@@ -23,25 +23,23 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   
   List<dynamic> _messages = [];
   bool _isLoading = true;
-  late IO.Socket _socket; // Déclaration du WebSocket
+  late IO.Socket _socket;
 
   @override
   void initState() {
     super.initState();
     _loadInitialMessages();
-    _initSocket(); // On lance la connexion
+    _initSocket();
   }
 
   @override
   void dispose() {
-    // On ferme proprement le tunnel quand on quitte la page
     _socket.disconnect();
     _socket.dispose();
     _messageController.dispose();
     super.dispose();
   }
 
-  // 1. Chargement classique de l'historique
   Future<void> _loadInitialMessages() async {
     final msgs = await _chatService.getMessages(widget.conversationId);
     if (mounted) {
@@ -52,33 +50,29 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     }
   }
 
-  // 2. Configuration du WebSocket
   void _initSocket() {
     final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
     _socket = IO.io(baseUrl, IO.OptionBuilder()
-        .setTransports(['websocket']) // On force le mode WebSocket
+        .setTransports(['websocket'])
         .disableAutoConnect()
         .build());
 
     _socket.connect();
 
     _socket.onConnect((_) {
-      // Dès qu'on est connecté, on rejoint le salon de cette conversation
       _socket.emit('joinRoom', widget.conversationId);
     });
 
-    // On écoute les nouveaux messages entrants
     _socket.on('newMessage', (data) {
       if (mounted) {
         setState(() {
-          _messages.add(data); // On ajoute le message reçu à la liste
+          _messages.add(data);
         });
       }
     });
   }
 
-  // 3. Envoi du message via notre route HTTP classique
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
@@ -91,7 +85,6 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         const SnackBar(content: Text('Erreur d\'envoi'), backgroundColor: Colors.red),
       );
     }
-    // Pas besoin de recharger la liste ici, le message va nous revenir via le WebSocket !
   }
 
   @override

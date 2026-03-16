@@ -26,13 +26,11 @@ export class ChatController {
     );
   }
 
-  // Route pour récupérer la liste des discussions : GET /chat
   @Get()
   getConversations(@CurrentUser() user: ValidatedUser) {
     return this.chatService.getConversations(user.userId);
   }
 
-  // Route pour poster un message : POST /chat/:id/messages
   @Post(':id/messages')
   async sendMessage(
     @Param('id', ParseIntPipe) conversationId: number,
@@ -44,7 +42,6 @@ export class ChatController {
     return message;
   }
 
-  // Route pour lire les messages : GET /chat/:id/messages
   @Get(':id/messages')
   getMessages(
     @Param('id', ParseIntPipe) conversationId: number,

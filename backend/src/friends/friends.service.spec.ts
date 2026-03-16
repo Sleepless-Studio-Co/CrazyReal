@@ -61,7 +61,6 @@ export class FriendsService {
 
     return friendships.map((f) => {
       const friend = f.userId === userId ? f.receiver : f.requester;
-      // On retire le mot de passe avant de renvoyer les données pour des raisons de sécurité
       const { password, ...friendData } = friend;
       return friendData;
     });
