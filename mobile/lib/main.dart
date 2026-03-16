@@ -7,6 +7,8 @@ import 'friend_page.dart';
 import 'new_post_page.dart';
 import 'setting_page.dart';
 import 'account_page.dart';
+import 'auth/auth_service.dart';
+import 'auth/login_page.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
@@ -34,13 +36,85 @@ class MyApp extends StatelessWidget {
         Locale('en', ''),
         Locale('fr', ''),
       ],
-      home: const MainScreen(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  final AuthService _authService = AuthService();
+  bool _isLoading = true;
+  bool _isAuthenticated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final isLoggedIn = await _authService.isLoggedIn();
+    if (!mounted) return;
+
+    setState(() {
+      _isAuthenticated = isLoggedIn;
+      _isLoading = false;
+    });
+  }
+
+  void _handleAuthSuccess() {
+    if (!mounted) return;
+    setState(() {
+      _isAuthenticated = true;
+    });
+  }
+
+  Future<void> _handleLogoutOrUnauthorized() async {
+    await _authService.logout();
+    if (!mounted) return;
+
+    setState(() {
+      _isAuthenticated = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (!_isAuthenticated) {
+      return LoginPage(onAuthSuccess: _handleAuthSuccess);
+    }
+
+    return MainScreen(
+      onLoggedOut: () => _handleLogoutOrUnauthorized(),
+      onUnauthorized: () => _handleLogoutOrUnauthorized(),
     );
   }
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  const MainScreen({
+    super.key,
+    required this.onLoggedOut,
+    required this.onUnauthorized,
+  });
+
+  final VoidCallback onLoggedOut;
+  final VoidCallback onUnauthorized;
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -49,12 +123,15 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    HomePage(),
-    FriendPage(),
-    NewPage(),
-    SettingPage(),
-    AccountPage(),
+  late final List<Widget> _pages = <Widget>[
+    HomePage(onUnauthorized: widget.onUnauthorized),
+    const FriendPage(),
+    NewPage(onUnauthorized: widget.onUnauthorized),
+    const SettingPage(),
+    AccountPage(
+      onLoggedOut: widget.onLoggedOut,
+      onUnauthorized: widget.onUnauthorized,
+    ),
   ];
 
   void _onItemTapped(int index) {

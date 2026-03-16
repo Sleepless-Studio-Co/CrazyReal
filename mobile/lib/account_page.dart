@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'auth/auth_service.dart';
-import 'auth/login_page.dart';
-import 'auth/register_page.dart';
 import 'l10n/app_localizations.dart';
 
 class AccountPage extends StatefulWidget {
-  const AccountPage({super.key});
+  const AccountPage({
+    super.key,
+    required this.onLoggedOut,
+    required this.onUnauthorized,
+  });
+
+  final VoidCallback onLoggedOut;
+  final VoidCallback onUnauthorized;
 
   @override
   State<AccountPage> createState() => _AccountPageState();
@@ -24,9 +29,21 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _checkAuthStatus() async {
     final isLoggedIn = await _authService.isLoggedIn();
-    if (isLoggedIn) {
-      _user = await _authService.getUser();
+    if (!isLoggedIn) {
+      if (mounted) {
+        widget.onUnauthorized();
+      }
+      return;
     }
+
+    _user = await _authService.getUser();
+
+    if (_user == null && mounted) {
+      widget.onUnauthorized();
+      return;
+    }
+
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
@@ -34,26 +51,8 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _logout() async {
     await _authService.logout();
-    setState(() {
-      _user = null;
-    });
-  }
-
-  void _navigateToLogin() async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
-    if (result == true) {
-      _checkAuthStatus();
-    }
-  }
-
-  void _navigateToRegister() async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const RegisterPage()),
-    );
-    if (result == true) {
-      _checkAuthStatus();
+    if (mounted) {
+      widget.onLoggedOut();
     }
   }
 
@@ -73,7 +72,7 @@ class _AccountPageState extends State<AccountPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: _user != null ? _buildUserProfile() : _buildAuthPrompt(),
+        child: _buildUserProfile(),
       ),
     );
   }
@@ -101,38 +100,6 @@ class _AccountPageState extends State<AccountPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildAuthPrompt() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            AppLocalizations.of(context)!.welcomeMessage,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          Text(AppLocalizations.of(context)!.pleaseLoginOrRegister),
-          const SizedBox(height: 40),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _navigateToLogin,
-              child: Text(AppLocalizations.of(context)!.login),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: _navigateToRegister,
-              child: Text(AppLocalizations.of(context)!.register),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
