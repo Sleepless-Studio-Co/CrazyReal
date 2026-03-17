@@ -61,6 +61,8 @@ class FriendService {
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized'); 
       } else {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
@@ -83,6 +85,8 @@ class FriendService {
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized'); 
       } else {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }

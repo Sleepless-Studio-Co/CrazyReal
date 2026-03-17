@@ -125,7 +125,7 @@ class _MainScreenState extends State<MainScreen> {
 
   late final List<Widget> _pages = <Widget>[
     HomePage(onUnauthorized: widget.onUnauthorized),
-    const FriendPage(),
+    FriendPage(onUnauthorized: widget.onUnauthorized),
     NewPage(onUnauthorized: widget.onUnauthorized),
     const SettingPage(),
     AccountPage(

@@ -5,7 +5,10 @@ import 'chat/create_group_page.dart';
 import 'chat/chat_list_page.dart';
 
 class FriendPage extends StatefulWidget {
-  const FriendPage({super.key});
+
+  final VoidCallback onUnauthorized;
+  
+  const FriendPage({super.key, required this.onUnauthorized});
 
   @override
   State<FriendPage> createState() => _FriendPageState();
@@ -27,17 +30,25 @@ class _FriendPageState extends State<FriendPage> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     
-    final results = await Future.wait([
-      _friendService.getFriends(),
-      _friendService.getPendingRequests(),
-    ]);
-    
-    if (mounted) {
-      setState(() {
-        _friends = results[0];
-        _pendingRequests = results[1];
-        _isLoading = false;
-      });
+    try {
+      final results = await Future.wait([
+        _friendService.getFriends(),
+        _friendService.getPendingRequests(),
+      ]);
+      
+      if (mounted) {
+        setState(() {
+          _friends = results[0];
+          _pendingRequests = results[1];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (e.toString().contains('Unauthorized') && mounted) {
+        widget.onUnauthorized();
+      } else {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

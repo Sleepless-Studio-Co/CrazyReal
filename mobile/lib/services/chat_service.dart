@@ -47,6 +47,8 @@ class ChatService {
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized'); 
       } else {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
@@ -69,8 +71,11 @@ class ChatService {
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized'); 
+      } else {
+        throw Exception('Erreur serveur: ${response.statusCode}');
       }
-      return [];
     } catch (e) {
       print('Erreur getMessages: $e');
       return [];
