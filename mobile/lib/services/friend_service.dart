@@ -67,6 +67,9 @@ class FriendService {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
     } catch (e) {
+      if (e.toString().contains('Unauthorized')) {
+        rethrow;
+      }
       print('Erreur getFriends: $e');
       return [];
     }
@@ -91,6 +94,9 @@ class FriendService {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
     } catch (e) {
+      if (e.toString().contains('Unauthorized')) {
+        rethrow;
+      }
       print('Erreur getPendingRequests: $e');
       return [];
     }

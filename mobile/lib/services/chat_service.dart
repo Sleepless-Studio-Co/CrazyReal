@@ -53,6 +53,9 @@ class ChatService {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
     } catch (e) {
+      if (e.toString().contains('Unauthorized')) {
+        rethrow;
+      }
       print('Erreur getConversations: $e');
       return [];
     }
@@ -77,6 +80,9 @@ class ChatService {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
     } catch (e) {
+      if (e.toString().contains('Unauthorized')) {
+        rethrow;
+      }
       print('Erreur getMessages: $e');
       return [];
     }

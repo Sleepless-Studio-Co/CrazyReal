@@ -24,6 +24,12 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     _loadFriends();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadFriends() async {
     final friends = await _friendService.getFriends();
     setState(() {
