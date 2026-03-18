@@ -1,9 +1,8 @@
-import { Controller, Post, Body, UseGuards, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Param, ParseIntPipe, Get } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
-import { Get } from '@nestjs/common';
 import { ChatGateway } from './chat.gateway';
 
 @UseGuards(JwtAuthGuard)

@@ -5,8 +5,24 @@ import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/com
 export class ChatService {
   constructor(private prisma: PrismaService) {}
 
+  async isParticipant(conversationId: number, userId: number): Promise<boolean> {
+    const participant = await this.prisma.participant.findUnique({
+      where: {
+        userId_conversationId: {
+          userId,
+          conversationId,
+        },
+      },
+    });
+
+    return !!participant;
+  }
+
   async createGroup(creatorId: number, name: string, participantIds: number[]) {
-    const totalMembers = participantIds.length + 1;
+    const uniqueParticipantIds = [...new Set(participantIds)].filter(
+      (id) => id !== creatorId,
+    );
+    const totalMembers = uniqueParticipantIds.length + 1;
 
     if (totalMembers < 2) {
       throw new BadRequestException("Un groupe doit avoir au moins 2 membres.");
@@ -23,7 +39,7 @@ export class ChatService {
         participants: {
           create: [
             { userId: creatorId },
-            ...participantIds.map((id) => ({ userId: id })),
+            ...uniqueParticipantIds.map((id) => ({ userId: id })),
           ],
         },
       },
