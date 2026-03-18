@@ -1,68 +1,99 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { FriendsService } from './friends.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-@Injectable()
-export class FriendsService {
-  constructor(private prisma: PrismaService) {}
+describe('FriendsService', () => {
+  let service: FriendsService;
+  let prismaService: {
+    user: {
+      findUnique: jest.Mock;
+    };
+    friendship: {
+      findFirst: jest.Mock;
+      create: jest.Mock;
+      findUnique: jest.Mock;
+      update: jest.Mock;
+      findMany: jest.Mock;
+    };
+  };
 
-  async sendFriendRequest(userId: number, friendId: number) {
-    if (userId === friendId) {
-      throw new BadRequestException("Tu ne peux pas t'ajouter en ami.");
-    }
-
-    const existingRequest = await this.prisma.friendship.findFirst({
-      where: {
-        OR: [
-          { userId: userId, friendId: friendId },
-          { userId: friendId, friendId: userId },
-        ],
+  beforeEach(async () => {
+    prismaService = {
+      user: {
+        findUnique: jest.fn(),
       },
+      friendship: {
+        findFirst: jest.fn(),
+        create: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        findMany: jest.fn(),
+      },
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        FriendsService,
+        {
+          provide: PrismaService,
+          useValue: prismaService,
+        },
+      ],
+    }).compile();
+
+    service = module.get<FriendsService>(FriendsService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('sendFriendRequest', () => {
+    it('should throw NotFoundException when target user does not exist', async () => {
+      prismaService.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.sendFriendRequest(1, 'unknown')).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { username: 'unknown' },
+      });
     });
 
-    if (existingRequest) {
-      throw new BadRequestException("Une demande ou une relation existe déjà.");
-    }
+    it('should throw BadRequestException when sending request to self', async () => {
+      prismaService.user.findUnique.mockResolvedValue({ id: 1, username: 'alice' });
 
-    return this.prisma.friendship.create({
-      data: {
-        userId,
-        friendId,
+      await expect(service.sendFriendRequest(1, 'alice')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('should create a pending request when target is valid and no relation exists', async () => {
+      prismaService.user.findUnique.mockResolvedValue({ id: 2, username: 'bob' });
+      prismaService.friendship.findFirst.mockResolvedValue(null);
+      prismaService.friendship.create.mockResolvedValue({
+        id: 10,
+        userId: 1,
+        friendId: 2,
         status: 'PENDING',
-      },
-    });
-  }
+      });
 
-  async acceptFriendRequest(userId: number, requestId: number) {
-    const request = await this.prisma.friendship.findUnique({
-      where: { id: requestId },
-    });
+      const result = await service.sendFriendRequest(1, 'bob');
 
-    if (!request || request.friendId !== userId) {
-      throw new NotFoundException("Demande introuvable ou non autorisée.");
-    }
-
-    return this.prisma.friendship.update({
-      where: { id: requestId },
-      data: { status: 'ACCEPTED' },
+      expect(prismaService.friendship.create).toHaveBeenCalledWith({
+        data: {
+          userId: 1,
+          friendId: 2,
+          status: 'PENDING',
+        },
+      });
+      expect(result).toEqual({
+        id: 10,
+        userId: 1,
+        friendId: 2,
+        status: 'PENDING',
+      });
     });
-  }
-
-  async getFriends(userId: number) {
-    const friendships = await this.prisma.friendship.findMany({
-      where: {
-        status: 'ACCEPTED',
-        OR: [{ userId: userId }, { friendId: userId }],
-      },
-      include: {
-        requester: true,
-        receiver: true, 
-      },
-    });
-
-    return friendships.map((f) => {
-      const friend = f.userId === userId ? f.receiver : f.requester;
-      const { password, ...friendData } = friend;
-      return friendData;
-    });
-  }
-}
+  });
+});
