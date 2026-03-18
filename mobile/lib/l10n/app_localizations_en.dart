@@ -197,4 +197,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pleaseLoginOrRegister => 'Please login or register to continue';
+
+  @override
+  String get friendRequestAccepted => 'Request accepted!';
+
+  @override
+  String get addFriend => 'Add a friend';
+
+  @override
+  String get friendUsernameLabel => 'Username';
+
+  @override
+  String get friendUsernameHint => 'e.g. johndoe';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String friendRequestSent(String username) {
+    return 'Request sent to $username!';
+  }
+
+  @override
+  String get friendRequestError =>
+      'Error: User not found or request already exists.';
+
+  @override
+  String get myFriends => 'My Friends';
+
+  @override
+  String get requests => 'Requests';
+
+  @override
+  String get noFriendsYet => 'You don\'t have any friends yet.';
+
+  @override
+  String get noPendingRequests => 'No pending requests.';
+
+  @override
+  String get wantsToBeYourFriend => 'Wants to be your friend';
+
+  @override
+  String get group => 'Group';
 }

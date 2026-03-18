@@ -318,5 +318,75 @@
   "pleaseLoginOrRegister": "Veuillez vous connecter ou vous inscrire pour continuer",
   "@pleaseLoginOrRegister": {
     "description": "Message pour inviter à se connecter ou s'inscrire"
+  },
+
+  "friendRequestAccepted": "Demande acceptée !",
+  "@friendRequestAccepted": {
+    "description": "Message affiché quand une demande d'ami est acceptée"
+  },
+
+  "addFriend": "Ajouter un ami",
+  "@addFriend": {
+    "description": "Titre de la boîte de dialogue pour ajouter un ami"
+  },
+
+  "friendUsernameLabel": "Pseudo de l'utilisateur",
+  "@friendUsernameLabel": {
+    "description": "Label du champ pseudo dans la boîte de dialogue d'ajout d'ami"
+  },
+
+  "friendUsernameHint": "Ex: johndoe",
+  "@friendUsernameHint": {
+    "description": "Texte d'aide pour le champ pseudo dans la boîte de dialogue d'ajout d'ami"
+  },
+
+  "send": "Envoyer",
+  "@send": {
+    "description": "Bouton pour envoyer une action"
+  },
+
+  "friendRequestSent": "Demande envoyée à {username} !",
+  "@friendRequestSent": {
+    "description": "Message affiché quand la demande d'ami est envoyée",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
+  "friendRequestError": "Erreur : Utilisateur introuvable ou demande existante.",
+  "@friendRequestError": {
+    "description": "Message d'erreur pour une demande d'ami invalide"
+  },
+
+  "myFriends": "Mes Amis",
+  "@myFriends": {
+    "description": "Titre et onglet de la liste d'amis"
+  },
+
+  "requests": "Demandes",
+  "@requests": {
+    "description": "Onglet des demandes d'amis"
+  },
+
+  "noFriendsYet": "Tu n'as pas encore d'amis.",
+  "@noFriendsYet": {
+    "description": "Message affiché quand la liste d'amis est vide"
+  },
+
+  "noPendingRequests": "Aucune demande en attente.",
+  "@noPendingRequests": {
+    "description": "Message affiché quand il n'y a pas de demande en attente"
+  },
+
+  "wantsToBeYourFriend": "Veut être ton ami(e)",
+  "@wantsToBeYourFriend": {
+    "description": "Sous-titre affiché pour une demande d'ami entrante"
+  },
+
+  "group": "Groupe",
+  "@group": {
+    "description": "Label du bouton flottant pour créer un groupe"
   }
 }

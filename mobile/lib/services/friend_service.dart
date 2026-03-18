@@ -1,0 +1,104 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../auth/auth_service.dart';
+
+class FriendService {
+  final String baseUrl = '${dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000'}/friends';
+  final AuthService _authService = AuthService();
+
+  Future<String> _getToken() async {
+    final token = await _authService.getAccessToken();
+    return token ?? '';
+  }
+
+  Future<bool> sendRequest(String username) async {
+    try {
+      final token = await _getToken();
+      final response = await http.post(
+        Uri.parse('$baseUrl/request/$username'), 
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('Erreur sendRequest: $e');
+      return false;
+    }
+  }
+
+  Future<bool> acceptRequest(int requestId) async {
+    try {
+      final token = await _getToken();
+      final response = await http.patch(
+        Uri.parse('$baseUrl/accept/$requestId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Erreur acceptRequest: $e');
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> getFriends() async {
+    try {
+      final token = await _getToken();
+      final response = await http.get(
+        Uri.parse(baseUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized'); 
+      } else {
+        throw Exception('Erreur serveur: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (e.toString().contains('Unauthorized')) {
+        rethrow;
+      }
+      print('Erreur getFriends: $e');
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> getPendingRequests() async {
+    try {
+      final token = await _getToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/requests'), 
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized'); 
+      } else {
+        throw Exception('Erreur serveur: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (e.toString().contains('Unauthorized')) {
+        rethrow;
+      }
+      print('Erreur getPendingRequests: $e');
+      return [];
+    }
+  }
+}

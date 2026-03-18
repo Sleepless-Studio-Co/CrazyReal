@@ -9,6 +9,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AdminBootstrapService } from './bootstrap/admin-bootstrap.service';
 import { I18nModule, AcceptLanguageResolver, QueryResolver, HeaderResolver } from 'nestjs-i18n';
+import { FriendsModule } from './friends/friends.module';
+import { ChatModule } from './chat/chat.module';
 import * as path from 'path';
 
 @Module({
@@ -38,6 +40,8 @@ import * as path from 'path';
     ]),
     UsersModule,
     AuthModule,
+    FriendsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [

@@ -318,5 +318,75 @@
   "pleaseLoginOrRegister": "Please login or register to continue",
   "@pleaseLoginOrRegister": {
     "description": "Message to prompt login or register"
+  },
+
+  "friendRequestAccepted": "Request accepted!",
+  "@friendRequestAccepted": {
+    "description": "Message shown when a friend request is accepted"
+  },
+
+  "addFriend": "Add a friend",
+  "@addFriend": {
+    "description": "Dialog title to add a friend"
+  },
+
+  "friendUsernameLabel": "Username",
+  "@friendUsernameLabel": {
+    "description": "Username field label in add friend dialog"
+  },
+
+  "friendUsernameHint": "e.g. johndoe",
+  "@friendUsernameHint": {
+    "description": "Username field hint in add friend dialog"
+  },
+
+  "send": "Send",
+  "@send": {
+    "description": "Button to send an action"
+  },
+
+  "friendRequestSent": "Request sent to {username}!",
+  "@friendRequestSent": {
+    "description": "Message shown when a friend request is sent",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
+  "friendRequestError": "Error: User not found or request already exists.",
+  "@friendRequestError": {
+    "description": "Error message for an invalid friend request"
+  },
+
+  "myFriends": "My Friends",
+  "@myFriends": {
+    "description": "Title and tab label for friend list"
+  },
+
+  "requests": "Requests",
+  "@requests": {
+    "description": "Tab label for friend requests"
+  },
+
+  "noFriendsYet": "You don't have any friends yet.",
+  "@noFriendsYet": {
+    "description": "Message shown when friend list is empty"
+  },
+
+  "noPendingRequests": "No pending requests.",
+  "@noPendingRequests": {
+    "description": "Message shown when there are no pending requests"
+  },
+
+  "wantsToBeYourFriend": "Wants to be your friend",
+  "@wantsToBeYourFriend": {
+    "description": "Subtitle displayed for incoming friend requests"
+  },
+
+  "group": "Group",
+  "@group": {
+    "description": "Label for the floating action button to create a group"
   }
 }
