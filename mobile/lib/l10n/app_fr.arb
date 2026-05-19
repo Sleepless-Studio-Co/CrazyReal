@@ -89,6 +89,36 @@
   "@profileUpdated": {
     "description": "Message affiche apres la mise a jour du profil"
   },
+
+  "profilePhoto": "Photo de profil",
+  "@profilePhoto": {
+    "description": "Titre de la section photo de profil"
+  },
+
+  "changePhoto": "Changer la photo",
+  "@changePhoto": {
+    "description": "Bouton pour changer la photo de profil"
+  },
+
+  "chooseAvatar": "Choisir un avatar",
+  "@chooseAvatar": {
+    "description": "Titre du selecteur d'avatar"
+  },
+
+  "baseAvatars": "Avatars de base",
+  "@baseAvatars": {
+    "description": "Libelle des avatars de base"
+  },
+
+  "chooseFromGallery": "Choisir depuis la galerie",
+  "@chooseFromGallery": {
+    "description": "Action pour choisir une photo personnalisee"
+  },
+
+  "removePhoto": "Supprimer la photo",
+  "@removePhoto": {
+    "description": "Action pour supprimer une photo personnalisee"
+  },
   
   "logout": "Déconnexion",
   "@logout": {

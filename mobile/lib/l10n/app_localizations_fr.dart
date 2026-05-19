@@ -63,6 +63,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profileUpdated => 'Profil mis à jour';
 
   @override
+  String get profilePhoto => 'Photo de profil';
+
+  @override
+  String get changePhoto => 'Changer la photo';
+
+  @override
+  String get chooseAvatar => 'Choisir un avatar';
+
+  @override
+  String get baseAvatars => 'Avatars de base';
+
+  @override
+  String get chooseFromGallery => 'Choisir depuis la galerie';
+
+  @override
+  String get removePhoto => 'Supprimer la photo';
+
+  @override
   String get logout => 'Déconnexion';
 
   @override
