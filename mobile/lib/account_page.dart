@@ -446,20 +446,6 @@ class _AccountPageState extends State<AccountPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.account),
-        actions: [
-          if (_isEditing)
-            TextButton(
-              onPressed: _isSaving ? null : _cancelEditing,
-              style: TextButton.styleFrom(textStyle: _labelStyle(context)),
-              child: Text(l10n.cancel),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.edit),
-              tooltip: l10n.edit,
-              onPressed: _isSaving ? null : _startEditing,
-            ),
-        ],
       ),
       body: SafeArea(
         child: _isEditing
@@ -477,8 +463,10 @@ class _AccountPageState extends State<AccountPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _buildProfileHeader(l10n),
-        const SizedBox(height: 16),
-        _isEditing ? _buildEditCard(l10n) : _buildDetailsCard(l10n),
+        if (_isEditing) ...[
+          const SizedBox(height: 16),
+          _buildEditCard(l10n),
+        ],
         const SizedBox(height: 16),
         _isEditing ? _buildSaveCard(l10n) : _buildLogoutCard(l10n),
       ],
@@ -554,9 +542,9 @@ class _AccountPageState extends State<AccountPage> {
                     Text(email, style: _mutedStyle(context)),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
-                      onPressed: _isAvatarLoading ? null : _showAvatarPicker,
-                      icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                      label: Text(l10n.changePhoto),
+                      onPressed: _isSaving ? null : _startEditing,
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: Text('${l10n.edit} ${l10n.profile}'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _inkColor,
                         backgroundColor: Colors.white.withOpacity(0.7),
@@ -575,31 +563,6 @@ class _AccountPageState extends State<AccountPage> {
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailsCard(AppLocalizations l10n) {
-    return _buildCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.profilePhoto, style: _labelStyle(context)),
-          const SizedBox(height: 12),
-          Center(child: _buildAvatar(size: 110)),
-          const SizedBox(height: 20),
-          _buildDetailRow(
-            icon: Icons.alternate_email,
-            label: l10n.username,
-            value: _user?['username']?.toString() ?? '',
-          ),
-          const Divider(height: 28),
-          _buildDetailRow(
-            icon: Icons.email_outlined,
-            label: l10n.email,
-            value: _user?['email']?.toString() ?? '',
           ),
         ],
       ),
@@ -748,37 +711,6 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 20, color: _accentColor),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: _labelStyle(context)),
-              const SizedBox(height: 4),
-              Text(value, style: _valueStyle(context)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildAvatar({double size = 96, bool showBadge = false}) {
     final option = _resolveAvatarOption();
