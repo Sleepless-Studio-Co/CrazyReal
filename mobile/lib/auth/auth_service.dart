@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -187,6 +188,84 @@ class AuthService {
       if (accessToken != null) {
         await _updateAccessToken(accessToken);
       }
+      await _saveUserIfPresent(data['user']);
+      return data;
+    } on SocketException catch (e) {
+      throw Exception('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateAvatarKey(String avatarKey) async {
+    final token = await getAccessToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/users/me/avatar'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'avatarKey': avatarKey}),
+      );
+
+      if (response.statusCode == 401) {
+        throw Exception('Unauthorized');
+      }
+
+      if (response.statusCode != 200) {
+        throw _buildHttpException('Avatar update failed', response);
+      }
+
+      final data = _decodeResponseMap(response.body);
+      await _saveUserIfPresent(data['user']);
+      return data;
+    } on SocketException catch (e) {
+      throw Exception('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadAvatarImage({
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    final token = await getAccessToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/users/me/avatar'),
+      );
+      request.headers['Authorization'] = 'Bearer $token';
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: filename,
+        ),
+      );
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+
+      if (response.statusCode == 401) {
+        throw Exception('Unauthorized');
+      }
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw _buildHttpException('Avatar upload failed', response);
+      }
+
+      final data = _decodeResponseMap(response.body);
       await _saveUserIfPresent(data['user']);
       return data;
     } on SocketException catch (e) {

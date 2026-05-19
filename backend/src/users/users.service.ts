@@ -51,6 +51,8 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -67,6 +69,8 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -84,6 +88,8 @@ export class UsersService {
           email: true,
           username: true,
           password: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -100,6 +106,8 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -115,6 +123,8 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -135,6 +145,30 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          createdAt: true,
+        },
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async updateAvatar(
+    userId: number,
+    updates: { avatarUrl?: string | null; avatarKey?: string | null },
+  ) {
+    try {
+      return this.prisma.user.update({
+        where: { id: userId },
+        data: updates,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });

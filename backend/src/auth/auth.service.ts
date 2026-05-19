@@ -78,6 +78,8 @@ export class AuthService {
           id: newUser.id,
           email: newUser.email,
           username: newUser.username,
+          avatarUrl: newUser.avatarUrl,
+          avatarKey: newUser.avatarKey,
         },
       };
     } catch (error) {
@@ -107,6 +109,8 @@ export class AuthService {
         id: user.id,
         email: user.email,
         username: user.username,
+        avatarUrl: user.avatarUrl,
+        avatarKey: user.avatarKey,
       },
     };
   }
@@ -177,6 +181,8 @@ export class AuthService {
         id: updatedUser.id,
         email: updatedUser.email,
         username: updatedUser.username,
+        avatarUrl: updatedUser.avatarUrl,
+        avatarKey: updatedUser.avatarKey,
       },
     };
   }

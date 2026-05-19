@@ -1,18 +1,16 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 
-const String _avatarTypeBase = 'base';
-const String _avatarTypeCustom = 'custom';
-const String _avatarTypeKeyPrefix = 'profile_avatar_type_';
-const String _avatarValueKeyPrefix = 'profile_avatar_value_';
+final String _apiBaseUrl =
+  dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
 const Color _cardColor = Color(0xFFFFF7E6);
@@ -97,9 +95,9 @@ class _AccountPageState extends State<AccountPage> {
   bool _isSaving = false;
   bool _isAvatarLoading = false;
   String? _errorMessage;
-  String _avatarType = _avatarTypeBase;
-  String? _avatarValue;
-  Uint8List? _customAvatarBytes;
+  String? _avatarUrl;
+  String? _avatarKey;
+  Uint8List? _pendingAvatarBytes;
 
   @override
   void initState() {
@@ -132,7 +130,7 @@ class _AccountPageState extends State<AccountPage> {
 
     if (_user != null) {
       _populateControllers(_user!);
-      await _loadAvatarPreferences();
+      _syncAvatarFromUser(_user!);
     }
 
     if (!mounted) return;
@@ -151,6 +149,11 @@ class _AccountPageState extends State<AccountPage> {
   void _populateControllers(Map<String, dynamic> user) {
     _usernameController.text = user['username']?.toString() ?? '';
     _emailController.text = user['email']?.toString() ?? '';
+  }
+
+  void _syncAvatarFromUser(Map<String, dynamic> user) {
+    _avatarUrl = user['avatarUrl']?.toString();
+    _avatarKey = user['avatarKey']?.toString();
   }
 
   void _startEditing() {
@@ -207,6 +210,7 @@ class _AccountPageState extends State<AccountPage> {
       final updatedUser = result['user'];
       if (updatedUser is Map<String, dynamic>) {
         _user = updatedUser;
+        _syncAvatarFromUser(updatedUser);
       }
 
       if (!mounted) return;
@@ -243,103 +247,70 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  String _profileKeySuffix() {
-    final id = _user?['id'];
-    if (id != null) return id.toString();
-    final email = _user?['email'];
-    if (email != null) return email.toString();
-    return 'default';
-  }
+  Future<void> _selectBaseAvatar(String id) async {
+    setState(() {
+      _isAvatarLoading = true;
+      _pendingAvatarBytes = null;
+    });
 
-  Future<void> _loadAvatarPreferences() async {
-    final prefs = await SharedPreferences.getInstance();
-    final suffix = _profileKeySuffix();
-    final storedType = prefs.getString('$_avatarTypeKeyPrefix$suffix');
-    final storedValue = prefs.getString('$_avatarValueKeyPrefix$suffix');
-
-    String resolvedType = storedType ?? _avatarTypeBase;
-    String? resolvedValue = storedValue;
-    Uint8List? customBytes;
-
-    if (resolvedType == _avatarTypeCustom && resolvedValue != null) {
-      customBytes = _decodeAvatar(resolvedValue);
-      if (customBytes == null) {
-        resolvedType = _avatarTypeBase;
-        resolvedValue = null;
+    try {
+      final result = await _authService.updateAvatarKey(id);
+      final updatedUser = result['user'];
+      if (updatedUser is Map<String, dynamic>) {
+        _user = updatedUser;
+        _syncAvatarFromUser(updatedUser);
+      }
+    } catch (e) {
+      _handleAvatarError(e);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAvatarLoading = false;
+        });
       }
     }
-
-    if (resolvedType == _avatarTypeBase) {
-      resolvedValue ??= _avatarOptions.first.id;
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _avatarType = resolvedType;
-      _avatarValue = resolvedValue;
-      _customAvatarBytes = customBytes;
-    });
-  }
-
-  Uint8List? _decodeAvatar(String value) {
-    try {
-      return base64Decode(value);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<void> _saveAvatarPreference({
-    required String type,
-    required String value,
-    Uint8List? bytes,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final suffix = _profileKeySuffix();
-    await prefs.setString('$_avatarTypeKeyPrefix$suffix', type);
-    await prefs.setString('$_avatarValueKeyPrefix$suffix', value);
-
-    if (!mounted) return;
-    setState(() {
-      _avatarType = type;
-      _avatarValue = value;
-      _customAvatarBytes = bytes;
-    });
-  }
-
-  Future<void> _selectBaseAvatar(String id) async {
-    await _saveAvatarPreference(type: _avatarTypeBase, value: id);
   }
 
   Future<void> _pickCustomAvatar() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 600,
+      maxHeight: 600,
+      imageQuality: 85,
+    );
+
+    if (image == null) {
+      return;
+    }
+
+    final bytes = await image.readAsBytes();
+    if (!mounted) return;
+
     setState(() {
       _isAvatarLoading = true;
+      _pendingAvatarBytes = bytes;
     });
 
     try {
-      final image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 600,
-        maxHeight: 600,
-        imageQuality: 85,
-      );
-
-      if (image == null) {
-        if (mounted) {
-          setState(() {
-            _isAvatarLoading = false;
-          });
-        }
-        return;
-      }
-
-      final bytes = await image.readAsBytes();
-      final encoded = base64Encode(bytes);
-      await _saveAvatarPreference(
-        type: _avatarTypeCustom,
-        value: encoded,
+      final filename = image.name.isNotEmpty
+          ? image.name
+          : image.path.split('/').last;
+      final result = await _authService.uploadAvatarImage(
         bytes: bytes,
+        filename: filename.isEmpty ? 'avatar.jpg' : filename,
       );
+      final updatedUser = result['user'];
+      if (updatedUser is Map<String, dynamic>) {
+        _user = updatedUser;
+        _syncAvatarFromUser(updatedUser);
+      }
+      if (mounted) {
+        setState(() {
+          _pendingAvatarBytes = null;
+        });
+      }
+    } catch (e) {
+      _handleAvatarError(e);
     } finally {
       if (mounted) {
         setState(() {
@@ -353,8 +324,26 @@ class _AccountPageState extends State<AccountPage> {
     await _selectBaseAvatar(_avatarOptions.first.id);
   }
 
+  void _handleAvatarError(Object error) {
+    final message = error.toString().replaceFirst('Exception: ', '');
+    if (message.toLowerCase().contains('unauthorized')) {
+      if (mounted) {
+        widget.onUnauthorized();
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   _AvatarOption _resolveAvatarOption() {
-    final id = _avatarValue;
+    final id = _avatarKey;
     if (id == null) return _avatarOptions.first;
     return _avatarOptions.firstWhere(
       (option) => option.id == id,
@@ -397,8 +386,9 @@ class _AccountPageState extends State<AccountPage> {
                       .map(
                         (option) => _buildAvatarChoice(
                           option: option,
-                          isSelected: _avatarType == _avatarTypeBase &&
-                              _avatarValue == option.id,
+                          isSelected: _avatarUrl == null &&
+                              _pendingAvatarBytes == null &&
+                              _avatarKey == option.id,
                           onTap: () async {
                             Navigator.pop(sheetContext);
                             await _selectBaseAvatar(option.id);
@@ -416,7 +406,7 @@ class _AccountPageState extends State<AccountPage> {
                   leading: const Icon(Icons.photo_library_outlined),
                   title: Text(l10n.chooseFromGallery, style: _valueStyle(context)),
                 ),
-                if (_avatarType == _avatarTypeCustom)
+                if (_avatarUrl != null)
                   ListTile(
                     onTap: () async {
                       Navigator.pop(sheetContext);
@@ -792,25 +782,62 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildAvatar({double size = 96, bool showBadge = false}) {
     final option = _resolveAvatarOption();
-    final avatarInner = _avatarType == _avatarTypeCustom &&
-            _customAvatarBytes != null
-        ? ClipOval(
-            child: Image.memory(
-              _customAvatarBytes!,
+    Widget avatarInner;
+
+    if (_pendingAvatarBytes != null) {
+      avatarInner = ClipOval(
+        child: Image.memory(
+          _pendingAvatarBytes!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
+      final resolvedAvatarUrl = _resolveMediaUrl(_avatarUrl!);
+      avatarInner = ClipOval(
+        child: Image.network(
+          resolvedAvatarUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return Container(
               width: size,
               height: size,
-              fit: BoxFit.cover,
-            ),
-          )
-        : Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
               color: option.background,
-            ),
-            child: Icon(option.icon, color: option.foreground, size: size * 0.45),
-          );
+              child: const Center(child: CircularProgressIndicator()),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: option.background,
+              ),
+              child: Icon(
+                option.icon,
+                color: option.foreground,
+                size: size * 0.45,
+              ),
+            );
+          },
+        ),
+      );
+    } else {
+      avatarInner = Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: option.background,
+        ),
+        child: Icon(option.icon, color: option.foreground, size: size * 0.45),
+      );
+    }
 
     return Stack(
       alignment: Alignment.center,
@@ -876,6 +903,36 @@ class _AccountPageState extends State<AccountPage> {
           ),
       ],
     );
+  }
+
+  String _resolveMediaUrl(String rawUrl) {
+    if (rawUrl.isEmpty) return rawUrl;
+
+    final configuredBase = _apiBaseUrl.endsWith('/')
+        ? _apiBaseUrl.substring(0, _apiBaseUrl.length - 1)
+        : _apiBaseUrl;
+    final configuredUri = Uri.tryParse(configuredBase);
+
+    if (rawUrl.startsWith('/')) {
+      return '$configuredBase$rawUrl';
+    }
+
+    final uri = Uri.tryParse(rawUrl);
+    if (uri != null && uri.hasScheme) {
+      final host = uri.host.toLowerCase();
+      if ((host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2') && configuredUri != null) {
+        return uri
+            .replace(
+              scheme: configuredUri.scheme,
+              host: configuredUri.host,
+              port: configuredUri.hasPort ? configuredUri.port : null,
+            )
+            .toString();
+      }
+      return rawUrl;
+    }
+
+    return '$configuredBase/$rawUrl';
   }
 
   Widget _buildAvatarChoice({
