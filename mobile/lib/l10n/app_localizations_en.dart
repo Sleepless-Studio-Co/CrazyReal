@@ -60,6 +60,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile => 'Profile';
 
   @override
+  String get profileUpdated => 'Profile updated';
+
+  @override
   String get logout => 'Logout';
 
   @override

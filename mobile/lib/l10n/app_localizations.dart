@@ -200,6 +200,12 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get profile;
 
+  /// Message shown after profile update
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated'**
+  String get profileUpdated;
+
   /// Logout button
   ///
   /// In en, this message translates to:

@@ -121,6 +121,17 @@ class AuthService {
     await prefs.setString(_refreshTokenKey, refreshToken);
   }
 
+  Future<void> _updateAccessToken(String accessToken) async {
+    final refreshToken = await getRefreshToken();
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _saveTokens(accessToken, refreshToken);
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_accessTokenKey, accessToken);
+  }
+
   Future<void> _saveUser(Map<String, dynamic> user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userKey, jsonEncode(user));
@@ -129,6 +140,59 @@ class AuthService {
   Future<void> _saveUserIfPresent(dynamic user) async {
     if (user is Map<String, dynamic>) {
       await _saveUser(user);
+    }
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    String? email,
+    String? username,
+  }) async {
+    final token = await getAccessToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Unauthorized');
+    }
+
+    final payload = <String, String>{};
+    if (email != null && email.isNotEmpty) {
+      payload['email'] = email;
+    }
+    if (username != null && username.isNotEmpty) {
+      payload['username'] = username;
+    }
+
+    if (payload.isEmpty) {
+      throw Exception('No updates provided');
+    }
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(payload),
+      );
+
+      if (response.statusCode == 401) {
+        throw Exception('Unauthorized');
+      }
+
+      if (response.statusCode != 200) {
+        throw _buildHttpException('Profile update failed', response);
+      }
+
+      final data = _decodeResponseMap(response.body);
+      final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+      if (accessToken != null) {
+        await _updateAccessToken(accessToken);
+      }
+      await _saveUserIfPresent(data['user']);
+      return data;
+    } on SocketException catch (e) {
+      throw Exception('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
     }
   }
 

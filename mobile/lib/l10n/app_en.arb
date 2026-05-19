@@ -84,6 +84,11 @@
   "@profile": {
     "description": "Profile label"
   },
+
+  "profileUpdated": "Profile updated",
+  "@profileUpdated": {
+    "description": "Message shown after profile update"
+  },
   
   "logout": "Logout",
   "@logout": {

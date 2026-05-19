@@ -84,6 +84,11 @@
   "@profile": {
     "description": "Label profil"
   },
+
+  "profileUpdated": "Profil mis à jour",
+  "@profileUpdated": {
+    "description": "Message affiche apres la mise a jour du profil"
+  },
   
   "logout": "Déconnexion",
   "@logout": {
