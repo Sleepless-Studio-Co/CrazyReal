@@ -6,16 +6,14 @@ describe('AppController', () => {
   let appController: AppController;
   let prismaService: {
     challenge: {
-      findUnique: jest.Mock;
-      create: jest.Mock;
+      findMany: jest.Mock;
     };
   };
 
   beforeEach(async () => {
     prismaService = {
       challenge: {
-        findUnique: jest.fn(),
-        create: jest.fn(),
+        findMany: jest.fn(),
       },
     };
 
@@ -33,13 +31,20 @@ describe('AppController', () => {
   });
 
   describe('getCurrentChallenge', () => {
-    it('should return the existing challenge', async () => {
-      const challenge = { id: 1, content: 'Fais une grimace ! 🤪', isActive: true };
-      prismaService.challenge.findUnique.mockResolvedValue(challenge);
+    it('should return the active challenge from candidates', async () => {
+      const now = new Date();
+      const challenge = {
+        id: 1,
+        title: 'Grimace Challenge',
+        description: 'Fais une grimace ! 🤪',
+        date: new Date(now.getTime() - 60 * 60 * 1000),
+        type: 'WEEKLY_A',
+        isActive: true,
+      };
+      prismaService.challenge.findMany.mockResolvedValue([challenge]);
 
       await expect(appController.getCurrentChallenge()).resolves.toEqual(challenge);
-      expect(prismaService.challenge.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
-      expect(prismaService.challenge.create).not.toHaveBeenCalled();
+      expect(prismaService.challenge.findMany).toHaveBeenCalled();
     });
   });
 });

@@ -10,11 +10,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ChallengeType {
+  WEEKLY_A
+  WEEKLY_B
+  SPECIAL
+}
+
 model Challenge {
-  id        Int      @id @default(autoincrement())
-  content   String
-  isActive  Boolean  @default(true)
-  posts     Post[]
+  id          Int           @id @default(autoincrement())
+  title       String        @default("Global Challenge")
+  description String        @default("")
+  date        DateTime      @default(now())
+  type        ChallengeType @default(WEEKLY_A)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
+  posts       Post[]
+
+  @@unique([date, type])
 }
 
 model Post {

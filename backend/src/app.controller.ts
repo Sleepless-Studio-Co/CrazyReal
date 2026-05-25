@@ -1,4 +1,13 @@
-import { Controller, Get, Post, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  NotFoundException,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  UseGuards,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
@@ -9,6 +18,7 @@ import { join } from 'path';
 import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CurrentUser } from './auth/current-user.decorator';
+import { ChallengeType } from '@prisma/client';
 
 @ApiTags('CrazyReal')
 @ApiBearerAuth('access-token')
@@ -17,17 +27,47 @@ import { CurrentUser } from './auth/current-user.decorator';
 export class AppController {
   constructor(private readonly prisma: PrismaService) {}
 
+  private isChallengeActiveNow(
+    challenge: { date: Date; type: ChallengeType; isActive: boolean },
+    now: Date,
+  ): boolean {
+    if (!challenge.isActive) {
+      return false;
+    }
+
+    const startsAt = new Date(challenge.date);
+    const durationHours = challenge.type === 'SPECIAL' ? 24 : 84;
+    const endsAt = new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
+
+    return now >= startsAt && now < endsAt;
+  }
+
   @Get('challenge/current')
   @ApiOperation({ summary: 'Récupérer le challenge actuel' })
   @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
   async getCurrentChallenge(@I18n() i18n: I18nContext) {
-    let challenge = await this.prisma.challenge.findUnique({ where: { id: 1 } });
-    if (!challenge) {
-      challenge = await this.prisma.challenge.create({
-        data: { id: 1, content: "Fais une grimace ! 🤪", isActive: true },
-      });
+    const now = new Date();
+
+    const candidateChallenges = await this.prisma.challenge.findMany({
+      where: {
+        isActive: true,
+        date: {
+          lte: now,
+        },
+      },
+      orderBy: {
+        date: 'desc',
+      },
+      take: 10,
+    });
+
+    const currentChallenge = candidateChallenges.find((challenge) => this.isChallengeActiveNow(challenge, now));
+
+    if (!currentChallenge) {
+      throw new NotFoundException('No active global challenge found for the current date/time.');
     }
-    return challenge;
+
+    return currentChallenge;
   }
 
   @Post('posts')
@@ -61,10 +101,30 @@ export class AppController {
     const apiHost = process.env.API_HOST || 'localhost';
     const apiPort = process.env.API_PORT || '3000';
 
+    const now = new Date();
+    const candidateChallenges = await this.prisma.challenge.findMany({
+      where: {
+        isActive: true,
+        date: {
+          lte: now,
+        },
+      },
+      orderBy: {
+        date: 'desc',
+      },
+      take: 10,
+    });
+
+    const currentChallenge = candidateChallenges.find((challenge) => this.isChallengeActiveNow(challenge, now));
+
+    if (!currentChallenge) {
+      throw new BadRequestException('No active challenge available for posting right now.');
+    }
+
     const post = await this.prisma.post.create({
       data: {
         photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
-        challengeId: 1,
+        challengeId: currentChallenge.id,
         userId: user.userId,
       },
     });
