@@ -42,29 +42,46 @@ export class AppController {
     return now >= startsAt && now < endsAt;
   }
 
-  @Get('challenge/current')
-  @ApiOperation({ summary: 'Récupérer le challenge actuel' })
-  @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
-  async getCurrentChallenge(@I18n() i18n: I18nContext) {
-    const now = new Date();
+  private async getCurrentChallengeForDate(now: Date) {
+    // Maximum challenge duration is 84 hours (WEEKLY), so look back that far
+    const maxDurationMs = 84 * 60 * 60 * 1000;
+    const lookbackDate = new Date(now.getTime() - maxDurationMs);
 
     const candidateChallenges = await this.prisma.challenge.findMany({
       where: {
         isActive: true,
         date: {
           lte: now,
+          gte: lookbackDate,
         },
       },
       orderBy: {
         date: 'desc',
       },
-      take: 10,
     });
 
-    const currentChallenge = candidateChallenges.find((challenge) => this.isChallengeActiveNow(challenge, now));
+    // Filter active challenges and sort by priority (SPECIAL first, then by date desc)
+    const activeChallenges = candidateChallenges
+      .filter((challenge) => this.isChallengeActiveNow(challenge, now))
+      .sort((a, b) => {
+        if (a.type === 'SPECIAL' && b.type !== 'SPECIAL') return -1;
+        if (a.type !== 'SPECIAL' && b.type === 'SPECIAL') return 1;
+        return b.date.getTime() - a.date.getTime();
+      });
+
+    return activeChallenges[0] || null;
+  }
+
+  @Get('challenge/current')
+  @ApiOperation({ summary: 'Récupérer le challenge actuel' })
+  @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
+  async getCurrentChallenge(@I18n() i18n: I18nContext) {
+    const now = new Date();
+
+    const currentChallenge = await this.getCurrentChallengeForDate(now);
 
     if (!currentChallenge) {
-      throw new NotFoundException('No active global challenge found for the current date/time.');
+      throw new NotFoundException(await i18n.t('challenge.not_found') || 'Aucun challenge global actif n\'a été trouvé pour la date et l\'heure actuelles.');
     }
 
     return currentChallenge;
@@ -102,23 +119,10 @@ export class AppController {
     const apiPort = process.env.API_PORT || '3000';
 
     const now = new Date();
-    const candidateChallenges = await this.prisma.challenge.findMany({
-      where: {
-        isActive: true,
-        date: {
-          lte: now,
-        },
-      },
-      orderBy: {
-        date: 'desc',
-      },
-      take: 10,
-    });
-
-    const currentChallenge = candidateChallenges.find((challenge) => this.isChallengeActiveNow(challenge, now));
+    const currentChallenge = await this.getCurrentChallengeForDate(now);
 
     if (!currentChallenge) {
-      throw new BadRequestException('No active challenge available for posting right now.');
+      throw new BadRequestException(await i18n.t('challenge.not_active') || 'Aucun challenge actif n\'est disponible pour poster en ce moment.');
     }
 
     const post = await this.prisma.post.create({
