@@ -4,10 +4,10 @@ const prisma = new PrismaClient();
 
 function getWeekStart(date = new Date()) {
   const d = new Date(date);
-  const day = d.getDay(); // 0 sunday
+  const day = d.getUTCDay(); // 0 sunday
   const diff = day === 0 ? -6 : 1 - day; // monday as week start
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + diff);
+  d.setUTCHours(0, 0, 0, 0);
   return d;
 }
 
@@ -15,7 +15,10 @@ async function main() {
   const weekStart = getWeekStart(new Date());
   const middleOfWeek = new Date(weekStart.getTime() + 84 * 60 * 60 * 1000); // +3.5 days
 
-  await prisma.challenge.deleteMany({});
+  await prisma.$transaction([
+    prisma.post.deleteMany({}),
+    prisma.challenge.deleteMany({}),
+  ]);
 
   await prisma.challenge.createMany({
     data: [
