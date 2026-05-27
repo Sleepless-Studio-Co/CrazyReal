@@ -603,7 +603,7 @@ class _AccountPageState extends State<AccountPage> {
               if (value == null || value.trim().isEmpty) {
                 return l10n.pleaseEnterEmail;
               }
-              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
+              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(value.trim())) {
                 return l10n.pleaseEnterValidEmail;
               }
               return null;
