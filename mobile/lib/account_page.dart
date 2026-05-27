@@ -544,7 +544,7 @@ class _AccountPageState extends State<AccountPage> {
                     OutlinedButton.icon(
                       onPressed: _isSaving ? null : _startEditing,
                       icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: Text('${l10n.edit} ${l10n.profile}'),
+                      label: Text(l10n.edit),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _inkColor,
                         backgroundColor: Colors.white.withOpacity(0.7),
