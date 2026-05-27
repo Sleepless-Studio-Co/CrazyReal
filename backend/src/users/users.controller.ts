@@ -14,8 +14,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { promises as fs } from 'fs';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { basename, extname, join } from 'path';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -35,6 +36,21 @@ const BASE_AVATAR_KEYS = new Set([
   'berry',
   'noon',
   'terra',
+]);
+
+const ALLOWED_AVATAR_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]);
+
+const ALLOWED_AVATAR_EXTENSIONS = new Set([
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.gif',
 ]);
 
 @Controller('users')
@@ -78,10 +94,14 @@ export class UsersController {
       );
     }
 
+    const previousAvatarUrl = user.avatarUrl;
+
     const updatedUser = await this.usersService.updateAvatar(user.userId, {
       avatarKey,
       avatarUrl: null,
     });
+
+    await this.deleteStoredAvatar(previousAvatarUrl);
 
     return { user: updatedUser };
   }
@@ -113,6 +133,27 @@ export class UsersController {
           callback(null, `avatar-${uniqueSuffix}${ext}`);
         },
       }),
+      fileFilter: (_req, file, callback) => {
+        const ext = extname(file.originalname).toLowerCase();
+
+        if (
+          !ALLOWED_AVATAR_MIME_TYPES.has(file.mimetype) ||
+          !ALLOWED_AVATAR_EXTENSIONS.has(ext)
+        ) {
+          callback(
+            new BadRequestException(
+              'Only JPEG, PNG, WebP, and GIF avatar images are allowed',
+            ),
+            false,
+          );
+          return;
+        }
+
+        callback(null, true);
+      },
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
     }),
   )
   async uploadAvatar(
@@ -124,11 +165,14 @@ export class UsersController {
     }
 
     const avatarUrl = `/uploads/${file.filename}`;
+    const previousAvatarUrl = user.avatarUrl;
 
     const updatedUser = await this.usersService.updateAvatar(user.userId, {
       avatarUrl,
       avatarKey: null,
     });
+
+    await this.deleteStoredAvatar(previousAvatarUrl);
 
     return { user: updatedUser };
   }
@@ -138,11 +182,37 @@ export class UsersController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Remove avatar information' })
   async clearAvatar(@CurrentUser() user: ValidatedUser) {
+    const previousAvatarUrl = user.avatarUrl;
+
     const updatedUser = await this.usersService.updateAvatar(user.userId, {
       avatarUrl: null,
       avatarKey: null,
     });
 
+    await this.deleteStoredAvatar(previousAvatarUrl);
+
     return { user: updatedUser };
+  }
+
+  private async deleteStoredAvatar(avatarUrl?: string | null) {
+    if (!avatarUrl || !avatarUrl.startsWith('/uploads/')) {
+      return;
+    }
+
+    const fileName = basename(avatarUrl);
+    const filePath = join(process.cwd(), 'uploads', fileName);
+
+    try {
+      await fs.unlink(filePath);
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code?: string }).code === 'ENOENT'
+      ) {
+        return;
+      }
+    }
   }
 }
