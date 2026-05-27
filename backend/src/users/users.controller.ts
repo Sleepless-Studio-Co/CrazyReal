@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -15,7 +16,13 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -28,7 +35,10 @@ export class UsersController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
-  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
     const authenticatedUserId = user.userId;
 
     if (id !== authenticatedUserId) {
@@ -77,7 +87,8 @@ export class UsersController {
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
           const ext = extname(file.originalname);
           callback(null, `avatar-${uniqueSuffix}${ext}`);
         },
@@ -88,6 +99,10 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: ValidatedUser,
   ) {
+    if (!file) {
+      throw new BadRequestException('Avatar file is required');
+    }
+
     const avatarUrl = `/uploads/${file.filename}`;
 
     const updatedUser = await this.usersService.updateAvatar(user.userId, {
