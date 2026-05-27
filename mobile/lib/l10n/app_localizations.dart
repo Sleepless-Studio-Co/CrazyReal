@@ -200,6 +200,48 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get profile;
 
+  /// Message shown after profile update
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated'**
+  String get profileUpdated;
+
+  /// Profile photo section title
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo'**
+  String get profilePhoto;
+
+  /// Button to change profile photo
+  ///
+  /// In en, this message translates to:
+  /// **'Change photo'**
+  String get changePhoto;
+
+  /// Title for avatar picker
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an avatar'**
+  String get chooseAvatar;
+
+  /// Label for base avatar options
+  ///
+  /// In en, this message translates to:
+  /// **'Base avatars'**
+  String get baseAvatars;
+
+  /// Action to pick a custom photo
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get chooseFromGallery;
+
+  /// Action to remove a custom photo
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get removePhoto;
+
   /// Logout button
   ///
   /// In en, this message translates to:

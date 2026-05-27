@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -8,11 +13,25 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   private handlePrismaError(error: unknown): never {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2002'
-    ) {
-      throw new ConflictException('mail already in use');
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        const target = error.meta?.target;
+        const fields = Array.isArray(target) ? target.join(',') : String(target ?? '');
+
+        if (fields.includes('email')) {
+          throw new ConflictException('mail already in use');
+        }
+
+        if (fields.includes('username')) {
+          throw new ConflictException('username already in use');
+        }
+
+        throw new ConflictException('unique constraint violation');
+      }
+
+      if (error.code === 'P2025') {
+        throw new NotFoundException('user not found');
+      }
     }
 
     throw new InternalServerErrorException('Database operation failed');
@@ -32,6 +51,8 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -48,6 +69,8 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -65,6 +88,8 @@ export class UsersService {
           email: true,
           username: true,
           password: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -81,6 +106,8 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });
@@ -96,6 +123,52 @@ export class UsersService {
           id: true,
           email: true,
           username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          createdAt: true,
+        },
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async updateProfile(
+    userId: number,
+    updates: { email?: string; username?: string },
+  ) {
+    try {
+      return this.prisma.user.update({
+        where: { id: userId },
+        data: updates,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          createdAt: true,
+        },
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async updateAvatar(
+    userId: number,
+    updates: { avatarUrl?: string | null; avatarKey?: string | null },
+  ) {
+    try {
+      return this.prisma.user.update({
+        where: { id: userId },
+        data: updates,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
           createdAt: true,
         },
       });

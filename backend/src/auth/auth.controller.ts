@@ -1,9 +1,10 @@
-import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import type { ValidatedUser } from './interfaces/auth-user.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -46,5 +47,15 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   getProfile(@CurrentUser() user: any) {
     return user;
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  updateProfile(
+    @CurrentUser() user: ValidatedUser,
+    @Body() body: { email?: string; username?: string },
+  ) {
+    return this.authService.updateProfile(user.userId, body);
   }
 }

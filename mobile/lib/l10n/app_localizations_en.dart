@@ -60,6 +60,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile => 'Profile';
 
   @override
+  String get profileUpdated => 'Profile updated';
+
+  @override
+  String get profilePhoto => 'Profile photo';
+
+  @override
+  String get changePhoto => 'Change photo';
+
+  @override
+  String get chooseAvatar => 'Choose an avatar';
+
+  @override
+  String get baseAvatars => 'Base avatars';
+
+  @override
+  String get chooseFromGallery => 'Choose from gallery';
+
+  @override
+  String get removePhoto => 'Remove photo';
+
+  @override
   String get logout => 'Logout';
 
   @override

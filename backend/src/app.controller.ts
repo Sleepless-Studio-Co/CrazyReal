@@ -58,12 +58,9 @@ export class AppController {
   async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any, @I18n() i18n: I18nContext) {
     console.log(await i18n.t('common.loading'), file.filename);
 
-    const apiHost = process.env.API_HOST || 'localhost';
-    const apiPort = process.env.API_PORT || '3000';
-
     const post = await this.prisma.post.create({
       data: {
-        photoUrl: `http://${apiHost}:${apiPort}/uploads/${file.filename}`,
+        photoUrl: `/uploads/${file.filename}`,
         challengeId: 1,
         userId: user.userId,
       },
@@ -76,9 +73,7 @@ export class AppController {
   async getUploads() {
     const uploadsDir = join(process.cwd(), 'uploads');
     const files = readdirSync(uploadsDir);
-    const apiHost = process.env.API_HOST || 'localhost';
-    const apiPort = process.env.API_PORT || '3000';
-    return { files: files.map(file => `http://${apiHost}:${apiPort}/uploads/${file}`) };
+    return { files: files.map(file => `/uploads/${file}`) };
   }
 
   @Get('posts')
@@ -89,7 +84,10 @@ export class AppController {
       include: {
         user: {
           select: {
+            id: true,
             username: true,
+            avatarUrl: true,
+            avatarKey: true,
           },
         },
       },

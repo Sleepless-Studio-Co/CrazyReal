@@ -84,6 +84,41 @@
   "@profile": {
     "description": "Profile label"
   },
+
+  "profileUpdated": "Profile updated",
+  "@profileUpdated": {
+    "description": "Message shown after profile update"
+  },
+
+  "profilePhoto": "Profile photo",
+  "@profilePhoto": {
+    "description": "Profile photo section title"
+  },
+
+  "changePhoto": "Change photo",
+  "@changePhoto": {
+    "description": "Button to change profile photo"
+  },
+
+  "chooseAvatar": "Choose an avatar",
+  "@chooseAvatar": {
+    "description": "Title for avatar picker"
+  },
+
+  "baseAvatars": "Base avatars",
+  "@baseAvatars": {
+    "description": "Label for base avatar options"
+  },
+
+  "chooseFromGallery": "Choose from gallery",
+  "@chooseFromGallery": {
+    "description": "Action to pick a custom photo"
+  },
+
+  "removePhoto": "Remove photo",
+  "@removePhoto": {
+    "description": "Action to remove a custom photo"
+  },
   
   "logout": "Logout",
   "@logout": {
