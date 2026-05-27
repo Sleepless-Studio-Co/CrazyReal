@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
@@ -73,6 +78,8 @@ export class AuthService {
           id: newUser.id,
           email: newUser.email,
           username: newUser.username,
+          avatarUrl: newUser.avatarUrl,
+          avatarKey: newUser.avatarKey,
         },
       };
     } catch (error) {
@@ -102,6 +109,8 @@ export class AuthService {
         id: user.id,
         email: user.email,
         username: user.username,
+        avatarUrl: user.avatarUrl,
+        avatarKey: user.avatarKey,
       },
     };
   }
@@ -132,5 +141,53 @@ export class AuthService {
       where: { token },
       data: { isRevoked: true },
     });
+  }
+
+  async updateProfile(
+    userId: number,
+    updates: { email?: string; username?: string },
+  ) {
+    const normalizedEmail =
+      typeof updates.email === 'string' ? updates.email.trim() : undefined;
+    const normalizedUsername =
+      typeof updates.username === 'string' ? updates.username.trim() : undefined;
+
+    const payload: { email?: string; username?: string } = {};
+
+    if (normalizedEmail) {
+      if (!this.isValidEmail(normalizedEmail)) {
+        throw new BadRequestException('Invalid email');
+      }
+      payload.email = normalizedEmail;
+    }
+
+    if (normalizedUsername) {
+      if (normalizedUsername.length < 3) {
+        throw new BadRequestException('Username too short');
+      }
+      payload.username = normalizedUsername;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      throw new BadRequestException('No changes provided');
+    }
+
+    const updatedUser = await this.usersService.updateProfile(userId, payload);
+    const accessToken = this.generateAccessToken(updatedUser);
+
+    return {
+      access_token: accessToken,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        avatarUrl: updatedUser.avatarUrl,
+        avatarKey: updatedUser.avatarKey,
+      },
+    };
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^@]+@[^@]+\.[^@]+$/.test(email);
   }
 }

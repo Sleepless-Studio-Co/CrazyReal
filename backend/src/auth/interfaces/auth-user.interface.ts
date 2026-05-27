@@ -2,6 +2,8 @@ export interface AuthUser {
   id: number;
   email: string;
   username: string;
+  avatarUrl?: string | null;
+  avatarKey?: string | null;
   createdAt: Date;
 }
 
@@ -13,4 +15,6 @@ export interface ValidatedUser {
   userId: number;
   email: string;
   username: string;
+  avatarUrl?: string | null;
+  avatarKey?: string | null;
 }
