@@ -28,6 +28,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
 
+const BASE_AVATAR_KEYS = new Set([
+  'ember',
+  'sea',
+  'citrus',
+  'berry',
+  'noon',
+  'terra',
+]);
+
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -57,7 +66,18 @@ export class UsersController {
     @CurrentUser() user: ValidatedUser,
     @Body() body: { avatarKey?: string | null },
   ) {
-    const avatarKey = body.avatarKey ?? null;
+    const avatarKey = body.avatarKey;
+
+    if (avatarKey == null || avatarKey.trim() === '') {
+      throw new BadRequestException('avatarKey is required');
+    }
+
+    if (!BASE_AVATAR_KEYS.has(avatarKey)) {
+      throw new BadRequestException(
+        `Invalid avatarKey. Allowed values: ${Array.from(BASE_AVATAR_KEYS).join(', ')}`,
+      );
+    }
+
     const updatedUser = await this.usersService.updateAvatar(user.userId, {
       avatarKey,
       avatarUrl: null,
