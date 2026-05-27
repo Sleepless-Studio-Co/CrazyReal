@@ -50,7 +50,7 @@ describe('AppController', () => {
       };
       prismaService.challenge.findMany.mockResolvedValue([challenge]);
 
-      const i18n = {} as Parameters<AppController['getCurrentChallenge']>[0];
+      const i18n = { t: jest.fn().mockResolvedValue('') } as unknown as Parameters<AppController['getCurrentChallenge']>[0];
       await expect(appController.getCurrentChallenge(i18n)).resolves.toEqual(challenge);
       expect(prismaService.challenge.findMany).toHaveBeenCalled();
     });
@@ -58,7 +58,7 @@ describe('AppController', () => {
     it('should throw NotFoundException when no active challenge exists', async () => {
       prismaService.challenge.findMany.mockResolvedValue([]);
 
-      const i18n = {} as Parameters<AppController['getCurrentChallenge']>[0];
+      const i18n = { t: jest.fn().mockResolvedValue('') } as unknown as Parameters<AppController['getCurrentChallenge']>[0];
       await expect(appController.getCurrentChallenge(i18n)).rejects.toThrow(NotFoundException);
     });
   });
@@ -79,7 +79,7 @@ describe('AppController', () => {
         originalname: 'test.jpg',
       } as Express.Multer.File;
       const user = { userId: 123 };
-      const i18n = {} as any;
+      const i18n = { t: jest.fn().mockResolvedValue('') } as any;
 
       prismaService.challenge.findMany.mockResolvedValue([challenge]);
       prismaService.post.create.mockResolvedValue({
@@ -104,7 +104,7 @@ describe('AppController', () => {
     it('should throw BadRequestException when no active challenge exists', async () => {
       const file = { filename: 'test.jpg' } as Express.Multer.File;
       const user = { userId: 123 };
-      const i18n = {} as any;
+      const i18n = { t: jest.fn().mockResolvedValue('') } as any;
 
       prismaService.challenge.findMany.mockResolvedValue([]);
 
