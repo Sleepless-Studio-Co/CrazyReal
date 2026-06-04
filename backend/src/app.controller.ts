@@ -19,13 +19,49 @@ import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CurrentUser } from './auth/current-user.decorator';
 import { ChallengeType } from '@prisma/client';
+import { FeedGateway } from './feed/feed.gateway';
+import type { ValidatedUser } from './auth/interfaces/auth-user.interface';
+
+const postInclude = {
+  user: {
+    select: {
+      id: true,
+      username: true,
+      avatarUrl: true,
+      avatarKey: true,
+    },
+  },
+  challenge: {
+    select: {
+      id: true,
+      title: true,
+      type: true,
+    },
+  },
+} as const;
 
 @ApiTags('CrazyReal')
 @ApiBearerAuth('access-token')
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class AppController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly feedGateway: FeedGateway,
+  ) {}
+
+  private async getAcceptedFriendIds(userId: number): Promise<number[]> {
+    const friendships = await this.prisma.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [{ userId }, { friendId: userId }],
+      },
+    });
+
+    return friendships.map((friendship) =>
+      friendship.userId === userId ? friendship.friendId : friendship.userId,
+    );
+  }
 
   private isChallengeActiveNow(
     challenge: { date: Date; type: ChallengeType; isActive: boolean },
@@ -128,7 +164,10 @@ export class AppController {
         challengeId: currentChallenge.id,
         userId: user.userId,
       },
+      include: postInclude,
     });
+
+    this.feedGateway.broadcastNewPost(post);
 
     return post;
   }
@@ -141,21 +180,20 @@ export class AppController {
   }
 
   @Get('posts')
-  @ApiOperation({ summary: 'Récupérer tous les posts avec les utilisateurs' })
+  @ApiOperation({ summary: 'Récupérer les posts du feed (amis + soi)' })
   @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
-  async getPosts() {
-    const posts = await this.prisma.post.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            avatarUrl: true,
-            avatarKey: true,
-          },
-        },
+  async getPosts(@CurrentUser() user: ValidatedUser) {
+    const friendIds = await this.getAcceptedFriendIds(user.userId);
+    const feedUserIds = [...new Set([...friendIds, user.userId])];
+
+    return this.prisma.post.findMany({
+      where: {
+        userId: { in: feedUserIds },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: postInclude,
     });
-    return posts;
   }
 }
