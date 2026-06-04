@@ -6,6 +6,7 @@ import '../models/feed_post.dart';
 import '../utils/media_url.dart';
 import '../utils/time_ago.dart';
 import 'feed_avatar.dart';
+import 'full_screen_photo_page.dart';
 
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
@@ -83,31 +84,44 @@ class PostCard extends StatelessWidget {
               ],
             ),
           ),
-          AspectRatio(
-            aspectRatio: 4 / 5,
-            child: Image.network(
-              photoUrl,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  color: const Color(0xFFEEDCC5),
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: const Color(0xFFEEDCC5),
-                  child: const Center(
-                    child: Icon(
-                      Icons.broken_image_outlined,
-                      color: _inkMuted,
-                      size: 42,
+          GestureDetector(
+            onTap: photoUrl.isEmpty
+                ? null
+                : () => FullScreenPhotoPage.open(
+                      context,
+                      imageUrl: photoUrl,
+                      heroTag: 'post-photo-${post.id}',
+                      caption: challengeLabel,
                     ),
-                  ),
-                );
-              },
+            child: AspectRatio(
+              aspectRatio: 4 / 5,
+              child: Hero(
+                tag: 'post-photo-${post.id}',
+                child: Image.network(
+                  photoUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: const Color(0xFFEEDCC5),
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: const Color(0xFFEEDCC5),
+                      child: const Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: _inkMuted,
+                          size: 42,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
           Padding(
