@@ -260,4 +260,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get group => 'Group';
+
+  @override
+  String get unknownUser => 'Unknown user';
+
+  @override
+  String get feedLoadError => 'Could not load the feed.';
+
+  @override
+  String get feedRetry => 'Try again';
+
+  @override
+  String get feedRefresh => 'Refresh';
+
+  @override
+  String get publishFirstPost => 'Publish a photo';
+
+  @override
+  String get publishFirstPostHint =>
+      'Answer the current challenge to fill your feed.';
+
+  @override
+  String get feedJustNow => 'Just now';
+
+  @override
+  String timeAgoMinutes(int minutes) {
+    return '$minutes min ago';
+  }
+
+  @override
+  String timeAgoHours(int hours) {
+    return '$hours h ago';
+  }
+
+  @override
+  String timeAgoDays(int days) {
+    return '$days d ago';
+  }
 }
