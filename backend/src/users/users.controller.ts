@@ -135,10 +135,14 @@ export class UsersController {
       }),
       fileFilter: (_req, file, callback) => {
         const ext = extname(file.originalname).toLowerCase();
+        const hasAllowedMimeType = ALLOWED_AVATAR_MIME_TYPES.has(file.mimetype);
+        const hasAllowedExtension = ALLOWED_AVATAR_EXTENSIONS.has(ext);
+        const isGenericBinaryUpload =
+          file.mimetype === 'application/octet-stream';
 
         if (
-          !ALLOWED_AVATAR_MIME_TYPES.has(file.mimetype) ||
-          !ALLOWED_AVATAR_EXTENSIONS.has(ext)
+          !hasAllowedExtension ||
+          (!hasAllowedMimeType && !isGenericBinaryUpload)
         ) {
           callback(
             new BadRequestException(
