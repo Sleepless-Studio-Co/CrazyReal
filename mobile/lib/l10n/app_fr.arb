@@ -423,5 +423,70 @@
   "group": "Groupe",
   "@group": {
     "description": "Label du bouton flottant pour créer un groupe"
+  },
+
+  "unknownUser": "Utilisateur inconnu",
+  "@unknownUser": {
+    "description": "Nom affiché quand le pseudo est absent"
+  },
+
+  "feedLoadError": "Impossible de charger le feed.",
+  "@feedLoadError": {
+    "description": "Message d'erreur du feed"
+  },
+
+  "feedRetry": "Réessayer",
+  "@feedRetry": {
+    "description": "Bouton pour recharger le feed"
+  },
+
+  "feedRefresh": "Actualiser",
+  "@feedRefresh": {
+    "description": "Tooltip du bouton refresh du feed"
+  },
+
+  "publishFirstPost": "Publier une photo",
+  "@publishFirstPost": {
+    "description": "Bouton CTA quand le feed est vide"
+  },
+
+  "publishFirstPostHint": "Réponds au challenge du moment pour remplir ton feed.",
+  "@publishFirstPostHint": {
+    "description": "Sous-texte quand le feed est vide"
+  },
+
+  "feedJustNow": "À l'instant",
+  "@feedJustNow": {
+    "description": "Date relative pour un post très récent"
+  },
+
+  "timeAgoMinutes": "Il y a {minutes} min",
+  "@timeAgoMinutes": {
+    "description": "Date relative en minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+
+  "timeAgoHours": "Il y a {hours} h",
+  "@timeAgoHours": {
+    "description": "Date relative en heures",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+
+  "timeAgoDays": "Il y a {days} j",
+  "@timeAgoDays": {
+    "description": "Date relative en jours",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   }
 }

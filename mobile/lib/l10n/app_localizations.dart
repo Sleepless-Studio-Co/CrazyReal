@@ -589,6 +589,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Group'**
   String get group;
+
+  /// Displayed when username is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown user'**
+  String get unknownUser;
+
+  /// Feed error message
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the feed.'**
+  String get feedLoadError;
+
+  /// Button to reload the feed
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get feedRetry;
+
+  /// Feed refresh button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get feedRefresh;
+
+  /// CTA button when feed is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Publish a photo'**
+  String get publishFirstPost;
+
+  /// Subtitle when feed is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Answer the current challenge to fill your feed.'**
+  String get publishFirstPostHint;
+
+  /// Relative time for a very recent post
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get feedJustNow;
+
+  /// Relative time in minutes
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min ago'**
+  String timeAgoMinutes(int minutes);
+
+  /// Relative time in hours
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h ago'**
+  String timeAgoHours(int hours);
+
+  /// Relative time in days
+  ///
+  /// In en, this message translates to:
+  /// **'{days} d ago'**
+  String timeAgoDays(int days);
 }
 
 class _AppLocalizationsDelegate

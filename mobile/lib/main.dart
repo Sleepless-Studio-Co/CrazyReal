@@ -122,22 +122,50 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
 
-  late final List<Widget> _pages = <Widget>[
-    HomePage(onUnauthorized: widget.onUnauthorized),
-    FriendPage(onUnauthorized: widget.onUnauthorized),
-    NewPage(onUnauthorized: widget.onUnauthorized),
-    const SettingPage(),
-    AccountPage(
-      onLoggedOut: widget.onLoggedOut,
-      onUnauthorized: widget.onUnauthorized,
-    ),
-  ];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = <Widget>[
+      HomePage(
+        key: _homeKey,
+        onUnauthorized: widget.onUnauthorized,
+        onPublishTap: () => _onItemTapped(2),
+      ),
+      FriendPage(onUnauthorized: widget.onUnauthorized),
+      NewPage(
+        onUnauthorized: widget.onUnauthorized,
+        onPostCreated: _onPostCreated,
+      ),
+      const SettingPage(),
+      AccountPage(
+        onLoggedOut: widget.onLoggedOut,
+        onUnauthorized: widget.onUnauthorized,
+      ),
+    ];
+  }
+
+  void _onPostCreated() {
+    _homeKey.currentState?.refreshFeed(showLoading: false);
+    _onItemTapped(0);
+  }
 
   void _onItemTapped(int index) {
+    final previousIndex = _selectedIndex;
     setState(() {
       _selectedIndex = index;
     });
+
+    if (previousIndex == 0 && index != 0) {
+      _homeKey.currentState?.setActive(false);
+    }
+    if (index == 0) {
+      _homeKey.currentState?.setActive(true);
+      _homeKey.currentState?.refreshFeed(showLoading: false);
+    }
   }
 
   @override

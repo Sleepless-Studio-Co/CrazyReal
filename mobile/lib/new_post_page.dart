@@ -9,9 +9,14 @@ import 'auth/auth_service.dart';
 final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
 class NewPage extends StatefulWidget {
-  const NewPage({super.key, required this.onUnauthorized});
+  const NewPage({
+    super.key,
+    required this.onUnauthorized,
+    this.onPostCreated,
+  });
 
   final VoidCallback onUnauthorized;
+  final VoidCallback? onPostCreated;
 
   @override
   State<NewPage> createState() => _NewPageState();
@@ -122,7 +127,8 @@ class _NewPageState extends State<NewPage> {
         final data = jsonDecode(response.body);
         if (!mounted) return;
         setState(() {
-          challengeText = data['content'];
+          challengeText = data['description']?.toString() ??
+              data['title']?.toString();
         });
       } else if (response.statusCode == 401) {
         if (mounted) {
@@ -176,12 +182,11 @@ class _NewPageState extends State<NewPage> {
       print('Upload response status: ${response.statusCode}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        final responseBody = await response.stream.bytesToString();
-        print('Upload successful: $responseBody');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.photoSentToFeed)),
           );
+          widget.onPostCreated?.call();
         }
       } else if (response.statusCode == 401) {
         if (mounted) {

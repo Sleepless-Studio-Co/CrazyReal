@@ -423,5 +423,70 @@
   "group": "Group",
   "@group": {
     "description": "Label for the floating action button to create a group"
+  },
+
+  "unknownUser": "Unknown user",
+  "@unknownUser": {
+    "description": "Displayed when username is missing"
+  },
+
+  "feedLoadError": "Could not load the feed.",
+  "@feedLoadError": {
+    "description": "Feed error message"
+  },
+
+  "feedRetry": "Try again",
+  "@feedRetry": {
+    "description": "Button to reload the feed"
+  },
+
+  "feedRefresh": "Refresh",
+  "@feedRefresh": {
+    "description": "Feed refresh button tooltip"
+  },
+
+  "publishFirstPost": "Publish a photo",
+  "@publishFirstPost": {
+    "description": "CTA button when feed is empty"
+  },
+
+  "publishFirstPostHint": "Answer the current challenge to fill your feed.",
+  "@publishFirstPostHint": {
+    "description": "Subtitle when feed is empty"
+  },
+
+  "feedJustNow": "Just now",
+  "@feedJustNow": {
+    "description": "Relative time for a very recent post"
+  },
+
+  "timeAgoMinutes": "{minutes} min ago",
+  "@timeAgoMinutes": {
+    "description": "Relative time in minutes",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+
+  "timeAgoHours": "{hours} h ago",
+  "@timeAgoHours": {
+    "description": "Relative time in hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+
+  "timeAgoDays": "{days} d ago",
+  "@timeAgoDays": {
+    "description": "Relative time in days",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
   }
 }

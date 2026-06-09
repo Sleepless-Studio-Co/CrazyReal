@@ -37,11 +37,12 @@ model Challenge {
 
 model Post {
   id          Int       @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id])
   photoUrl    String
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId Int
+  createdAt   DateTime  @default(now())
 }
 
 model User {
