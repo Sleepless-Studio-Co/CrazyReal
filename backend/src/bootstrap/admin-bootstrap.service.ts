@@ -33,10 +33,18 @@ export class AdminBootstrapService {
           email: adminEmail,
           password: hashedPassword,
           username: adminUsername,
+          role: 'ADMIN',
         },
       });
       console.log(`Admin bootstrap user created: ${adminEmail}`);
     } else {
+      if (existingUser.role !== 'ADMIN') {
+        await this.prisma.user.update({
+          where: { email: adminEmail },
+          data: { role: 'ADMIN' },
+        });
+        console.log(`Admin bootstrap user promoted to ADMIN: ${adminEmail}`);
+      }
       console.log(`Admin bootstrap user already exists: ${adminEmail}`);
     }
   }
