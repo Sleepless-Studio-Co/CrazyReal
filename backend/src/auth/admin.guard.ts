@@ -1,4 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -11,6 +12,6 @@ export class AdminGuard implements CanActivate {
     if (!user?.userId) return false;
 
     const dbUser = await this.prisma.user.findUnique({ where: { id: user.userId } });
-    return dbUser?.role === 'ADMIN';
+    return dbUser?.role === Role.ADMIN;
   }
 }

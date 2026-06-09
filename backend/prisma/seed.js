@@ -13,22 +13,21 @@ function getWeekStart(date = new Date()) {
 
 async function main() {
   const weekStart = getWeekStart(new Date());
-  const middleOfWeek = new Date(weekStart.getTime() + 84 * 60 * 60 * 1000); // +3.5 days
 
   const fs = require('fs');
   const path = require('path');
+  const file = path.join(__dirname, 'challenges.json');
+
+  if (!fs.existsSync(file)) {
+    console.warn('⚠️  prisma/challenges.json not found — skipping seed to avoid clearing existing data.');
+    return;
+  }
 
   // clear posts and challenges for a clean seed
   await prisma.$transaction([
     prisma.post.deleteMany({}),
     prisma.challenge.deleteMany({}),
   ]);
-
-  const file = path.join(__dirname, 'challenges.json');
-  if (!fs.existsSync(file)) {
-    console.warn('⚠️  prisma/challenges.json not found — skipping JSON import.');
-    return;
-  }
 
   const raw = fs.readFileSync(file, 'utf-8');
   const items = JSON.parse(raw);

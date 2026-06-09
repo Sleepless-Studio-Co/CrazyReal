@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { ChallengeType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -7,7 +8,7 @@ import * as path from 'path';
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async importChallengesFromFile(): Promise<{ imported: number } | { error: string }> {
+  async importChallengesFromFile(): Promise<{ imported: number }> {
     try {
       // Prefer prisma/challenges.json relative to project root (process.cwd())
       let file = path.join(process.cwd(), 'prisma', 'challenges.json');
@@ -18,7 +19,7 @@ export class AdminService {
       }
 
       if (!fs.existsSync(file)) {
-        return { error: 'prisma/challenges.json not found' };
+        throw new NotFoundException('prisma/challenges.json not found');
       }
 
       const raw = fs.readFileSync(file, 'utf-8');
@@ -28,7 +29,7 @@ export class AdminService {
         title: c.title,
         description: c.description || '',
         date: c.date ? new Date(c.date) : new Date(),
-        type: c.type,
+        type: c.type || ChallengeType.WEEKLY_A,
         isActive: c.isActive !== undefined ? c.isActive : true,
       }));
 
@@ -37,7 +38,11 @@ export class AdminService {
       const res = await this.prisma.challenge.createMany({ data, skipDuplicates: true });
       return { imported: res.count };
     } catch (e: any) {
-      return { error: e.message || String(e) };
+      if (e instanceof NotFoundException) {
+        throw e;
+      }
+
+      throw new InternalServerErrorException(e?.message || String(e));
     }
   }
 
