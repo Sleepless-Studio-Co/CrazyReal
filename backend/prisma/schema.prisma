@@ -54,6 +54,7 @@ model User {
   receivedRequests Friendship[] @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
+  ownedConversations Conversation[] @relation("OwnedConversations")
 }
 
 model RefreshToken {
@@ -84,8 +85,10 @@ model Conversation {
   id        Int      @id @default(autoincrement())
   isGroup   Boolean  @default(false)
   name      String?
+  ownerId   Int?
   createdAt DateTime @default(now())
 
+  owner        User?         @relation("OwnedConversations", fields: [ownerId], references: [id], onDelete: SetNull)
   messages     Message[]
   participants Participant[]
 }

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { UseGuards } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
@@ -5,7 +6,13 @@ import { ChatService } from './chat.service';
 import { WsJwtAuthGuard } from '../auth/ws-jwt-auth.guard';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
 
-@WebSocketGateway({ cors: { origin: '*' } })
+// Les clients mobiles natifs ne sont pas concernés par CORS ; cette restriction
+// protège uniquement les clients web (Flutter Web) du gateway temps réel.
+const allowedOrigins = process.env.CHAT_CORS_ORIGIN
+  ? process.env.CHAT_CORS_ORIGIN.split(',').map((origin) => origin.trim())
+  : false;
+
+@WebSocketGateway({ cors: { origin: allowedOrigins } })
 export class ChatGateway {
   constructor(private readonly chatService: ChatService) {}
 

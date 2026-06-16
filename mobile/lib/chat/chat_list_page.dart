@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import '../services/api_exception.dart';
 import 'chat_room_page.dart';
 
 class ChatListPage extends StatefulWidget {
@@ -22,12 +23,50 @@ class _ChatListPageState extends State<ChatListPage> {
 
   Future<void> _loadConversations() async {
     setState(() => _isLoading = true);
-    final convos = await _chatService.getConversations();
-    if (mounted) {
-      setState(() {
-        _conversations = convos;
-        _isLoading = false;
-      });
+    try {
+      final convos = await _chatService.getConversations();
+      if (mounted) {
+        setState(() {
+          _conversations = convos;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        final message = e is ApiException ? e.message : 'Erreur lors du chargement des discussions';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _leaveGroup(int conversationId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Quitter le groupe'),
+        content: const Text('Veux-tu vraiment quitter ce groupe ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Quitter')),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _chatService.leaveGroup(conversationId);
+      _loadConversations();
+    } catch (e) {
+      if (mounted) {
+        final message = e is ApiException ? e.message : 'Erreur lors de la sortie du groupe';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -69,6 +108,13 @@ class _ChatListPageState extends State<ChatListPage> {
                           ),
                           title: Text(name),
                           subtitle: Text('$participantCount membre(s)'),
+                          trailing: isGroup
+                              ? IconButton(
+                                  icon: const Icon(Icons.exit_to_app, color: Colors.red),
+                                  tooltip: 'Quitter le groupe',
+                                  onPressed: () => _leaveGroup(conv['id']),
+                                )
+                              : null,
                           onTap: () {
                             Navigator.push(
                               context,

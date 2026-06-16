@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../auth/auth_service.dart';
+import 'api_exception.dart';
 
 class ChatService {
   final String baseUrl = '${dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000'}/chat';
@@ -12,98 +13,82 @@ class ChatService {
     return token ?? '';
   }
 
-  Future<bool> createGroup(String name, List<int> memberIds) async {
-    try {
-      final token = await _getToken();
-      final response = await http.post(
-        Uri.parse('$baseUrl/group'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'name': name,
-          'members': memberIds,
-        }),
-      );
-      
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      print('Erreur createGroup: $e');
-      return false;
+  Future<Map<String, String>> _headers() async {
+    final token = await _getToken();
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
+  Future<void> createGroup(String name, List<int> memberIds) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/group'),
+      headers: await _headers(),
+      body: jsonEncode({'name': name, 'members': memberIds}),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
     }
   }
 
-  Future<List<dynamic>> getConversations() async {
-    try {
-      final token = await _getToken();
-      final response = await http.get(
-        Uri.parse(baseUrl), 
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
+  Future<List<dynamic>> getConversations({int page = 1, int limit = 20}) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl?page=$page&limit=$limit'),
+      headers: await _headers(),
+    );
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized'); 
-      } else {
-        throw Exception('Erreur serveur: ${response.statusCode}');
-      }
-    } catch (e) {
-      if (e.toString().contains('Unauthorized')) {
-        rethrow;
-      }
-      print('Erreur getConversations: $e');
-      return [];
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw buildApiException(response);
+  }
+
+  Future<void> leaveGroup(int conversationId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/$conversationId/leave'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
     }
   }
 
-  Future<List<dynamic>> getMessages(int conversationId) async {
-    try {
-      final token = await _getToken();
-      final response = await http.get(
-        Uri.parse('$baseUrl/$conversationId/messages'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
+  Future<void> removeMember(int conversationId, int memberId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/$conversationId/members/$memberId'),
+      headers: await _headers(),
+    );
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized'); 
-      } else {
-        throw Exception('Erreur serveur: ${response.statusCode}');
-      }
-    } catch (e) {
-      if (e.toString().contains('Unauthorized')) {
-        rethrow;
-      }
-      print('Erreur getMessages: $e');
-      return [];
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
     }
   }
 
-  Future<bool> sendMessage(int conversationId, String content) async {
-    try {
-      final token = await _getToken();
-      final response = await http.post(
-        Uri.parse('$baseUrl/$conversationId/messages'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'content': content}),
-      );
-      
-      return response.statusCode == 201;
-    } catch (e) {
-      print('Erreur sendMessage: $e');
-      return false;
+  Future<List<dynamic>> getMessages(int conversationId, {int limit = 30, int? cursor}) async {
+    final cursorParam = cursor != null ? '&cursor=$cursor' : '';
+    final response = await http.get(
+      Uri.parse('$baseUrl/$conversationId/messages?limit=$limit$cursorParam'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw buildApiException(response);
+  }
+
+  Future<void> sendMessage(int conversationId, String content) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/$conversationId/messages'),
+      headers: await _headers(),
+      body: jsonEncode({'content': content}),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
     }
   }
 }

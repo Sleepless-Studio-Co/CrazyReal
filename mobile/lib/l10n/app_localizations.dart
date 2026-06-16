@@ -584,6 +584,18 @@ abstract class AppLocalizations {
   /// **'Wants to be your friend'**
   String get wantsToBeYourFriend;
 
+  /// Button to reject an incoming friend request
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get rejectRequest;
+
+  /// Message shown when a friend request is rejected
+  ///
+  /// In en, this message translates to:
+  /// **'Request rejected.'**
+  String get friendRequestRejected;
+
   /// Label for the floating action button to create a group
   ///
   /// In en, this message translates to:

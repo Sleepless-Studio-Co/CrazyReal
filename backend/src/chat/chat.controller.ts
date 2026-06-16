@@ -1,9 +1,13 @@
-import { Controller, Post, Body, UseGuards, Param, ParseIntPipe, Get } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Param, ParseIntPipe, Get, Query, Delete } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
 import { ChatGateway } from './chat.gateway';
+import { CreateChatDto } from './dto/create-chat.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { GetMessagesQueryDto } from './dto/get-messages-query.dto';
+import { GetConversationsQueryDto } from './dto/get-conversations-query.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -14,10 +18,7 @@ export class ChatController {
   ) {}
 
   @Post('group')
-  createGroup(
-    @CurrentUser() user: ValidatedUser,
-    @Body() createGroupDto: { name: string; members: number[] },
-  ) {
+  createGroup(@CurrentUser() user: ValidatedUser, @Body() createGroupDto: CreateChatDto) {
     return this.chatService.createGroup(
       user.userId,
       createGroupDto.name,
@@ -26,17 +27,37 @@ export class ChatController {
   }
 
   @Get()
-  getConversations(@CurrentUser() user: ValidatedUser) {
-    return this.chatService.getConversations(user.userId);
+  getConversations(
+    @CurrentUser() user: ValidatedUser,
+    @Query() query: GetConversationsQueryDto,
+  ) {
+    return this.chatService.getConversations(user.userId, query.page, query.limit);
+  }
+
+  @Delete(':id/leave')
+  leaveGroup(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
+    return this.chatService.leaveGroup(conversationId, user.userId);
+  }
+
+  @Delete(':id/members/:memberId')
+  removeMember(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
+    return this.chatService.removeMember(conversationId, user.userId, memberId);
   }
 
   @Post(':id/messages')
   async sendMessage(
     @Param('id', ParseIntPipe) conversationId: number,
     @CurrentUser() user: ValidatedUser,
-    @Body('content') content: string,
+    @Body() body: CreateMessageDto,
   ) {
-    const message = await this.chatService.sendMessage(conversationId, user.userId, content);
+    const message = await this.chatService.sendMessage(conversationId, user.userId, body.content);
     this.chatGateway.broadcastNewMessage(conversationId, message);
     return message;
   }
@@ -45,7 +66,8 @@ export class ChatController {
   getMessages(
     @Param('id', ParseIntPipe) conversationId: number,
     @CurrentUser() user: ValidatedUser,
+    @Query() query: GetMessagesQueryDto,
   ) {
-    return this.chatService.getMessages(conversationId, user.userId);
+    return this.chatService.getMessages(conversationId, user.userId, query.limit, query.cursor);
   }
 }

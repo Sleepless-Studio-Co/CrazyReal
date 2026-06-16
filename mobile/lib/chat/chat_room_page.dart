@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../services/chat_service.dart';
+import '../services/api_exception.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final int conversationId;
@@ -41,12 +42,22 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   Future<void> _loadInitialMessages() async {
-    final msgs = await _chatService.getMessages(widget.conversationId);
-    if (mounted) {
-      setState(() {
-        _messages = msgs;
-        _isLoading = false;
-      });
+    try {
+      final msgs = await _chatService.getMessages(widget.conversationId);
+      if (mounted) {
+        setState(() {
+          _messages = msgs;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        final message = e is ApiException ? e.message : 'Erreur lors du chargement des messages';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -77,13 +88,17 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    _messageController.clear(); 
-    
-    final success = await _chatService.sendMessage(widget.conversationId, text);
-    if (!success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur d\'envoi'), backgroundColor: Colors.red),
-      );
+    _messageController.clear();
+
+    try {
+      await _chatService.sendMessage(widget.conversationId, text);
+    } catch (e) {
+      if (mounted) {
+        final message = e is ApiException ? e.message : 'Erreur d\'envoi';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
