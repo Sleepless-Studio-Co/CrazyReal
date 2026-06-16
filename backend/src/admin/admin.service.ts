@@ -26,8 +26,10 @@ export class AdminService {
       const items = JSON.parse(raw || '[]');
 
       const data = items.map((c: any) => ({
-        title: c.title,
-        description: c.description || '',
+        titleEn: c.titleEn,
+        titleFr: c.titleFr,
+        descriptionEn: c.descriptionEn || '',
+        descriptionFr: c.descriptionFr || '',
         date: c.date ? new Date(c.date) : new Date(),
         type: c.type || ChallengeType.WEEKLY_A,
         isActive: c.isActive !== undefined ? c.isActive : true,

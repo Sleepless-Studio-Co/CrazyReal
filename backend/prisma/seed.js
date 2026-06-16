@@ -34,8 +34,10 @@ async function main() {
 
   // Normalize dates if provided as ISO strings
   const data = items.map((c) => ({
-    title: c.title,
-    description: c.description || '',
+    titleEn: c.titleEn,
+    titleFr: c.titleFr,
+    descriptionEn: c.descriptionEn || '',
+    descriptionFr: c.descriptionFr || '',
     date: c.date ? new Date(c.date) : weekStart,
     type: c.type || ChallengeType.WEEKLY_A,
     isActive: c.isActive !== undefined ? c.isActive : true,
