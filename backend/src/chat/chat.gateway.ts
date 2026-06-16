@@ -38,6 +38,33 @@ export class ChatGateway {
     console.log(`Un utilisateur a rejoint la discussion ${conversationId}`);
   }
 
+  @UseGuards(WsJwtAuthGuard)
+  @SubscribeMessage('typing')
+  async handleTyping(@ConnectedSocket() client: Socket, @MessageBody() conversationId: number) {
+    const user = client.data.user as ValidatedUser | undefined;
+    if (!user) return;
+
+    const isParticipant = await this.chatService.isParticipant(conversationId, user.userId);
+    if (!isParticipant) return;
+
+    client.to(conversationId.toString()).emit('userTyping', {
+      userId: user.userId,
+      username: user.username,
+    });
+  }
+
+  @UseGuards(WsJwtAuthGuard)
+  @SubscribeMessage('stopTyping')
+  async handleStopTyping(@ConnectedSocket() client: Socket, @MessageBody() conversationId: number) {
+    const user = client.data.user as ValidatedUser | undefined;
+    if (!user) return;
+
+    client.to(conversationId.toString()).emit('userStoppedTyping', {
+      userId: user.userId,
+      username: user.username,
+    });
+  }
+
   broadcastNewMessage(conversationId: number, message: any) {
     this.server.to(conversationId.toString()).emit('newMessage', message);
   }

@@ -297,16 +297,20 @@ Routes protégées pour le profil et la gestion des avatars (sélection prédéf
 
 ## Messagerie temps réel
 
-Le client se connecte via **Socket.io** sur la même origine que `API_BASE_URL`.
+Le client se connecte via **Socket.io** sur la même origine que `API_BASE_URL`, en passant le JWT d'accès dans `auth.token` lors du handshake (sinon le `WsJwtAuthGuard` refuse la connexion et aucun événement n'est jamais reçu).
 
 | Événement (client → serveur) | Description |
 |------------------------------|-------------|
 | `joinRoom` | Rejoindre une conversation (`conversationId`) |
+| `typing` | Signale que l'utilisateur est en train d'écrire (`conversationId`) |
+| `stopTyping` | Signale l'arrêt de la saisie (`conversationId`) |
 
 | Événement (serveur → client) | Description |
 |------------------------------|-------------|
 | `newMessage` | Nouveau message dans la room |
 | `joinRoomError` | Erreur d’authentification ou d’accès |
+| `userTyping` | Un autre participant est en train d'écrire (`userId`, `username`) |
+| `userStoppedTyping` | Un autre participant a arrêté d'écrire (`userId`, `username`) |
 
 L’authentification WebSocket utilise le JWT (guard `WsJwtAuthGuard`).
 
