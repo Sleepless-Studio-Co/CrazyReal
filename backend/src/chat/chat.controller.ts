@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Param, ParseIntPipe, Get, Query, Delete } from '@nestjs/common';
+import { Controller, Post, Patch, Body, UseGuards, Param, ParseIntPipe, Get, Query, Delete } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -34,6 +34,14 @@ export class ChatController {
     return this.chatService.getConversations(user.userId, query.page, query.limit);
   }
 
+  @Get(':id/members')
+  getMembers(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
+    return this.chatService.getMembers(conversationId, user.userId);
+  }
+
   @Delete(':id/leave')
   leaveGroup(
     @Param('id', ParseIntPipe) conversationId: number,
@@ -49,6 +57,24 @@ export class ChatController {
     @CurrentUser() user: ValidatedUser,
   ) {
     return this.chatService.removeMember(conversationId, user.userId, memberId);
+  }
+
+  @Patch(':id/members/:memberId/promote')
+  promoteMember(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
+    return this.chatService.promoteMember(conversationId, user.userId, memberId);
+  }
+
+  @Patch(':id/members/:memberId/demote')
+  demoteMember(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @Param('memberId', ParseIntPipe) memberId: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
+    return this.chatService.demoteMember(conversationId, user.userId, memberId);
   }
 
   @Post(':id/messages')

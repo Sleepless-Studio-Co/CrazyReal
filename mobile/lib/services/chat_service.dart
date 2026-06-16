@@ -67,6 +67,40 @@ class ChatService {
     }
   }
 
+  Future<List<dynamic>> getMembers(int conversationId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/$conversationId/members'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw buildApiException(response);
+  }
+
+  Future<void> promoteMember(int conversationId, int memberId) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/$conversationId/members/$memberId/promote'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
+    }
+  }
+
+  Future<void> demoteMember(int conversationId, int memberId) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/$conversationId/members/$memberId/demote'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
+    }
+  }
+
   Future<List<dynamic>> getMessages(int conversationId, {int limit = 30, int? cursor}) async {
     final cursorParam = cursor != null ? '&cursor=$cursor' : '';
     final response = await http.get(

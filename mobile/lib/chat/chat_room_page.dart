@@ -5,15 +5,18 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../auth/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/api_exception.dart';
+import 'group_members_page.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final int conversationId;
   final String conversationName;
+  final bool isGroup;
 
   const ChatRoomPage({
     super.key,
     required this.conversationId,
     required this.conversationName,
+    this.isGroup = false,
   });
 
   @override
@@ -186,7 +189,24 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.conversationName)),
+      appBar: AppBar(
+        title: Text(widget.conversationName),
+        actions: [
+          if (widget.isGroup)
+            IconButton(
+              icon: const Icon(Icons.group),
+              tooltip: 'Membres du groupe',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupMembersPage(conversationId: widget.conversationId),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(

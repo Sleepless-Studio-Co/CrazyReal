@@ -122,6 +122,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                 builder: (context) => ChatRoomPage(
                                   conversationId: conv['id'],
                                   conversationName: name,
+                                  isGroup: isGroup,
                                 ),
                               ),
                             );

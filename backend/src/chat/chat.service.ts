@@ -18,6 +18,26 @@ export class ChatService {
     return !!participant;
   }
 
+  async getMembers(conversationId: number, userId: number) {
+    const isParticipant = await this.isParticipant(conversationId, userId);
+    if (!isParticipant) {
+      throw new ForbiddenException("Tu n'as pas accès à ce groupe.");
+    }
+
+    return this.prisma.participant.findMany({
+      where: { conversationId },
+      orderBy: { joinedAt: 'asc' },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
+    });
+  }
+
   async createGroup(creatorId: number, name: string, participantIds: number[]) {
     const uniqueParticipantIds = [...new Set(participantIds)].filter(
       (id) => id !== creatorId,
@@ -57,11 +77,10 @@ export class ChatService {
       data: {
         isGroup: true,
         name: name,
-        ownerId: creatorId,
         participants: {
           create: [
-            { userId: creatorId },
-            ...uniqueParticipantIds.map((id) => ({ userId: id })),
+            { userId: creatorId, role: 'ADMIN' },
+            ...uniqueParticipantIds.map((id) => ({ userId: id, role: 'MEMBER' as const })),
           ],
         },
       },
@@ -132,24 +151,28 @@ export class ChatService {
 
     await this.prisma.participant.delete({ where: { id: participant.id } });
 
-    const remaining = await this.prisma.participant.findMany({ where: { conversationId } });
+    const remaining = await this.prisma.participant.findMany({
+      where: { conversationId },
+      orderBy: { joinedAt: 'asc' },
+    });
 
     if (remaining.length === 0) {
       await this.prisma.conversation.delete({ where: { id: conversationId } });
       return { success: true, deleted: true };
     }
 
-    if (conversation.ownerId === userId) {
-      await this.prisma.conversation.update({
-        where: { id: conversationId },
-        data: { ownerId: remaining[0].userId },
+    const hasRemainingAdmin = remaining.some((p) => p.role === 'ADMIN');
+    if (participant.role === 'ADMIN' && !hasRemainingAdmin) {
+      await this.prisma.participant.update({
+        where: { id: remaining[0].id },
+        data: { role: 'ADMIN' },
       });
     }
 
     return { success: true, deleted: false };
   }
 
-  async removeMember(conversationId: number, requesterId: number, memberId: number) {
+  private async requireAdmin(conversationId: number, userId: number) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
     });
@@ -162,9 +185,19 @@ export class ChatService {
       throw new BadRequestException("Cette action n'est possible que sur un groupe.");
     }
 
-    if (conversation.ownerId !== requesterId) {
-      throw new ForbiddenException("Seul le créateur du groupe peut retirer un membre.");
+    const requester = await this.prisma.participant.findUnique({
+      where: { userId_conversationId: { userId, conversationId } },
+    });
+
+    if (!requester || requester.role !== 'ADMIN') {
+      throw new ForbiddenException("Seul un admin du groupe peut effectuer cette action.");
     }
+
+    return conversation;
+  }
+
+  async removeMember(conversationId: number, requesterId: number, memberId: number) {
+    await this.requireAdmin(conversationId, requesterId);
 
     if (memberId === requesterId) {
       throw new BadRequestException('Utilise la sortie de groupe pour te retirer toi-même.');
@@ -180,6 +213,52 @@ export class ChatService {
 
     await this.prisma.participant.delete({ where: { id: participant.id } });
     return { success: true };
+  }
+
+  async promoteMember(conversationId: number, requesterId: number, memberId: number) {
+    await this.requireAdmin(conversationId, requesterId);
+
+    const participant = await this.prisma.participant.findUnique({
+      where: { userId_conversationId: { userId: memberId, conversationId } },
+    });
+
+    if (!participant) {
+      throw new NotFoundException("Cet utilisateur ne fait pas partie du groupe.");
+    }
+
+    return this.prisma.participant.update({
+      where: { id: participant.id },
+      data: { role: 'ADMIN' },
+    });
+  }
+
+  async demoteMember(conversationId: number, requesterId: number, memberId: number) {
+    await this.requireAdmin(conversationId, requesterId);
+
+    const participant = await this.prisma.participant.findUnique({
+      where: { userId_conversationId: { userId: memberId, conversationId } },
+    });
+
+    if (!participant) {
+      throw new NotFoundException("Cet utilisateur ne fait pas partie du groupe.");
+    }
+
+    if (participant.role === 'MEMBER') {
+      return participant;
+    }
+
+    const adminCount = await this.prisma.participant.count({
+      where: { conversationId, role: 'ADMIN' },
+    });
+
+    if (adminCount <= 1) {
+      throw new BadRequestException('Le groupe doit garder au moins un admin.');
+    }
+
+    return this.prisma.participant.update({
+      where: { id: participant.id },
+      data: { role: 'MEMBER' },
+    });
   }
 
   async sendMessage(conversationId: number, senderId: number, content: string) {

@@ -282,12 +282,19 @@ Documentation interactive : **GET** `/api` (Swagger).
 
 ### Chat — `/chat`
 
+Chaque participant d'un groupe a un rôle : `ADMIN` (peut retirer un membre, promouvoir/rétrograder un autre admin) ou `MEMBER`. Le créateur du groupe devient automatiquement `ADMIN`. Un groupe garde toujours au moins un admin (promotion automatique du membre le plus ancien si le dernier admin quitte le groupe).
+
 | Méthode | Route | Description |
 |---------|-------|-------------|
 | `GET` | `/chat` | Conversations de l’utilisateur |
-| `POST` | `/chat/group` | Créer un groupe (`name`, `members[]`) |
+| `POST` | `/chat/group` | Créer un groupe (`name`, `members[]` doivent être des amis acceptés) |
+| `GET` | `/chat/:id/members` | Liste des membres et de leur rôle |
+| `DELETE` | `/chat/:id/leave` | Quitter un groupe |
+| `DELETE` | `/chat/:id/members/:memberId` | Retirer un membre (admin uniquement) |
+| `PATCH` | `/chat/:id/members/:memberId/promote` | Promouvoir un membre en admin (admin uniquement) |
+| `PATCH` | `/chat/:id/members/:memberId/demote` | Rétrograder un admin en membre (admin uniquement) |
 | `POST` | `/chat/:id/messages` | Envoyer un message |
-| `GET` | `/chat/:id/messages` | Historique des messages |
+| `GET` | `/chat/:id/messages` | Historique des messages (paginé : `limit`, `cursor`) |
 
 ### Utilisateurs — `/users`
 
