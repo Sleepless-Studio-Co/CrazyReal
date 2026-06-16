@@ -12,6 +12,7 @@ import { I18nModule, AcceptLanguageResolver, QueryResolver, HeaderResolver } fro
 import { FriendsModule } from './friends/friends.module';
 import { ChatModule } from './chat/chat.module';
 import { FeedModule } from './feed/feed.module';
+import { UpVotesModule } from './upvotes/upvotes.module';
 import * as path from 'path';
 
 @Module({
@@ -44,6 +45,7 @@ import * as path from 'path';
     FriendsModule,
     ChatModule,
     FeedModule,
+    UpVotesModule,
   ],
   controllers: [AppController],
   providers: [
