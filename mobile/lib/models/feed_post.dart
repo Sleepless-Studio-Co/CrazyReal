@@ -48,6 +48,8 @@ class FeedPost {
     required this.user,
     this.createdAt,
     this.challenge,
+    this.upvoteCount = 0,
+    this.hasUpvoted = false,
   });
 
   final int id;
@@ -55,6 +57,23 @@ class FeedPost {
   final DateTime? createdAt;
   final FeedUser user;
   final FeedChallenge? challenge;
+  final int upvoteCount;
+  final bool hasUpvoted;
+
+  FeedPost copyWith({
+    int? upvoteCount,
+    bool? hasUpvoted,
+  }) {
+    return FeedPost(
+      id: id,
+      photoUrl: photoUrl,
+      createdAt: createdAt,
+      user: user,
+      challenge: challenge,
+      upvoteCount: upvoteCount ?? this.upvoteCount,
+      hasUpvoted: hasUpvoted ?? this.hasUpvoted,
+    );
+  }
 
   factory FeedPost.fromJson(Map<String, dynamic> json) {
     DateTime? createdAt;
@@ -76,6 +95,8 @@ class FeedPost {
       challenge: challengeJson is Map<String, dynamic>
           ? FeedChallenge.fromJson(challengeJson)
           : null,
+      upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
+      hasUpvoted: json['hasUpvoted'] == true,
     );
   }
 
@@ -91,6 +112,18 @@ class FeedPost {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
       if (a[i].id != b[i].id) return false;
+    }
+    return true;
+  }
+
+  static bool sameVoteState(List<FeedPost> a, List<FeedPost> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id ||
+          a[i].upvoteCount != b[i].upvoteCount ||
+          a[i].hasUpvoted != b[i].hasUpvoted) {
+        return false;
+      }
     }
     return true;
   }
