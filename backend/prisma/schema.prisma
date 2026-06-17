@@ -47,6 +47,7 @@ model User {
   username      String         @unique
   avatarUrl     String?
   avatarKey     String?
+  isPrivate     Boolean        @default(false)
   createdAt     DateTime       @default(now())
   posts         Post[]
   refreshTokens RefreshToken[]
