@@ -101,10 +101,11 @@ class ChatService {
     }
   }
 
-  Future<List<dynamic>> getMessages(int conversationId, {int limit = 30, int? cursor}) async {
+  Future<List<dynamic>> getMessages(int conversationId, {int limit = 30, int? cursor, int? after}) async {
     final cursorParam = cursor != null ? '&cursor=$cursor' : '';
+    final afterParam = after != null ? '&after=$after' : '';
     final response = await http.get(
-      Uri.parse('$baseUrl/$conversationId/messages?limit=$limit$cursorParam'),
+      Uri.parse('$baseUrl/$conversationId/messages?limit=$limit$cursorParam$afterParam'),
       headers: await _headers(),
     );
 
@@ -114,7 +115,7 @@ class ChatService {
     throw buildApiException(response);
   }
 
-  Future<void> sendMessage(int conversationId, String content) async {
+  Future<Map<String, dynamic>> sendMessage(int conversationId, String content) async {
     final response = await http.post(
       Uri.parse('$baseUrl/$conversationId/messages'),
       headers: await _headers(),
@@ -124,5 +125,6 @@ class ChatService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw buildApiException(response);
     }
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 }

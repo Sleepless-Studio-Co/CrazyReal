@@ -13,4 +13,9 @@ export class GetMessagesQueryDto {
   @Type(() => Number)
   @IsInt()
   cursor?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  after?: number;
 }

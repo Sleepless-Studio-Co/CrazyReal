@@ -94,6 +94,6 @@ export class ChatController {
     @CurrentUser() user: ValidatedUser,
     @Query() query: GetMessagesQueryDto,
   ) {
-    return this.chatService.getMessages(conversationId, user.userId, query.limit, query.cursor);
+    return this.chatService.getMessages(conversationId, user.userId, query.limit, query.cursor, query.after);
   }
 }

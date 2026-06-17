@@ -292,7 +292,7 @@ export class ChatService {
     });
   }
 
-  async getMessages(conversationId: number, userId: number, limit = 30, cursor?: number) {
+  async getMessages(conversationId: number, userId: number, limit = 30, cursor?: number, after?: number) {
     const isParticipant = await this.prisma.participant.findUnique({
       where: {
         userId_conversationId: {
@@ -306,14 +306,14 @@ export class ChatService {
       throw new ForbiddenException("Tu n'as pas accès à ces messages.");
     }
 
+    const idFilter = cursor ? { lt: cursor } : after ? { gt: after } : undefined;
+
     const messages = await this.prisma.message.findMany({
       where: {
         conversationId: conversationId,
-        ...(cursor ? { id: { lt: cursor } } : {}),
+        ...(idFilter ? { id: idFilter } : {}),
       },
-      orderBy: {
-        id: 'desc',
-      },
+      orderBy: { id: after ? 'asc' : 'desc' },
       take: limit,
       include: {
         sender: {
@@ -325,6 +325,7 @@ export class ChatService {
       },
     });
 
-    return messages.reverse();
+    // `after` already returns ascending (oldest→newest); cursor/initial need reversal
+    return after ? messages : messages.reverse();
   }
 }

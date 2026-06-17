@@ -1,25 +1,70 @@
 import 'dotenv/config';
-import { UseGuards } from '@nestjs/common';
-import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket } from '@nestjs/websockets';
+import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket, OnGatewayConnection } from '@nestjs/websockets';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
-import { WsJwtAuthGuard } from '../auth/ws-jwt-auth.guard';
+import { JWT_CONFIG_KEYS } from '../auth/jwt.config';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
 
 // Les clients mobiles natifs ne sont pas concernés par CORS ; cette restriction
 // protège uniquement les clients web (Flutter Web) du gateway temps réel.
+// Note : le middleware `cors` traite `origin: false` comme "pas de restriction"
+// (il ajoute `Access-Control-Allow-Origin: *`), donc on retombe sur `true`
+// (même comportement que le CORS REST dans main.ts) quand la variable n'est pas définie.
 const allowedOrigins = process.env.CHAT_CORS_ORIGIN
   ? process.env.CHAT_CORS_ORIGIN.split(',').map((origin) => origin.trim())
-  : false;
+  : true;
 
-@WebSocketGateway({ cors: { origin: allowedOrigins } })
-export class ChatGateway {
-  constructor(private readonly chatService: ChatService) {}
+@WebSocketGateway({ namespace: '/chat', cors: { origin: allowedOrigins }, pingTimeout: 60000, pingInterval: 10000 })
+export class ChatGateway implements OnGatewayConnection {
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @WebSocketServer()
   server: Server;
 
-  @UseGuards(WsJwtAuthGuard)
+  async handleConnection(client: Socket) {
+    const token = this.extractToken(client);
+    if (!token) {
+      console.warn(`[ws-auth] Connexion WebSocket ${client.id} refusée : aucun token fourni.`);
+      client.disconnect();
+      return;
+    }
+
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+        secret: this.configService.getOrThrow<string>(JWT_CONFIG_KEYS.secret),
+      });
+      client.data.user = { userId: payload.sub, email: payload.email, username: payload.username } satisfies ValidatedUser;
+    } catch {
+      console.warn(`[ws-auth] Connexion WebSocket ${client.id} refusée : token invalide ou expiré.`);
+      client.disconnect();
+    }
+  }
+
+  private extractToken(client: Socket): string | null {
+    const authHeader = client.handshake.headers?.authorization;
+    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+      return authHeader.slice(7);
+    }
+
+    const authToken = client.handshake.auth?.token;
+    if (typeof authToken === 'string' && authToken.startsWith('Bearer ')) {
+      return authToken.slice(7);
+    }
+
+    if (typeof authToken === 'string' && authToken.length > 0) {
+      return authToken;
+    }
+
+    return null;
+  }
+
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() conversationId: number) {
     const user = client.data.user as ValidatedUser | undefined;
@@ -30,15 +75,16 @@ export class ChatGateway {
 
     const isParticipant = await this.chatService.isParticipant(conversationId, user.userId);
     if (!isParticipant) {
+      console.warn(`[chat] joinRoom refusé pour ${user.username} sur la conversation ${conversationId}`);
       client.emit('joinRoomError', 'Accès refusé à cette conversation');
       return;
     }
 
     client.join(conversationId.toString());
-    console.log(`Un utilisateur a rejoint la discussion ${conversationId}`);
+    client.emit('joinRoomSuccess', { conversationId });
+    console.log(`[chat] ${user.username} a rejoint la discussion ${conversationId}`);
   }
 
-  @UseGuards(WsJwtAuthGuard)
   @SubscribeMessage('typing')
   async handleTyping(@ConnectedSocket() client: Socket, @MessageBody() conversationId: number) {
     const user = client.data.user as ValidatedUser | undefined;
@@ -53,7 +99,6 @@ export class ChatGateway {
     });
   }
 
-  @UseGuards(WsJwtAuthGuard)
   @SubscribeMessage('stopTyping')
   async handleStopTyping(@ConnectedSocket() client: Socket, @MessageBody() conversationId: number) {
     const user = client.data.user as ValidatedUser | undefined;
@@ -66,6 +111,8 @@ export class ChatGateway {
   }
 
   broadcastNewMessage(conversationId: number, message: any) {
-    this.server.to(conversationId.toString()).emit('newMessage', message);
+    const room = conversationId.toString();
+    console.log(`[chat] broadcast newMessage → room ${room} messageId=${(message as any).id}`);
+    this.server.to(room).emit('newMessage', message);
   }
 }
