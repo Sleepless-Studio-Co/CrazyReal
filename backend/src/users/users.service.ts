@@ -204,6 +204,22 @@ export class UsersService {
     }
   }
 
+  async deleteAccount(userId: number) {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.message.deleteMany({ where: { senderId: userId } }),
+        this.prisma.participant.deleteMany({ where: { userId } }),
+        this.prisma.friendship.deleteMany({
+          where: { OR: [{ userId }, { friendId: userId }] },
+        }),
+        this.prisma.post.deleteMany({ where: { userId } }),
+        this.prisma.user.delete({ where: { id: userId } }),
+      ]);
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
   async findPublicProfile(targetId: number, requesterId: number) {
     try {
       const target = await this.prisma.user.findUnique({
