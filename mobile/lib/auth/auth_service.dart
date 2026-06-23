@@ -309,6 +309,28 @@ class AuthService {
     }
   }
 
+  Future<void> deleteAccount() async {
+    final token = await getAccessToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Unauthorized');
+    }
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/users/me'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 401) throw Exception('Unauthorized');
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw _buildHttpException('Delete account failed', response);
+      }
+      await _clearTokens();
+    } on SocketException catch (e) {
+      throw Exception('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
   Future<void> _clearTokens() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_accessTokenKey);
