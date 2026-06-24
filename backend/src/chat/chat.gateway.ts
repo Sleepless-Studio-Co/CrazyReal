@@ -17,7 +17,10 @@ const allowedOrigins = process.env.CHAT_CORS_ORIGIN
   ? process.env.CHAT_CORS_ORIGIN.split(',').map((origin) => origin.trim())
   : true;
 
-@WebSocketGateway({ namespace: '/chat', cors: { origin: allowedOrigins }, pingTimeout: 60000, pingInterval: 10000 })
+// pingInterval/pingTimeout courts : sur réseau mobile/émulateur le websocket
+// peut mourir silencieusement ; on veut détecter la coupure en ~15 s (et non
+// ~70 s) pour reconnecter et re-synchroniser vite.
+@WebSocketGateway({ namespace: '/chat', cors: { origin: allowedOrigins }, pingTimeout: 10000, pingInterval: 5000 })
 export class ChatGateway implements OnGatewayConnection {
   constructor(
     private readonly chatService: ChatService,
@@ -40,7 +43,18 @@ export class ChatGateway implements OnGatewayConnection {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.configService.getOrThrow<string>(JWT_CONFIG_KEYS.secret),
       });
-      client.data.user = { userId: payload.sub, email: payload.email, username: payload.username } satisfies ValidatedUser;
+      const user = { userId: payload.sub, email: payload.email, username: payload.username } satisfies ValidatedUser;
+      client.data.user = user;
+
+      // Auto-join toutes les conversations de l'utilisateur dès la connexion, pour
+      // qu'il reçoive `newMessage` même sans avoir la conversation ouverte (liste,
+      // badges, notifications). `joinRoom` reste utile pour les conversations créées
+      // après la connexion.
+      const conversationIds = await this.chatService.getConversationIdsForUser(user.userId);
+      for (const id of conversationIds) {
+        client.join(id.toString());
+      }
+      console.log(`[chat] ${user.username} connecté (${client.id}) → ${conversationIds.length} conversations rejointes`);
     } catch {
       console.warn(`[ws-auth] Connexion WebSocket ${client.id} refusée : token invalide ou expiré.`);
       client.disconnect();
@@ -94,6 +108,7 @@ export class ChatGateway implements OnGatewayConnection {
     if (!isParticipant) return;
 
     client.to(conversationId.toString()).emit('userTyping', {
+      conversationId,
       userId: user.userId,
       username: user.username,
     });
@@ -105,6 +120,7 @@ export class ChatGateway implements OnGatewayConnection {
     if (!user) return;
 
     client.to(conversationId.toString()).emit('userStoppedTyping', {
+      conversationId,
       userId: user.userId,
       username: user.username,
     });

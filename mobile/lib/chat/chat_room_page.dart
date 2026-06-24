@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../auth/auth_service.dart';
 import '../services/chat_service.dart';
+import '../services/chat_socket_service.dart';
 import '../services/api_exception.dart';
 import 'group_members_page.dart';
 
@@ -41,12 +40,22 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   int? _currentUserId;
   String _currentUsername = '';
 
-  IO.Socket? _socket;
+  final ChatSocketService _chatSocket = ChatSocketService();
+  StreamSubscription<Map<String, dynamic>>? _messageSub;
+  StreamSubscription<Map<String, dynamic>>? _typingSub;
+  StreamSubscription<bool>? _connectionSub;
 
   final Map<int, String> _typingUsers = {};
   final Map<int, Timer> _typingTimeouts = {};
   Timer? _stopTypingDebounce;
   bool _isTyping = false;
+
+  // Filet de sécurité : si le websocket meurt (ping timeout/transport close sur
+  // mobile), ce poll garantit que les nouveaux messages apparaissent en quelques
+  // secondes au lieu d'attendre la reconnexion. Quand le socket est vivant, il
+  // ne récupère rien (0 message) — le live reste instantané.
+  Timer? _backupPollTimer;
+  static const Duration _backupPollInterval = Duration(seconds: 5);
 
   int _tempIdCounter = 0;
 
@@ -64,23 +73,41 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   @override
   void initState() {
     super.initState();
-    _loadCurrentUser();
-    _loadInitialMessages();
-    _initSocket();
     _messageController.addListener(_onTextChanged);
+    _init();
+  }
+
+  Future<void> _init() async {
+    // On charge l'utilisateur courant avant d'écouter le socket pour que le
+    // filtrage « mon propre message » fonctionne dès le premier événement.
+    await _loadCurrentUser();
+    _attachSocket();
+    await _loadInitialMessages();
+    _startBackupPoll();
+  }
+
+  void _startBackupPoll() {
+    _backupPollTimer?.cancel();
+    _backupPollTimer = Timer.periodic(_backupPollInterval, (_) {
+      if (mounted) _syncMissedMessages();
+    });
   }
 
   @override
   void dispose() {
     _messageController.removeListener(_onTextChanged);
     _scrollController.dispose();
+    _backupPollTimer?.cancel();
     _stopTypingDebounce?.cancel();
     for (final t in _typingTimeouts.values) {
       t.cancel();
     }
-    _socket?.emit('stopTyping', widget.conversationId);
-    _socket?.disconnect();
-    _socket?.dispose();
+    _messageSub?.cancel();
+    _typingSub?.cancel();
+    _connectionSub?.cancel();
+    // On ne ferme PAS le socket partagé : il reste vivant pour la liste et les
+    // autres conversations. On signale juste l'arrêt de frappe.
+    _chatSocket.emitStopTyping(widget.conversationId);
     _messageController.dispose();
     super.dispose();
   }
@@ -162,99 +189,54 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   // ─── Socket ─────────────────────────────────────────────────────────────────
 
-  Future<void> _initSocket() async {
-    final baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
-    final token = await _authService.getAccessToken();
+  void _attachSocket() {
+    // Le socket partagé est connecté au niveau de l'app (après login). On
+    // s'assure simplement qu'il est actif, on rejoint la room (utile pour une
+    // conversation créée après la connexion) et on s'abonne aux flux filtrés.
+    _chatSocket.connect();
+    _chatSocket.joinRoom(widget.conversationId);
+    _socketWasConnected = _chatSocket.isConnected;
 
-    if (token == null || token.isEmpty) {
-      if (mounted) _showError('Session expirée, veuillez vous reconnecter');
-      return;
-    }
+    _messageSub = _chatSocket.messages.listen(_onSocketMessage);
+    _typingSub = _chatSocket.typingEvents.listen(_onTypingEvent);
 
-    final socket = IO.io(
-      '$baseUrl/chat',
-      IO.OptionBuilder()
-          .setTransports(['polling', 'websocket'])
-          .setAuth({'token': token})
-          .setTimeout(20000)
-          .enableReconnection()
-          .setReconnectionDelay(1000)
-          .setReconnectionAttempts(999)
-          .disableAutoConnect()
-          .build(),
-    );
-    _socket = socket;
-    socket.connect();
-
-    socket.onConnect((_) {
-      debugPrint('[socket] connecté id=${socket.id} → joinRoom ${widget.conversationId}');
-      socket.emit('joinRoom', widget.conversationId);
-      if (_socketWasConnected) _syncMissedMessages();
-      _socketWasConnected = true;
-    });
-
-    socket.onConnectError((error) {
-      debugPrint('[socket] connect_error: $error');
-      if (!_socketWasConnected && mounted) {
-        _showError('Connexion temps réel impossible');
+    _connectionSub = _chatSocket.connectionState.listen((connected) {
+      if (connected) {
+        _chatSocket.joinRoom(widget.conversationId);
+        if (_socketWasConnected) _syncMissedMessages();
+        _socketWasConnected = true;
       }
     });
+  }
 
-    socket.onError((error) => debugPrint('[socket] error: $error'));
-    socket.onDisconnect((reason) => debugPrint('[socket] déconnecté: $reason'));
+  void _onSocketMessage(Map<String, dynamic> msg) {
+    if (!mounted) return;
+    if (msg['conversationId'] != widget.conversationId) return;
 
-    socket.on('joinRoomError', (error) {
-      debugPrint('[socket] joinRoomError: $error');
-      if (mounted) _showError('Erreur salle : $error');
-    });
+    final senderId = (msg['sender'] as Map?)?['id'] as int?;
+    if (senderId != null && senderId == _currentUserId) return;
 
-    socket.on('joinRoomSuccess', (data) {
-      debugPrint('[socket] joinRoomSuccess: $data');
-    });
+    final alreadyExists = _messages.any((m) => m['id'] == msg['id']);
+    if (alreadyExists) return;
 
-    socket.on('newMessage', (data) {
-      debugPrint('[socket] newMessage RAW: $data');
-      if (!mounted) return;
+    setState(() => _messages.add(_normalize(msg)));
+    _scrollToBottom();
+  }
 
-      Map<String, dynamic> msg;
-      try {
-        msg = Map<String, dynamic>.from(data as Map);
-      } catch (e) {
-        debugPrint('[socket] newMessage parse error: $e');
-        return;
-      }
+  void _onTypingEvent(Map<String, dynamic> data) {
+    if (data['conversationId'] != widget.conversationId) return;
+    final userId = data['userId'] as int?;
+    if (userId == null || userId == _currentUserId) return;
 
-      final senderId = (msg['sender'] as Map?)?['id'] as int?;
-      debugPrint('[socket] newMessage id=${msg['id']} senderId=$senderId myId=$_currentUserId');
-
-      if (senderId != null && senderId == _currentUserId) {
-        debugPrint('[socket] newMessage ignoré (message propre)');
-        return;
-      }
-
-      final alreadyExists = _messages.any((m) => m['id'] == msg['id']);
-      if (alreadyExists) {
-        debugPrint('[socket] newMessage ignoré (déjà dans la liste)');
-        return;
-      }
-
-      debugPrint('[socket] newMessage ajouté à la liste');
-      setState(() => _messages.add(_normalize(msg)));
-      _scrollToBottom();
-    });
-
-    socket.on('userTyping', (data) {
-      final userId = (data as Map)['userId'] as int;
-      final username = data['username'] as String;
+    if (data['typing'] == true) {
+      final username = data['username'] as String? ?? '';
       _typingTimeouts[userId]?.cancel();
       _typingTimeouts[userId] =
           Timer(const Duration(seconds: 5), () => _clearTypingUser(userId));
       if (mounted) setState(() => _typingUsers[userId] = username);
-    });
-
-    socket.on('userStoppedTyping', (data) {
-      _clearTypingUser((data as Map)['userId'] as int);
-    });
+    } else {
+      _clearTypingUser(userId);
+    }
   }
 
   void _clearTypingUser(int userId) {
@@ -269,18 +251,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       _stopTypingDebounce?.cancel();
       if (_isTyping) {
         _isTyping = false;
-        _socket?.emit('stopTyping', widget.conversationId);
+        _chatSocket.emitStopTyping(widget.conversationId);
       }
       return;
     }
     if (!_isTyping) {
       _isTyping = true;
-      _socket?.emit('typing', widget.conversationId);
+      _chatSocket.emitTyping(widget.conversationId);
     }
     _stopTypingDebounce?.cancel();
     _stopTypingDebounce = Timer(const Duration(seconds: 2), () {
       _isTyping = false;
-      _socket?.emit('stopTyping', widget.conversationId);
+      _chatSocket.emitStopTyping(widget.conversationId);
     });
   }
 
@@ -294,7 +276,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     _messageController.clear();
     _stopTypingDebounce?.cancel();
     _isTyping = false;
-    _socket?.emit('stopTyping', widget.conversationId);
+    _chatSocket.emitStopTyping(widget.conversationId);
 
     // 1. Optimistic insert
     final pending = <String, dynamic>{

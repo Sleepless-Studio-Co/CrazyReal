@@ -5,6 +5,14 @@ import { Injectable, BadRequestException, ForbiddenException, NotFoundException 
 export class ChatService {
   constructor(private prisma: PrismaService) {}
 
+  async getConversationIdsForUser(userId: number): Promise<number[]> {
+    const participations = await this.prisma.participant.findMany({
+      where: { userId },
+      select: { conversationId: true },
+    });
+    return participations.map((p) => p.conversationId);
+  }
+
   async isParticipant(conversationId: number, userId: number): Promise<boolean> {
     const participant = await this.prisma.participant.findUnique({
       where: {
