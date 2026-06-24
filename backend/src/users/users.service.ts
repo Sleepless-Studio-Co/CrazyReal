@@ -53,6 +53,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -71,6 +72,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -90,6 +92,7 @@ export class UsersService {
           password: true,
           avatarUrl: true,
           avatarKey: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -108,6 +111,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -125,6 +129,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -135,7 +140,12 @@ export class UsersService {
 
   async updateProfile(
     userId: number,
-    updates: { email?: string; username?: string },
+    updates: {
+      email?: string;
+      username?: string;
+      emailVerified?: boolean;
+      emailVerifiedAt?: Date | null;
+    },
   ) {
     try {
       return this.prisma.user.update({
@@ -147,6 +157,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -169,6 +180,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
