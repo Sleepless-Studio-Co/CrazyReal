@@ -3,7 +3,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   Param,
   ParseIntPipe,
@@ -60,17 +59,38 @@ export class UsersController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get a user profile (privacy-aware)' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Full profile if public, own profile, or accepted friend; minimal locked profile otherwise',
+  })
   findOne(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: ValidatedUser,
   ) {
-    const authenticatedUserId = user.userId;
+    return this.usersService.findPublicProfile(id, user.userId);
+  }
 
-    if (id !== authenticatedUserId) {
-      throw new ForbiddenException('You can only access your own profile');
+  @Patch('me/privacy')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Set the account to public or private' })
+  @ApiResponse({ status: 200, description: 'Privacy setting updated' })
+  async updatePrivacy(
+    @CurrentUser() user: ValidatedUser,
+    @Body() body: { isPrivate?: boolean },
+  ) {
+    if (typeof body.isPrivate !== 'boolean') {
+      throw new BadRequestException('isPrivate must be a boolean');
     }
 
-    return this.usersService.findById(id);
+    const updatedUser = await this.usersService.updatePrivacy(
+      user.userId,
+      body.isPrivate,
+    );
+
+    return { user: updatedUser };
   }
 
   @Patch('me/avatar')

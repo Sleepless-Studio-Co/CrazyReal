@@ -53,6 +53,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          isPrivate: true,
           createdAt: true,
         },
       });
@@ -71,6 +72,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          isPrivate: true,
           createdAt: true,
         },
       });
@@ -90,6 +92,7 @@ export class UsersService {
           password: true,
           avatarUrl: true,
           avatarKey: true,
+          isPrivate: true,
           createdAt: true,
         },
       });
@@ -108,6 +111,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          isPrivate: true,
           createdAt: true,
         },
       });
@@ -125,6 +129,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          isPrivate: true,
           createdAt: true,
         },
       });
@@ -147,6 +152,7 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          isPrivate: true,
           createdAt: true,
         },
       });
@@ -169,9 +175,84 @@ export class UsersService {
           username: true,
           avatarUrl: true,
           avatarKey: true,
+          isPrivate: true,
           createdAt: true,
         },
       });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async updatePrivacy(userId: number, isPrivate: boolean) {
+    try {
+      return this.prisma.user.update({
+        where: { id: userId },
+        data: { isPrivate },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          createdAt: true,
+        },
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async findPublicProfile(targetId: number, requesterId: number) {
+    try {
+      const target = await this.prisma.user.findUnique({
+        where: { id: targetId },
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          createdAt: true,
+        },
+      });
+
+      if (!target) {
+        throw new NotFoundException('user not found');
+      }
+
+      if (target.id === requesterId) {
+        return { ...target, isFriend: true, isSelf: true };
+      }
+
+      if (!target.isPrivate) {
+        return { ...target, isFriend: false, isSelf: false };
+      }
+
+      const friendship = await this.prisma.friendship.findFirst({
+        where: {
+          status: 'ACCEPTED',
+          OR: [
+            { userId: requesterId, friendId: targetId },
+            { userId: targetId, friendId: requesterId },
+          ],
+        },
+      });
+
+      if (friendship) {
+        return { ...target, isFriend: true, isSelf: false };
+      }
+
+      return {
+        id: target.id,
+        username: target.username,
+        avatarUrl: target.avatarUrl,
+        avatarKey: target.avatarKey,
+        isPrivate: true,
+        isFriend: false,
+        isSelf: false,
+      };
     } catch (error) {
       this.handlePrismaError(error);
     }
