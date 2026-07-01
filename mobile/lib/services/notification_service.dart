@@ -55,6 +55,13 @@ class NotificationService {
       importance: Importance.max,
     );
 
+    const AndroidNotificationChannel generalChannel = AndroidNotificationChannel(
+      'general',
+      'General Notifications',
+      description: 'General application notifications',
+      importance: Importance.max,
+    );
+
     await _notificationsPlugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
@@ -64,6 +71,11 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(challengesChannel);
+
+    await _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(generalChannel);
   }
 
   void _handleNotificationClick(NotificationResponse response) {
