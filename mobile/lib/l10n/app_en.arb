@@ -420,6 +420,16 @@
     "description": "Subtitle displayed for incoming friend requests"
   },
 
+  "rejectRequest": "Reject",
+  "@rejectRequest": {
+    "description": "Button to reject an incoming friend request"
+  },
+
+  "friendRequestRejected": "Request rejected.",
+  "@friendRequestRejected": {
+    "description": "Message shown when a friend request is rejected"
+  },
+
   "group": "Group",
   "@group": {
     "description": "Label for the floating action button to create a group"

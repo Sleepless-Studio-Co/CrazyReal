@@ -14,6 +14,7 @@ describe('FriendsController', () => {
       create: jest.Mock;
       findUnique: jest.Mock;
       update: jest.Mock;
+      delete: jest.Mock;
       findMany: jest.Mock;
     };
   };
@@ -28,6 +29,7 @@ describe('FriendsController', () => {
         create: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
+        delete: jest.fn(),
         findMany: jest.fn(),
       },
     };

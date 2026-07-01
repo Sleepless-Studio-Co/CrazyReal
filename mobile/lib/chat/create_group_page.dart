@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/friend_service.dart';
 import '../services/chat_service.dart';
+import '../services/api_exception.dart';
 
 class CreateGroupPage extends StatefulWidget {
   const CreateGroupPage({super.key});
@@ -31,11 +32,48 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   }
 
   Future<void> _loadFriends() async {
-    final friends = await _friendService.getFriends();
-    setState(() {
-      _friends = friends;
-      _isLoading = false;
-    });
+    try {
+      final friends = await _friendService.getFriends();
+      if (mounted) {
+        setState(() {
+          _friends = friends;
+          _isLoading = false;
+        });
+
+        if (_friends.isEmpty) {
+          _showNoFriendsDialog();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        final message = e is ApiException ? e.message : 'Erreur lors du chargement des amis';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _showNoFriendsDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Aucun ami'),
+        content: const Text(
+          "Tu n'as pas encore d'amis. Ajoute des amis avant de pouvoir créer un groupe.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              Navigator.pop(context);
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _toggleSelection(int userId) {
@@ -63,12 +101,21 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       return;
     }
 
-    final success = await _chatService.createGroup(name, _selectedUserIds);
-    if (mounted && success) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Groupe créé !'), backgroundColor: Colors.green),
-      );
+    try {
+      await _chatService.createGroup(name, _selectedUserIds);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Groupe créé !'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final message = e is ApiException ? e.message : 'Erreur lors de la création du groupe';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 

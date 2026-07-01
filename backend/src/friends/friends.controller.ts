@@ -25,6 +25,22 @@ export class FriendsController {
     return this.friendsService.acceptFriendRequest(user.userId, requestId);
   }
 
+  @Patch('reject/:requestId')
+  rejectRequest(
+    @CurrentUser() user: ValidatedUser,
+    @Param('requestId', ParseIntPipe) requestId: number,
+  ) {
+    return this.friendsService.rejectFriendRequest(user.userId, requestId);
+  }
+
+  @Post('block/:username')
+  blockUser(
+    @CurrentUser() user: ValidatedUser,
+    @Param('username') username: string,
+  ) {
+    return this.friendsService.blockUser(user.userId, username);
+  }
+
   @Get()
   getFriends(@CurrentUser() user: ValidatedUser) {
     return this.friendsService.getFriends(user.userId);

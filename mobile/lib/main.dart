@@ -9,6 +9,7 @@ import 'setting_page.dart';
 import 'account_page.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
+import 'services/chat_socket_service.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
@@ -50,6 +51,7 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   final AuthService _authService = AuthService();
+  final ChatSocketService _chatSocket = ChatSocketService();
   bool _isLoading = true;
   bool _isAuthenticated = false;
 
@@ -63,6 +65,8 @@ class _AuthGateState extends State<AuthGate> {
     final isLoggedIn = await _authService.isLoggedIn();
     if (!mounted) return;
 
+    if (isLoggedIn) _chatSocket.connect();
+
     setState(() {
       _isAuthenticated = isLoggedIn;
       _isLoading = false;
@@ -71,12 +75,14 @@ class _AuthGateState extends State<AuthGate> {
 
   void _handleAuthSuccess() {
     if (!mounted) return;
+    _chatSocket.connect();
     setState(() {
       _isAuthenticated = true;
     });
   }
 
   Future<void> _handleLogoutOrUnauthorized() async {
+    _chatSocket.disconnect();
     await _authService.logout();
     if (!mounted) return;
 

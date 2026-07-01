@@ -259,6 +259,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wantsToBeYourFriend => 'Wants to be your friend';
 
   @override
+  String get rejectRequest => 'Reject';
+
+  @override
+  String get friendRequestRejected => 'Request rejected.';
+
+  @override
   String get group => 'Group';
 
   @override
