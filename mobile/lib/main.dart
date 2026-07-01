@@ -11,6 +11,7 @@ import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
 import 'services/chat_socket_service.dart';
 import 'services/notification_service.dart';
+import 'services/global_notification_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -72,7 +73,10 @@ class _AuthGateState extends State<AuthGate> {
     final isLoggedIn = await _authService.isLoggedIn();
     if (!mounted) return;
 
-    if (isLoggedIn) _chatSocket.connect();
+    if (isLoggedIn) {
+      _chatSocket.connect();
+      GlobalNotificationService().connect();
+    }
 
     setState(() {
       _isAuthenticated = isLoggedIn;
@@ -83,6 +87,7 @@ class _AuthGateState extends State<AuthGate> {
   void _handleAuthSuccess() {
     if (!mounted) return;
     _chatSocket.connect();
+    GlobalNotificationService().connect();
     setState(() {
       _isAuthenticated = true;
     });
@@ -90,6 +95,7 @@ class _AuthGateState extends State<AuthGate> {
 
   Future<void> _handleLogoutOrUnauthorized() async {
     _chatSocket.disconnect();
+    GlobalNotificationService().disconnect();
     await _authService.logout();
     if (!mounted) return;
 

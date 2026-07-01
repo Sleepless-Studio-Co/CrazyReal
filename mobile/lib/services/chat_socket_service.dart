@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../auth/auth_service.dart';
 import '../utils/media_url.dart';
+import 'notification_service.dart';
 
 /// Socket temps réel unique et persistant pour tout le chat.
 ///
@@ -87,7 +88,15 @@ class ChatSocketService {
     socket.on('newMessage', (data) {
       debugPrint('[chat-socket] newMessage reçu: $data');
       try {
-        _messageController.add(Map<String, dynamic>.from(data as Map));
+        final map = Map<String, dynamic>.from(data as Map);
+        _messageController.add(map);
+
+        // Show local notification
+        NotificationService().showNotification(
+          title: 'Nouveau message de ${map['sender']['username']}',
+          body: map['content'],
+          channelId: 'general',
+        );
       } catch (e) {
         debugPrint('[chat-socket] newMessage parse error: $e');
       }
