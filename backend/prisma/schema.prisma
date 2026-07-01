@@ -38,6 +38,19 @@ model Post {
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId Int
   createdAt   DateTime  @default(now())
+  upVotes     UpVote[]
+}
+
+model UpVote {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
 }
 
 model User {
@@ -47,10 +60,12 @@ model User {
   username      String         @unique
   avatarUrl     String?
   avatarKey     String?
+  isPrivate     Boolean        @default(false)
   emailVerified Boolean        @default(false)
   emailVerifiedAt DateTime?
   createdAt     DateTime       @default(now())
   posts         Post[]
+  upVotes       UpVote[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")

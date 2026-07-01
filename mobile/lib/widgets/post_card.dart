@@ -17,10 +17,12 @@ class PostCard extends StatelessWidget {
     super.key,
     required this.post,
     required this.unknownUserLabel,
+    this.onUpvote,
   });
 
   final FeedPost post;
   final String unknownUserLabel;
+  final VoidCallback? onUpvote;
 
   @override
   Widget build(BuildContext context) {
@@ -126,16 +128,49 @@ class PostCard extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                challengeLabel,
-                style: _labelStyle(),
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      challengeLabel,
+                      style: _labelStyle(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: onUpvote,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          post.hasUpvoted ? Icons.favorite : Icons.favorite_border,
+                          color: post.hasUpvoted ? const Color(0xFFE05252) : _inkMuted,
+                          size: 22,
+                        ),
+                        if (post.upvoteCount > 0) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            '${post.upvoteCount}',
+                            style: _labelStyle().copyWith(
+                              color: post.hasUpvoted ? const Color(0xFFE05252) : _inkMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

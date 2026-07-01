@@ -98,6 +98,8 @@ class _AccountPageState extends State<AccountPage> {
   String? _errorMessage;
   String? _avatarUrl;
   String? _avatarKey;
+  bool _isPrivate = false;
+  bool _isPrivacySaving = false;
   Uint8List? _pendingAvatarBytes;
 
   @override
@@ -212,6 +214,7 @@ class _AccountPageState extends State<AccountPage> {
   void _syncAvatarFromUser(Map<String, dynamic> user) {
     _avatarUrl = user['avatarUrl']?.toString();
     _avatarKey = user['avatarKey']?.toString();
+    _isPrivate = user['isPrivate'] == true;
   }
 
   void _startEditing() {
@@ -382,6 +385,35 @@ class _AccountPageState extends State<AccountPage> {
     await _selectBaseAvatar(_avatarOptions.first.id);
   }
 
+  Future<void> _togglePrivacy(bool value) async {
+    setState(() {
+      _isPrivacySaving = true;
+    });
+
+    try {
+      final result = await _authService.updatePrivacy(value);
+      final updatedUser = result['user'];
+      if (updatedUser is Map<String, dynamic>) {
+        _user = updatedUser;
+        _syncAvatarFromUser(updatedUser);
+      } else {
+        // Fallback in case the backend response shape changes: still
+        // reflect the toggle locally so the UI doesn't feel stuck.
+        setState(() {
+          _isPrivate = value;
+        });
+      }
+    } catch (e) {
+      _handleAvatarError(e);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPrivacySaving = false;
+        });
+      }
+    }
+  }
+
   void _handleAvatarError(Object error) {
     final message = error.toString().replaceFirst('Exception: ', '');
     if (message.toLowerCase().contains('unauthorized')) {
@@ -521,6 +553,8 @@ class _AccountPageState extends State<AccountPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _buildProfileHeader(l10n),
+        const SizedBox(height: 16),
+        _buildPrivacyCard(l10n),
         if (!_isEmailVerified) ...[
           const SizedBox(height: 16),
           _buildVerificationBanner(l10n),
@@ -532,6 +566,60 @@ class _AccountPageState extends State<AccountPage> {
         const SizedBox(height: 16),
         _isEditing ? _buildSaveCard(l10n) : _buildLogoutCard(l10n),
       ],
+    );
+  }
+
+  Widget _buildPrivacyCard(AppLocalizations l10n) {
+    return _buildCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0DFC2),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              _isPrivate ? Icons.lock_outline : Icons.public,
+              color: _accentColor,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  // TODO: move to AppLocalizations once the key is added
+                  // to the .arb files (e.g. l10n.privateAccount).
+                  _isPrivate ? 'Compte privé' : 'Compte public',
+                  style: _valueStyle(context),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _isPrivate
+                      ? 'Seuls tes amis acceptés voient ton profil et tes défis.'
+                      : 'Tout le monde peut voir ton profil et tes défis.',
+                  style: _mutedStyle(context),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _isPrivacySaving
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Switch(
+                  value: _isPrivate,
+                  activeColor: _accentColor,
+                  onChanged: _togglePrivacy,
+                ),
+        ],
+      ),
     );
   }
 
