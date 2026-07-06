@@ -16,7 +16,7 @@ class NotificationService {
     navigatorKey = navKey;
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('logo_app');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
