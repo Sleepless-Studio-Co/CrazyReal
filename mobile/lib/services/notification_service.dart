@@ -16,7 +16,7 @@ class NotificationService {
     navigatorKey = navKey;
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('logo_app');
+        AndroidInitializationSettings('ic_notification');
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
@@ -98,7 +98,7 @@ class NotificationService {
       'General Notifications',
       importance: Importance.max,
       priority: Priority.high,
-      icon: 'logo_app',
+      icon: 'ic_notification',
       largeIcon: const DrawableResourceAndroidBitmap('logo_app'),
       color: const Color(0xFF3B2A21),
     );
