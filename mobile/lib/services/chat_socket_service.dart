@@ -85,18 +85,24 @@ class ChatSocketService {
     });
     socket.onError((err) => debugPrint('[chat-socket] error: $err'));
 
-    socket.on('newMessage', (data) {
+    socket.on('newMessage', (data) async {
       debugPrint('[chat-socket] newMessage reçu: $data');
       try {
         final map = Map<String, dynamic>.from(data as Map);
         _messageController.add(map);
 
-        // Show local notification
-        NotificationService().showNotification(
-          title: 'Nouveau message de ${map['sender']['username']}',
-          body: map['content'],
-          channelId: 'general',
-        );
+        // Show local notification only if not sent by current user
+        final currentUser = await _authService.getUser();
+        final currentUserId = currentUser?['id'];
+        final senderId = map['sender']['id'];
+
+        if (currentUserId != senderId) {
+          NotificationService().showNotification(
+            title: 'Nouveau message de ${map['sender']['username']}',
+            body: map['content'],
+            channelId: 'general',
+          );
+        }
       } catch (e) {
         debugPrint('[chat-socket] newMessage parse error: $e');
       }
