@@ -98,6 +98,8 @@ class NotificationService {
       'General Notifications',
       importance: Importance.max,
       priority: Priority.high,
+      icon: 'logo_app',
+      largeIcon: const DrawableResourceAndroidBitmap('logo_app'),
     );
 
     const iosDetails = DarwinNotificationDetails();
