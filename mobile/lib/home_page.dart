@@ -11,6 +11,8 @@ import 'utils/media_url.dart';
 import 'widgets/post_card.dart';
 import 'widgets/post_card_skeleton.dart';
 
+import 'services/notification_service.dart';
+
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
 
@@ -230,6 +232,16 @@ class HomePageState extends State<HomePage> {
               onPressed: () => refreshFeed(showLoading: false),
               tooltip: l10n.feedRefresh,
             ),
+            IconButton(
+            icon: const Icon(Icons.notifications_active),
+            onPressed: () {
+              NotificationService().showNotification(
+                title: 'Test Notification',
+                body: 'Ceci est une notification de test pour CrazyReal',
+              );
+            },
+          ),
+
         ],
       ),
       body: _buildBody(l10n),
