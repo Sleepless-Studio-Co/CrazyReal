@@ -99,6 +99,7 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       icon: 'ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('logo_app'),
       color: const Color(0xFF3B2A21),
     );
 

@@ -308,4 +308,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String timeAgoDays(int days) {
     return 'Il y a $days j';
   }
+
+  @override
+  String get notificationFriendRequestTitle => 'Demande d\'ami';
+
+  @override
+  String notificationFriendRequestBody(String username) {
+    return '$username vous a envoyé une demande d\'ami';
+  }
+
+  @override
+  String notificationNewMessageTitle(String username) {
+    return 'Nouveau message de $username';
+  }
 }

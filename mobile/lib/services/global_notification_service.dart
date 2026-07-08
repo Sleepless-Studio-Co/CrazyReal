@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../auth/auth_service.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/media_url.dart';
 import 'notification_service.dart';
+import '../main.dart';
 
 class GlobalNotificationService {
   GlobalNotificationService._internal();
@@ -35,9 +37,23 @@ class GlobalNotificationService {
     _socket!.on('friendRequestReceived', (data) {
       try {
         final map = Map<String, dynamic>.from(data as Map);
+        final username = map['requesterUsername'] as String;
+
+        final context = navigatorKey.currentContext;
+        String title = 'Demande d\'ami';
+        String body = '$username vous a envoyé une demande d\'ami';
+
+        if (context != null) {
+          final l10n = AppLocalizations.of(context);
+          if (l10n != null) {
+            title = l10n.notificationFriendRequestTitle;
+            body = l10n.notificationFriendRequestBody(username);
+          }
+        }
+
         NotificationService().showNotification(
-          title: 'Demande d\'ami',
-          body: '${map['requesterUsername']} vous a envoyé une demande d\'ami',
+          title: title,
+          body: body,
           channelId: 'friend_requests',
         );
       } catch (e) {

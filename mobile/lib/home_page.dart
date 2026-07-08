@@ -232,6 +232,16 @@ class HomePageState extends State<HomePage> {
               onPressed: () => refreshFeed(showLoading: false),
               tooltip: l10n.feedRefresh,
             ),
+            IconButton(
+            icon: const Icon(Icons.notifications_active),
+            onPressed: () {
+              NotificationService().showNotification(
+                title: 'Test Notification',
+                body: 'Ceci est une notification de test pour CrazyReal',
+              );
+            },
+          ),
+
         ],
       ),
       body: _buildBody(l10n),

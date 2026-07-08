@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../auth/auth_service.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/media_url.dart';
 import 'notification_service.dart';
+import '../main.dart';
 
 /// Socket temps réel unique et persistant pour tout le chat.
 ///
@@ -97,9 +99,18 @@ class ChatSocketService {
         final senderId = map['sender']['id'];
 
         if (currentUserId != senderId) {
+          final context = navigatorKey.currentContext;
+          String title = 'Nouveau message de ${map['sender']['username']}';
+          if (context != null) {
+            final l10n = AppLocalizations.of(context);
+            if (l10n != null) {
+              title = l10n.notificationNewMessageTitle(map['sender']['username'] as String);
+            }
+          }
+
           NotificationService().showNotification(
-            title: 'Nouveau message de ${map['sender']['username']}',
-            body: map['content'],
+            title: title,
+            body: map['content'] as String,
             channelId: 'general',
           );
         }
