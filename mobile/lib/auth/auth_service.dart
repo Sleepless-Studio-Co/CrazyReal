@@ -10,11 +10,21 @@ class AuthService {
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userKey = 'user';
 
-  final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+  final http.Client _client;
+
+  AuthService({http.Client? client}) : _client = client ?? http.Client();
+
+  String get baseUrl {
+    try {
+      return dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+    } catch (_) {
+      return 'http://localhost:3000';
+    }
+  }
 
   Future<Map<String, dynamic>?> login(String email, String password) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
@@ -44,7 +54,7 @@ class AuthService {
 
   Future<Map<String, dynamic>?> register(String email, String password, String username) async {
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$baseUrl/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password, 'username': username}),
@@ -77,7 +87,7 @@ class AuthService {
     final accessToken = await getAccessToken();
     if (refreshToken != null) {
       try {
-        await http.post(
+        await _client.post(
           Uri.parse('$baseUrl/auth/logout'),
           headers: {
             'Content-Type': 'application/json',
@@ -92,9 +102,19 @@ class AuthService {
     await _clearTokens();
   }
 
-  Future<String?> getAccessToken() async {
+  Future<String?> getAccessToken({bool refreshIfNeeded = false}) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_accessTokenKey);
+    final currentToken = prefs.getString(_accessTokenKey);
+    if (!refreshIfNeeded || (currentToken != null && currentToken.isNotEmpty)) {
+      return currentToken;
+    }
+
+    final refreshToken = prefs.getString(_refreshTokenKey);
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return currentToken;
+    }
+
+    return _refreshAccessToken(refreshToken);
   }
 
   Future<String?> getRefreshToken() async {
@@ -112,8 +132,29 @@ class AuthService {
   }
 
   Future<bool> isLoggedIn() async {
+    final restored = await restoreSession();
+    if (restored) {
+      return true;
+    }
+
     final token = await getAccessToken();
-    return token != null;
+    return token != null && token.isNotEmpty;
+  }
+
+  Future<bool> restoreSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString(_refreshTokenKey);
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return false;
+    }
+
+    final token = await _refreshAccessToken(refreshToken);
+    if (token == null || token.isEmpty) {
+      await _clearTokens();
+      return false;
+    }
+
+    return true;
   }
 
   /// Fetches the current profile from the API and refreshes the cached user.
@@ -125,7 +166,7 @@ class AuthService {
     }
 
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('$baseUrl/auth/me'),
         headers: {'Authorization': 'Bearer $token'},
       );
@@ -156,7 +197,7 @@ class AuthService {
     }
 
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$baseUrl/auth/resend-verification'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -228,7 +269,7 @@ class AuthService {
     }
 
     try {
-      final response = await http.patch(
+      final response = await _client.patch(
         Uri.parse('$baseUrl/auth/me'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -266,7 +307,7 @@ class AuthService {
     }
 
     try {
-      final response = await http.patch(
+      final response = await _client.patch(
         Uri.parse('$baseUrl/users/me/avatar'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -300,7 +341,7 @@ class AuthService {
     }
 
     try {
-      final response = await http.patch(
+      final response = await _client.patch(
         Uri.parse('$baseUrl/users/me/privacy'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -376,6 +417,31 @@ class AuthService {
     await prefs.remove(_accessTokenKey);
     await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userKey);
+  }
+
+  Future<String?> _refreshAccessToken(String refreshToken) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/auth/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh_token': refreshToken}),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return null;
+      }
+
+      final data = _decodeResponseMap(response.body);
+      final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+      if (accessToken == null || accessToken.isEmpty) {
+        return null;
+      }
+
+      await _saveTokens(accessToken, refreshToken);
+      return accessToken;
+    } catch (_) {
+      return null;
+    }
   }
 
   Map<String, dynamic> _decodeResponseMap(String body) {
