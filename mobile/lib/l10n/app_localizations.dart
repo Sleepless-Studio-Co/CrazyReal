@@ -386,6 +386,12 @@ abstract class AppLocalizations {
   /// **'Photo sent to your Feed!'**
   String get photoSentToFeed;
 
+  /// Confirmation message when the photo link is copied to the clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Photo link copied!'**
+  String get photoLinkCopied;
+
   /// Error message when photo send fails
   ///
   /// In en, this message translates to:
