@@ -239,6 +239,11 @@
   "@photoSentToFeed": {
     "description": "Message de succès quand la photo est envoyée"
   },
+
+  "photoLinkCopied": "Lien de la photo copié !",
+  "@photoLinkCopied": {
+    "description": "Message de confirmation quand le lien de la photo est copié dans le presse-papier"
+  },
   
   "errorSendingPhoto": "❌ Erreur lors de l'envoi de la photo",
   "@errorSendingPhoto": {

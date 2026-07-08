@@ -239,6 +239,11 @@
   "@photoSentToFeed": {
     "description": "Success message when photo is sent"
   },
+
+  "photoLinkCopied": "Photo link copied!",
+  "@photoLinkCopied": {
+    "description": "Confirmation message when the photo link is copied to the clipboard"
+  },
   
   "errorSendingPhoto": "❌ Error sending photo",
   "@errorSendingPhoto": {
