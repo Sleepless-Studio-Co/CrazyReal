@@ -16,6 +16,11 @@ enum ChallengeType {
   SPECIAL
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -48,6 +53,7 @@ model User {
   avatarUrl     String?
   avatarKey     String?
   createdAt     DateTime       @default(now())
+  role          Role           @default(USER)
   posts         Post[]
   refreshTokens RefreshToken[]
   sentRequests Friendship[] @relation("SentRequests")
