@@ -445,6 +445,16 @@
     "description": "Sous-titre affiché pour une demande d'ami entrante"
   },
 
+  "rejectRequest": "Refuser",
+  "@rejectRequest": {
+    "description": "Bouton pour refuser une demande d'ami entrante"
+  },
+
+  "friendRequestRejected": "Demande refusée.",
+  "@friendRequestRejected": {
+    "description": "Message affiché quand une demande d'ami est refusée"
+  },
+
   "group": "Groupe",
   "@group": {
     "description": "Label du bouton flottant pour créer un groupe"

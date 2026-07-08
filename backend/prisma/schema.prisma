@@ -16,6 +16,11 @@ enum ChallengeType {
   SPECIAL
 }
 
+enum ParticipantRole {
+  ADMIN
+  MEMBER
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -120,10 +125,11 @@ model Conversation {
 }
 
 model Participant {
-  id             Int          @id @default(autoincrement())
+  id             Int             @id @default(autoincrement())
   userId         Int
   conversationId Int
-  joinedAt       DateTime     @default(now())
+  role           ParticipantRole @default(MEMBER)
+  joinedAt       DateTime        @default(now())
 
   user           User         @relation(fields: [userId], references: [id])
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

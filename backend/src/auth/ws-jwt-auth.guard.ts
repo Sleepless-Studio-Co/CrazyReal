@@ -18,6 +18,7 @@ export class WsJwtAuthGuard implements CanActivate {
     const token = this.extractToken(client);
 
     if (!token) {
+      console.warn(`[ws-auth] Connexion WebSocket ${client.id} refusée : aucun token fourni.`);
       throw new UnauthorizedException('Token manquant pour la connexion WebSocket.');
     }
 
@@ -34,7 +35,8 @@ export class WsJwtAuthGuard implements CanActivate {
 
       client.data.user = user;
       return true;
-    } catch {
+    } catch (error) {
+      console.warn(`[ws-auth] Connexion WebSocket ${client.id} refusée : token invalide ou expiré.`, error);
       throw new UnauthorizedException('Token WebSocket invalide ou expiré.');
     }
   }

@@ -124,7 +124,7 @@ class HomePageState extends State<HomePage> {
 
   void _initSocket() {
     _socket = IO.io(
-      apiBaseUrl,
+      '$apiBaseUrl/feed',
       IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
     );
 

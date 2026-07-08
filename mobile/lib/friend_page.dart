@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 import 'services/friend_service.dart';
-import 'chat/create_group_page.dart'; 
+import 'services/api_exception.dart';
+import 'chat/create_group_page.dart';
 import 'chat/chat_list_page.dart';
 
 class FriendPage extends StatefulWidget {
@@ -35,7 +36,7 @@ class _FriendPageState extends State<FriendPage> {
         _friendService.getFriends(),
         _friendService.getPendingRequests(),
       ]);
-      
+
       if (mounted) {
         setState(() {
           _friends = results[0];
@@ -44,19 +45,29 @@ class _FriendPageState extends State<FriendPage> {
         });
       }
     } catch (e) {
-      if (e.toString().contains('Unauthorized') && mounted) {
+      if (e is UnauthorizedException && mounted) {
         widget.onUnauthorized();
       } else {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showError(e);
+        }
       }
     }
   }
 
+  void _showError(Object error) {
+    final message = error is ApiException ? error.message : AppLocalizations.of(context)!.error;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   Future<void> _acceptRequest(int requestId) async {
     final l10n = AppLocalizations.of(context)!;
-    final success = await _friendService.acceptRequest(requestId);
-    if (success) {
-      _loadData(); 
+    try {
+      await _friendService.acceptRequest(requestId);
+      _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -65,14 +76,60 @@ class _FriendPageState extends State<FriendPage> {
           ),
         );
       }
+    } catch (e) {
+      if (mounted) _showError(e);
     }
+  }
+
+  Future<void> _rejectRequest(int requestId) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await _friendService.rejectRequest(requestId);
+      _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.friendRequestRejected),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) _showError(e);
+    }
+  }
+
+  void _openCreateGroup() {
+    if (_friends.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Aucun ami'),
+          content: const Text(
+            "Tu n'as pas encore d'amis. Ajoute des amis avant de pouvoir créer un groupe.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CreateGroupPage()),
+    );
   }
 
   void _showAddFriendDialog() {
     final l10n = AppLocalizations.of(context)!;
     final TextEditingController usernameController = TextEditingController();
     final scaffoldContext = context;
-    
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -91,19 +148,26 @@ class _FriendPageState extends State<FriendPage> {
           ),
           ElevatedButton(
             onPressed: () async {
-              final username = usernameController.text.trim(); 
+              final username = usernameController.text.trim();
               if (username.isNotEmpty) {
-                Navigator.pop(dialogContext); 
-                final success = await _friendService.sendRequest(username);
-                if (mounted) {
-                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                    SnackBar(
-                      content: Text(success 
-                        ? l10n.friendRequestSent(username)
-                        : l10n.friendRequestError),
-                      backgroundColor: success ? Colors.green : Colors.red,
-                    ),
-                  );
+                Navigator.pop(dialogContext);
+                try {
+                  await _friendService.sendRequest(username);
+                  if (mounted) {
+                    ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                      SnackBar(
+                        content: Text(l10n.friendRequestSent(username)),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    final message = e is ApiException ? e.message : l10n.friendRequestError;
+                    ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                      SnackBar(content: Text(message), backgroundColor: Colors.red),
+                    );
+                  }
                 }
               }
             },
@@ -184,9 +248,19 @@ class _FriendPageState extends State<FriendPage> {
                                 ),
                                 title: Text(requester['username']),
                                 subtitle: Text(l10n.wantsToBeYourFriend),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.check_circle, color: Colors.green, size: 30),
-                                  onPressed: () => _acceptRequest(request['requestId']),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.cancel, color: Colors.red, size: 30),
+                                      tooltip: l10n.rejectRequest,
+                                      onPressed: () => _rejectRequest(request['requestId']),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.check_circle, color: Colors.green, size: 30),
+                                      onPressed: () => _acceptRequest(request['requestId']),
+                                    ),
+                                  ],
                                 ),
                               );
                             },
@@ -195,12 +269,7 @@ class _FriendPageState extends State<FriendPage> {
                 ],
               ),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CreateGroupPage()),
-            );
-          },
+          onPressed: _openCreateGroup,
           label: Text(l10n.group),
           icon: const Icon(Icons.group_add),
         ),
