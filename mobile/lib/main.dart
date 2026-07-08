@@ -81,7 +81,22 @@ class _AuthGateState extends State<AuthGate> {
     });
   }
 
-  Future<void> _handleLogoutOrUnauthorized() async {
+  Future<void> _handleUnauthorized() async {
+    final refreshed = await _authService.restoreSession();
+    if (!mounted) return;
+
+    if (refreshed) {
+      _chatSocket.connect();
+      setState(() {
+        _isAuthenticated = true;
+      });
+      return;
+    }
+
+    await _handleLogout();
+  }
+
+  Future<void> _handleLogout() async {
     _chatSocket.disconnect();
     await _authService.logout();
     if (!mounted) return;
@@ -106,8 +121,8 @@ class _AuthGateState extends State<AuthGate> {
     }
 
     return MainScreen(
-      onLoggedOut: () => _handleLogoutOrUnauthorized(),
-      onUnauthorized: () => _handleLogoutOrUnauthorized(),
+      onLoggedOut: () => _handleLogout(),
+      onUnauthorized: () => _handleUnauthorized(),
     );
   }
 }
