@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
   static const String _accessTokenKey = 'access_token';
@@ -11,8 +12,14 @@ class AuthService {
   static const String _userKey = 'user';
 
   final http.Client _client;
+  final FlutterSecureStorage _secureStorage;
 
-  AuthService({http.Client? client}) : _client = client ?? http.Client();
+  AuthService({http.Client? client, FlutterSecureStorage? secureStorage})
+      : _client = client ?? http.Client(),
+        _secureStorage = secureStorage ??
+            const FlutterSecureStorage(
+              aOptions: AndroidOptions(encryptedSharedPreferences: true),
+            );
 
   String get baseUrl {
     try {
@@ -103,13 +110,12 @@ class AuthService {
   }
 
   Future<String?> getAccessToken({bool refreshIfNeeded = false}) async {
-    final prefs = await SharedPreferences.getInstance();
-    final currentToken = prefs.getString(_accessTokenKey);
+    final currentToken = await _secureStorage.read(key: _accessTokenKey);
     if (!refreshIfNeeded || (currentToken != null && currentToken.isNotEmpty)) {
       return currentToken;
     }
 
-    final refreshToken = prefs.getString(_refreshTokenKey);
+    final refreshToken = await _secureStorage.read(key: _refreshTokenKey);
     if (refreshToken == null || refreshToken.isEmpty) {
       return currentToken;
     }
@@ -118,8 +124,7 @@ class AuthService {
   }
 
   Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_refreshTokenKey);
+    return _secureStorage.read(key: _refreshTokenKey);
   }
 
   Future<Map<String, dynamic>?> getUser() async {
@@ -142,8 +147,7 @@ class AuthService {
   }
 
   Future<bool> restoreSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final refreshToken = prefs.getString(_refreshTokenKey);
+    final refreshToken = await _secureStorage.read(key: _refreshTokenKey);
     if (refreshToken == null || refreshToken.isEmpty) {
       return false;
     }
@@ -220,9 +224,8 @@ class AuthService {
   }
 
   Future<void> _saveTokens(String accessToken, String refreshToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, accessToken);
-    await prefs.setString(_refreshTokenKey, refreshToken);
+    await _secureStorage.write(key: _accessTokenKey, value: accessToken);
+    await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
   }
 
   Future<void> _updateAccessToken(String accessToken) async {
@@ -232,8 +235,7 @@ class AuthService {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, accessToken);
+    await _secureStorage.write(key: _accessTokenKey, value: accessToken);
   }
 
   Future<void> _saveUser(Map<String, dynamic> user) async {
@@ -413,9 +415,9 @@ class AuthService {
   }
 
   Future<void> _clearTokens() async {
+    await _secureStorage.delete(key: _accessTokenKey);
+    await _secureStorage.delete(key: _refreshTokenKey);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_accessTokenKey);
-    await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userKey);
   }
 
