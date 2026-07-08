@@ -154,6 +154,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get photoSentToFeed => 'Photo envoyée dans ton Feed !';
 
   @override
+  String get photoLinkCopied => 'Lien de la photo copié !';
+
+  @override
   String get errorSendingPhoto => '❌ Erreur lors de l\'envoi de la photo';
 
   @override
