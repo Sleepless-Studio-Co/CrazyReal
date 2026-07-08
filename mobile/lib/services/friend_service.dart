@@ -65,6 +65,19 @@ class FriendService {
     }
   }
 
+  Future<List<dynamic>> searchUsers(String query) async {
+    final root = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+    final response = await http.get(
+      Uri.parse('$root/users/search?q=${Uri.encodeQueryComponent(query)}'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw buildApiException(response);
+  }
+
   Future<List<dynamic>> getFriends() async {
     final response = await http.get(Uri.parse(baseUrl), headers: await _headers());
 

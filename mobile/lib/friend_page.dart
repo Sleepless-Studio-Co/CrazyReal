@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
 import 'services/friend_service.dart';
@@ -126,55 +127,12 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showAddFriendDialog() {
-    final l10n = AppLocalizations.of(context)!;
-    final TextEditingController usernameController = TextEditingController();
-    final scaffoldContext = context;
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.addFriend),
-        content: TextField(
-          controller: usernameController,
-          decoration: InputDecoration(
-            labelText: l10n.friendUsernameLabel,
-            hintText: l10n.friendUsernameHint,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final username = usernameController.text.trim();
-              if (username.isNotEmpty) {
-                Navigator.pop(dialogContext);
-                try {
-                  await _friendService.sendRequest(username);
-                  if (mounted) {
-                    ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                      SnackBar(
-                        content: Text(l10n.friendRequestSent(username)),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    final message = e is ApiException ? e.message : l10n.friendRequestError;
-                    ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                      SnackBar(content: Text(message), backgroundColor: Colors.red),
-                    );
-                  }
-                }
-              }
-            },
-            child: Text(l10n.send),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (_) => _AddFriendSheet(friendService: _friendService),
     );
   }
 
@@ -195,10 +153,6 @@ class _FriendPageState extends State<FriendPage> {
                   MaterialPageRoute(builder: (context) => const ChatListPage()),
                 );
               },
-            ),
-            IconButton(
-              icon: const Icon(Icons.person_add),
-              onPressed: _showAddFriendDialog,
             ),
           ],
           bottom: TabBar(
@@ -268,12 +222,201 @@ class _FriendPageState extends State<FriendPage> {
                   ),
                 ],
               ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _openCreateGroup,
-          label: Text(l10n.group),
-          icon: const Icon(Icons.group_add),
+        floatingActionButton: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            FloatingActionButton.small(
+              heroTag: 'createGroup',
+              onPressed: _openCreateGroup,
+              tooltip: l10n.group,
+              child: const Icon(Icons.group_add),
+            ),
+            const SizedBox(height: 12),
+            FloatingActionButton.extended(
+              heroTag: 'addFriend',
+              onPressed: _showAddFriendDialog,
+              icon: const Icon(Icons.person_add),
+              label: Text(l10n.addFriend),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _AddFriendSheet extends StatefulWidget {
+  final FriendService friendService;
+
+  const _AddFriendSheet({required this.friendService});
+
+  @override
+  State<_AddFriendSheet> createState() => _AddFriendSheetState();
+}
+
+class _AddFriendSheetState extends State<_AddFriendSheet> {
+  final TextEditingController _controller = TextEditingController();
+  Timer? _debounce;
+  List<dynamic> _results = [];
+  bool _loading = false;
+  final Set<int> _sent = {};
+
+  void _onChanged(String value) {
+    _debounce?.cancel();
+    final query = value.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _results = [];
+        _loading = false;
+      });
+      return;
+    }
+    setState(() => _loading = true);
+    _debounce = Timer(const Duration(milliseconds: 350), () => _search(query));
+  }
+
+  Future<void> _search(String query) async {
+    try {
+      final results = await widget.friendService.searchUsers(query);
+      if (mounted) {
+        setState(() {
+          _results = results;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _results = [];
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _send(Map<String, dynamic> user) async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await widget.friendService.sendRequest(user['username']);
+      if (mounted) {
+        setState(() => _sent.add(user['id']));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.friendRequestSent(user['username'])),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final message = e is ApiException ? e.message : l10n.friendRequestError;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      // Lift the sheet above the keyboard.
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.75,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Text(
+                l10n.addFriend,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                controller: _controller,
+                autofocus: true,
+                onChanged: _onChanged,
+                decoration: InputDecoration(
+                  hintText: l10n.searchUsersHint,
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(child: _buildResults(l10n)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResults(AppLocalizations l10n) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_controller.text.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+    if (_results.isEmpty) {
+      return Center(child: Text(l10n.noUsersFound));
+    }
+    return ListView.builder(
+      itemCount: _results.length,
+      itemBuilder: (context, index) {
+        final user = _results[index] as Map<String, dynamic>;
+        final isPrivate = user['isPrivate'] == true;
+        final alreadySent = _sent.contains(user['id']);
+        return ListTile(
+          leading: CircleAvatar(
+            child: Text(
+              user['username'].toString().substring(0, 1).toUpperCase(),
+            ),
+          ),
+          title: Text(user['username']),
+          subtitle: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isPrivate ? Icons.lock : Icons.public,
+                size: 14,
+                color: isPrivate ? Colors.orange : Colors.green,
+              ),
+              const SizedBox(width: 4),
+              Text(isPrivate ? l10n.accountPrivate : l10n.accountPublic),
+            ],
+          ),
+          trailing: alreadySent
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check, color: Colors.green, size: 18),
+                    const SizedBox(width: 4),
+                    Text(l10n.requestSentShort),
+                  ],
+                )
+              : IconButton(
+                  icon: const Icon(Icons.person_add),
+                  tooltip: l10n.send,
+                  onPressed: () => _send(user),
+                ),
+        );
+      },
     );
   }
 }
