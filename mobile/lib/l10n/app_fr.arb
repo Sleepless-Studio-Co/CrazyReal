@@ -498,5 +498,53 @@
         "type": "int"
       }
     }
-  }
+  },
+
+  "deleteAccount": "Supprimer le compte",
+  "@deleteAccount": { "description": "Bouton supprimer le compte" },
+
+  "deleteAccountConfirmTitle": "Supprimer ton compte ?",
+  "@deleteAccountConfirmTitle": { "description": "Titre de la boîte de dialogue de confirmation" },
+
+  "deleteAccountConfirmBody": "Toutes tes données seront définitivement supprimées. Cette action est irréversible.",
+  "@deleteAccountConfirmBody": { "description": "Corps de la boîte de dialogue de confirmation" },
+
+  "privacy": "Confidentialité",
+  "@privacy": { "description": "En-tête de section confidentialité" },
+
+  "blockedUsers": "Utilisateurs bloqués",
+  "@blockedUsers": { "description": "Tuile utilisateurs bloqués" },
+
+  "permissions": "Autorisations",
+  "@permissions": { "description": "En-tête de section autorisations" },
+
+  "permissionsInfo": "Pour gérer l'accès au micro, à la caméra et à la localisation, va dans Réglages > CrazyReal sur ton téléphone.",
+  "@permissionsInfo": { "description": "Info affichée quand l'utilisateur appuie sur une autorisation" },
+
+  "accessibility": "Accessibilité",
+  "@accessibility": { "description": "En-tête de section accessibilité" },
+
+  "language": "Langue",
+  "@language": { "description": "Tuile langue" },
+
+  "helpCenter": "Aide",
+  "@helpCenter": { "description": "En-tête et tuile aide" },
+
+  "helpInfo": "Pour toute aide ou retour, contacte-nous à support@crazyreal.app",
+  "@helpInfo": { "description": "Corps de la boîte de dialogue d'aide" },
+
+  "privateAccount": "Compte privé",
+  "@privateAccount": { "description": "Label compte privé" },
+
+  "publicAccount": "Compte public",
+  "@publicAccount": { "description": "Label compte public" },
+
+  "privateAccountDesc": "Seuls tes amis acceptés voient ton profil et tes défis.",
+  "@privateAccountDesc": { "description": "Description compte privé" },
+
+  "publicAccountDesc": "Tout le monde peut voir ton profil et tes défis.",
+  "@publicAccountDesc": { "description": "Description compte public" },
+
+  "comingSoon": "Bientôt disponible",
+  "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" }
 }
