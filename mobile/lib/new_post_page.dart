@@ -268,7 +268,7 @@ class _NewPageState extends State<NewPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         DropdownButton<int>(
-          value: _selectedChallengeId,
+          value: selected['id'] as int,
           isExpanded: true,
           underline: const SizedBox.shrink(),
           items: _challenges

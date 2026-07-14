@@ -71,6 +71,9 @@ export class AppController {
     const candidateChallenges = await this.prisma.challenge.findMany({
       where: {
         isActive: true,
+        // Le "challenge global courant" ne considère que les challenges globaux ;
+        // les défis de groupe ont leur propre cycle de vie (fenêtre endsAt).
+        conversationId: null,
         date: {
           lte: now,
           gte: lookbackDate,
