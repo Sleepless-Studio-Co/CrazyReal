@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -48,6 +49,20 @@ const ALLOWED_AVATAR_EXTENSIONS = new Set([
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  // Must be declared before GET :id, otherwise "search" is parsed as an id.
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Search users by username' })
+  @ApiResponse({ status: 200, description: 'Matching users with privacy flag' })
+  search(@Query('q') q: string, @CurrentUser() user: ValidatedUser) {
+    const query = (q ?? '').trim();
+    if (query.length < 1) {
+      return [];
+    }
+    return this.usersService.searchByUsername(query, user.userId);
+  }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)

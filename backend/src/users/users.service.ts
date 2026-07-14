@@ -107,6 +107,28 @@ export class UsersService {
     }
   }
 
+  async searchByUsername(query: string, requesterId: number) {
+    try {
+      return this.prisma.user.findMany({
+        where: {
+          username: { contains: query, mode: 'insensitive' },
+          NOT: { id: requesterId },
+        },
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+        },
+        orderBy: { username: 'asc' },
+        take: 20,
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
   async updateProfile(
     userId: number,
     updates: { email?: string; username?: string },
