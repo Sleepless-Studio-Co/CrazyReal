@@ -38,7 +38,7 @@ model Challenge {
 model Post {
   id          Int       @id @default(autoincrement())
   userId      Int
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   photoUrl    String
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId Int
@@ -94,8 +94,8 @@ model Friendship {
   createdAt DateTime @default(now())
 
   // Relations
-  requester User @relation("SentRequests", fields: [userId], references: [id])
-  receiver  User @relation("ReceivedRequests", fields: [friendId], references: [id])
+  requester User @relation("SentRequests", fields: [userId], references: [id], onDelete: Cascade)
+  receiver  User @relation("ReceivedRequests", fields: [friendId], references: [id], onDelete: Cascade)
 
   @@unique([userId, friendId])
 }
@@ -117,7 +117,7 @@ model Participant {
   role           ParticipantRole @default(MEMBER)
   joinedAt       DateTime        @default(now())
 
-  user           User         @relation(fields: [userId], references: [id])
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, conversationId])
@@ -130,6 +130,6 @@ model Message {
   senderId       Int
   conversationId Int
   
-  sender         User         @relation(fields: [senderId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }

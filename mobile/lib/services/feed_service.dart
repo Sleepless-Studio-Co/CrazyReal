@@ -1,94 +1,35 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
 import '../auth/auth_service.dart';
 import '../models/feed_post.dart';
 import '../utils/media_url.dart';
-
-enum FeedFetchStatus { success, unauthorized, error }
-
-enum UpvoteStatus { success, unauthorized, error }
-
-class FeedFetchResult {
-  const FeedFetchResult({
-    required this.status,
-    this.posts = const [],
-    this.errorMessage,
-  });
-
-  final FeedFetchStatus status;
-  final List<FeedPost> posts;
-  final String? errorMessage;
-}
-
-class UpvoteResult {
-  const UpvoteResult({
-    required this.status,
-    this.post,
-    this.errorMessage,
-  });
-
-  final UpvoteStatus status;
-  final FeedPost? post;
-  final String? errorMessage;
-}
+import 'api_exception.dart';
 
 class FeedService {
   final AuthService _authService = AuthService();
   final String _baseUrl = apiBaseUrl;
 
-  Future<String?> _tokenOrNull() => _authService.getAccessToken();
-
-  Map<String, String> _authHeaders(String token) => {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      };
-
-  Future<FeedFetchResult> fetchPosts() async {
-    try {
-      final token = await _tokenOrNull();
-      if (token == null) {
-        return const FeedFetchResult(status: FeedFetchStatus.unauthorized);
-      }
-
-      final response = await http.get(
-        Uri.parse('$_baseUrl/posts'),
-        headers: _authHeaders(token),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return FeedFetchResult(
-          status: FeedFetchStatus.success,
-          posts: FeedPost.listFromJson(data),
-        );
-      }
-
-      if (response.statusCode == 401) {
-        return const FeedFetchResult(status: FeedFetchStatus.unauthorized);
-      }
-
-      return FeedFetchResult(
-        status: FeedFetchStatus.error,
-        errorMessage: 'HTTP ${response.statusCode}',
-      );
-    } catch (e) {
-      return FeedFetchResult(
-        status: FeedFetchStatus.error,
-        errorMessage: e.toString(),
-      );
-    }
+  /// Throws [UnauthorizedException] when the session is invalid and
+  /// [ApiException] for other failures.
+  Future<List<FeedPost>> fetchPosts() async {
+    final data = await _authedRequest('GET', '/posts');
+    return FeedPost.listFromJson(data);
   }
 
   Future<FeedChallengeSummary?> fetchCurrentChallenge() async {
     try {
-      final token = await _tokenOrNull();
+      final token = await _authService.getAccessToken();
       if (token == null) return null;
 
       final response = await http.get(
         Uri.parse('$_baseUrl/challenge/current'),
-        headers: _authHeaders(token),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
       );
 
       if (response.statusCode != 200) return null;
@@ -101,79 +42,52 @@ class FeedService {
     }
   }
 
-  Future<UpvoteResult> upvotePost(int postId) async {
-    try {
-      final token = await _tokenOrNull();
-      if (token == null) {
-        return const UpvoteResult(status: UpvoteStatus.unauthorized);
-      }
+  Future<FeedPost> upvotePost(int postId) => _vote(postId, remove: false);
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl/posts/$postId/upvote'),
-        headers: _authHeaders(token),
-      );
+  Future<FeedPost> removeUpvote(int postId) => _vote(postId, remove: true);
 
-      if (response.statusCode == 401) {
-        return const UpvoteResult(status: UpvoteStatus.unauthorized);
-      }
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        if (data is Map<String, dynamic>) {
-          return UpvoteResult(
-            status: UpvoteStatus.success,
-            post: FeedPost.fromJson(data),
-          );
-        }
-      }
-
-      return UpvoteResult(
-        status: UpvoteStatus.error,
-        errorMessage: 'HTTP ${response.statusCode}',
-      );
-    } catch (e) {
-      return UpvoteResult(
-        status: UpvoteStatus.error,
-        errorMessage: e.toString(),
-      );
-    }
+  Future<FeedPost> _vote(int postId, {required bool remove}) async {
+    final data = await _authedRequest(
+      remove ? 'DELETE' : 'POST',
+      '/posts/$postId/upvote',
+    );
+    return FeedPost.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<UpvoteResult> removeUpvote(int postId) async {
-    try {
-      final token = await _tokenOrNull();
-      if (token == null) {
-        return const UpvoteResult(status: UpvoteStatus.unauthorized);
-      }
-
-      final response = await http.delete(
-        Uri.parse('$_baseUrl/posts/$postId/upvote'),
-        headers: _authHeaders(token),
-      );
-
-      if (response.statusCode == 401) {
-        return const UpvoteResult(status: UpvoteStatus.unauthorized);
-      }
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data is Map<String, dynamic>) {
-          return UpvoteResult(
-            status: UpvoteStatus.success,
-            post: FeedPost.fromJson(data),
-          );
-        }
-      }
-
-      return UpvoteResult(
-        status: UpvoteStatus.error,
-        errorMessage: 'HTTP ${response.statusCode}',
-      );
-    } catch (e) {
-      return UpvoteResult(
-        status: UpvoteStatus.error,
-        errorMessage: e.toString(),
-      );
+  Future<dynamic> _authedRequest(String method, String path) async {
+    final token = await _authService.getAccessToken();
+    if (token == null || token.isEmpty) {
+      throw UnauthorizedException();
     }
+
+    final uri = Uri.parse('$_baseUrl$path');
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    http.Response response;
+    try {
+      switch (method) {
+        case 'POST':
+          response = await http.post(uri, headers: headers);
+          break;
+        case 'DELETE':
+          response = await http.delete(uri, headers: headers);
+          break;
+        default:
+          response = await http.get(uri, headers: headers);
+      }
+    } on SocketException catch (e) {
+      throw ApiException('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw ApiException('Network error: $e');
+    }
+
+    // buildApiException maps 401 → UnauthorizedException.
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw buildApiException(response);
+    }
+    return jsonDecode(response.body);
   }
 }

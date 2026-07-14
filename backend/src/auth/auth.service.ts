@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -60,36 +59,23 @@ export class AuthService {
   }
 
   async register(email: string, password: string, username: string) {
-    const existingUser = await this.usersService.findByEmail(email);
-    if (existingUser) {
-      throw new ConflictException('mail already in use');
-    }
+    // UsersService.create maps P2002 → ConflictException (single source of truth).
+    const newUser = await this.usersService.create(email, password, username);
 
-    try {
-      const newUser = await this.usersService.create(email, password, username);
+    const accessToken = this.generateAccessToken(newUser);
+    const refreshToken = await this.generateRefreshToken(newUser.id);
 
-      const accessToken = this.generateAccessToken(newUser);
-      const refreshToken = await this.generateRefreshToken(newUser.id);
-
-      return {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          username: newUser.username,
-          avatarUrl: newUser.avatarUrl,
-          avatarKey: newUser.avatarKey,
-        },
-      };
-    } catch (error) {
-      // Handle Prisma unique constraint violation (P2002)
-      if (error.code === 'P2002') {
-        throw new ConflictException('mail already in use');
-      }
-      // Re-throw other errors
-      throw error;
-    }
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        username: newUser.username,
+        avatarUrl: newUser.avatarUrl,
+        avatarKey: newUser.avatarKey,
+      },
+    };
   }
 
   async login(email: string, password: string) {
@@ -152,19 +138,14 @@ export class AuthService {
     const normalizedUsername =
       typeof updates.username === 'string' ? updates.username.trim() : undefined;
 
+    // Email/username shape is validated by UpdateProfileDto (@IsEmail / @MinLength).
     const payload: { email?: string; username?: string } = {};
 
     if (normalizedEmail) {
-      if (!this.isValidEmail(normalizedEmail)) {
-        throw new BadRequestException('Invalid email');
-      }
       payload.email = normalizedEmail;
     }
 
     if (normalizedUsername) {
-      if (normalizedUsername.length < 3) {
-        throw new BadRequestException('Username too short');
-      }
       payload.username = normalizedUsername;
     }
 
@@ -185,9 +166,5 @@ export class AuthService {
         avatarKey: updatedUser.avatarKey,
       },
     };
-  }
-
-  private isValidEmail(email: string): boolean {
-    return /^[^@]+@[^@]+\.[^@]+$/.test(email);
   }
 }

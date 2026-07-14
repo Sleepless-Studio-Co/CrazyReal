@@ -13,9 +13,6 @@ import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth
 import { PrismaService } from './prisma/prisma.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
-import { readdirSync } from 'fs';
-import { join } from 'path';
-import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CurrentUser } from './auth/current-user.decorator';
 import { ChallengeType } from '@prisma/client';
@@ -97,13 +94,13 @@ export class AppController {
   @Get('challenge/current')
   @ApiOperation({ summary: 'Récupérer le challenge actuel' })
   @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
-  async getCurrentChallenge(@I18n() i18n: I18nContext) {
+  async getCurrentChallenge() {
     const now = new Date();
 
     const currentChallenge = await this.getCurrentChallengeForDate(now);
 
     if (!currentChallenge) {
-      throw new NotFoundException(await i18n.t('challenge.not_found') || 'Aucun challenge global actif n\'a été trouvé pour la date et l\'heure actuelles.');
+      throw new NotFoundException('Aucun challenge global actif n\'a été trouvé pour la date et l\'heure actuelles.');
     }
 
     return currentChallenge;
@@ -134,14 +131,12 @@ export class AppController {
       },
     }),
   }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any, @I18n() i18n: I18nContext) {
-    console.log(await i18n.t('common.loading'), file.filename);
-
+  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
     const now = new Date();
     const currentChallenge = await this.getCurrentChallengeForDate(now);
 
     if (!currentChallenge) {
-      throw new BadRequestException(await i18n.t('challenge.not_active') || 'Aucun challenge actif n\'est disponible pour poster en ce moment.');
+      throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
     }
 
     const post = await this.prisma.post.create({
@@ -158,13 +153,6 @@ export class AppController {
     this.feedGateway.broadcastNewPost(formattedPost);
 
     return formattedPost;
-  }
-
-  @Get('uploads')
-  async getUploads() {
-    const uploadsDir = join(process.cwd(), 'uploads');
-    const files = readdirSync(uploadsDir);
-    return { files: files.map(file => `/uploads/${file}`) };
   }
 
   @Get('posts')

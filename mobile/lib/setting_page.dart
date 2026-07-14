@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
+import 'services/api_exception.dart';
 
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
@@ -31,27 +31,11 @@ class _SettingPageState extends State<SettingPage> {
   bool _isPrivate = false;
   bool _isPrivacySaving = false;
   bool _isDeleting = false;
-  PermissionStatus? _micStatus;
-  PermissionStatus? _camStatus;
-  PermissionStatus? _locStatus;
 
   @override
   void initState() {
     super.initState();
     _loadPrivacy();
-    _loadPermissions();
-  }
-
-  Future<void> _loadPermissions() async {
-    final mic = await Permission.microphone.status;
-    final cam = await Permission.camera.status;
-    final loc = await Permission.location.status;
-    if (!mounted) return;
-    setState(() {
-      _micStatus = mic;
-      _camStatus = cam;
-      _locStatus = loc;
-    });
   }
 
   Future<void> _loadPrivacy() async {
@@ -72,8 +56,10 @@ class _SettingPageState extends State<SettingPage> {
           _isPrivate = u is Map ? (u['isPrivate'] == true) : value;
         });
       }
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
     } catch (e) {
-      _showError(e.toString().replaceFirst('Exception: ', ''));
+      _showError(e.toString());
     } finally {
       if (mounted) setState(() => _isPrivacySaving = false);
     }
@@ -105,32 +91,12 @@ class _SettingPageState extends State<SettingPage> {
     try {
       await _authService.deleteAccount();
       if (mounted) widget.onLoggedOut();
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
     } catch (e) {
-      final msg = e.toString().replaceFirst('Exception: ', '');
-      if (msg.toLowerCase().contains('unauthorized')) {
-        if (mounted) widget.onUnauthorized();
-        return;
-      }
-      _showError(msg);
+      _showError(e.toString());
       if (mounted) setState(() => _isDeleting = false);
     }
-  }
-
-  void _showPermissionsInfo() {
-    final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.permissions),
-        content: Text(l10n.permissionsInfo),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _showLanguagePicker() async {
@@ -214,30 +180,6 @@ class _SettingPageState extends State<SettingPage> {
               icon: Icons.block,
               title: l10n.blockedUsers,
               onTap: _showComingSoon,
-            ),
-          ]),
-          const SizedBox(height: 16),
-          _SectionHeader(l10n.permissions),
-          _SettingCard(children: [
-            _NavTile(
-              icon: Icons.mic_none,
-              title: 'Microphone',
-              onTap: _showPermissionsInfo,
-              permStatus: _micStatus,
-            ),
-            const Divider(height: 1, indent: 56),
-            _NavTile(
-              icon: Icons.videocam_outlined,
-              title: 'Caméra',
-              onTap: _showPermissionsInfo,
-              permStatus: _camStatus,
-            ),
-            const Divider(height: 1, indent: 56),
-            _NavTile(
-              icon: Icons.location_on_outlined,
-              title: 'Localisation',
-              onTap: _showPermissionsInfo,
-              permStatus: _locStatus,
             ),
           ]),
           const SizedBox(height: 16),
@@ -366,7 +308,6 @@ class _NavTile extends StatelessWidget {
     this.iconColor,
     this.titleColor,
     this.loading = false,
-    this.permStatus,
   });
 
   final IconData icon;
@@ -376,7 +317,6 @@ class _NavTile extends StatelessWidget {
   final Color? iconColor;
   final Color? titleColor;
   final bool loading;
-  final PermissionStatus? permStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -386,17 +326,6 @@ class _NavTile extends StatelessWidget {
         width: 20,
         height: 20,
         child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    } else if (permStatus != null) {
-      final granted = permStatus == PermissionStatus.granted ||
-          permStatus == PermissionStatus.limited;
-      trailing = Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: granted ? Colors.green : Colors.grey,
-        ),
       );
     } else {
       trailing = const Icon(Icons.chevron_right, color: _inkMuted, size: 20);

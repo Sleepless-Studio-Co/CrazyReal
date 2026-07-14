@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'l10n/app_localizations.dart';
 import 'auth/auth_service.dart';
+import 'utils/media_url.dart';
 
-final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+final String baseUrl = apiBaseUrl;
 
 class NewPage extends StatefulWidget {
   const NewPage({

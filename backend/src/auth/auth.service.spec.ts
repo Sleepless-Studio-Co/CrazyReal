@@ -72,7 +72,6 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should register a user successfully', async () => {
-      usersServiceMock.findByEmail.mockResolvedValue(null);
       usersServiceMock.create.mockResolvedValue({
         id: 1,
         email: 'john@example.com',
@@ -90,7 +89,6 @@ describe('AuthService', () => {
           username: 'john',
         },
       });
-      expect(usersServiceMock.findByEmail).toHaveBeenCalledWith('john@example.com');
       expect(usersServiceMock.create).toHaveBeenCalledWith(
         'john@example.com',
         'StrongPassword123!',
@@ -111,13 +109,13 @@ describe('AuthService', () => {
     });
 
     it('should throw ConflictException when email is already used', async () => {
-      usersServiceMock.findByEmail.mockResolvedValue({ id: 99, email: 'john@example.com' });
+      // UsersService.create is the single source of truth for the P2002 → 409 mapping.
+      usersServiceMock.create.mockRejectedValue(new ConflictException('mail already in use'));
 
       await expect(
         service.register('john@example.com', 'StrongPassword123!', 'john'),
       ).rejects.toThrow(ConflictException);
 
-      expect(usersServiceMock.create).not.toHaveBeenCalled();
       expect(jwtServiceMock.sign).not.toHaveBeenCalled();
       expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
     });

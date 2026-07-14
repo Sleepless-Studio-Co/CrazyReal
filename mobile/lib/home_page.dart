@@ -6,6 +6,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import 'l10n/app_localizations.dart';
 import 'models/feed_post.dart';
+import 'services/api_exception.dart';
 import 'services/feed_service.dart';
 import 'utils/media_url.dart';
 import 'widgets/post_card.dart';
@@ -80,33 +81,29 @@ class HomePageState extends State<HomePage> {
       setState(() => _isRefreshing = true);
     }
 
-    final result = await _feedService.fetchPosts();
+    try {
+      final posts = await _feedService.fetchPosts();
+      if (!mounted) return;
 
-    if (!mounted) return;
-
-    if (result.status == FeedFetchStatus.unauthorized) {
-      widget.onUnauthorized();
-      return;
-    }
-
-    if (result.status == FeedFetchStatus.error) {
+      final shouldUpdate = !FeedPost.sameVoteState(_posts, posts);
+      setState(() {
+        if (shouldUpdate) {
+          _posts = posts;
+        }
+        _isLoading = false;
+        _isRefreshing = false;
+        _errorMessage = null;
+      });
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _isRefreshing = false;
-        _errorMessage = result.errorMessage;
+        _errorMessage = e.toString();
       });
-      return;
     }
-
-    final shouldUpdate = !FeedPost.sameVoteState(_posts, result.posts);
-    setState(() {
-      if (shouldUpdate) {
-        _posts = result.posts;
-      }
-      _isLoading = false;
-      _isRefreshing = false;
-      _errorMessage = null;
-    });
   }
 
   Future<void> _loadChallengeSubtitle() async {
@@ -171,25 +168,19 @@ class HomePageState extends State<HomePage> {
       );
     });
 
-    final result = wasUpvoted
-        ? await _feedService.removeUpvote(postId)
-        : await _feedService.upvotePost(postId);
-
-    if (!mounted) return;
-
-    if (result.status == UpvoteStatus.unauthorized) {
+    try {
+      final post = wasUpvoted
+          ? await _feedService.removeUpvote(postId)
+          : await _feedService.upvotePost(postId);
+      if (!mounted) return;
+      setState(() => _posts[index] = post);
+    } on UnauthorizedException {
+      if (!mounted) return;
       setState(() => _posts[index] = original);
       widget.onUnauthorized();
-      return;
-    }
-
-    if (result.status != UpvoteStatus.success) {
+    } catch (_) {
+      if (!mounted) return;
       setState(() => _posts[index] = original);
-      return;
-    }
-
-    if (result.post != null) {
-      setState(() => _posts[index] = result.post!);
     }
   }
 

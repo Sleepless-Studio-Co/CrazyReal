@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../auth/auth_service.dart';
+import '../utils/media_url.dart';
 import 'api_exception.dart';
 
 class ChatService {
-  final String baseUrl = '${dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000'}/chat';
+  final String baseUrl = '$apiBaseUrl/chat';
   final AuthService _authService = AuthService();
 
   Future<String> _getToken() async {
