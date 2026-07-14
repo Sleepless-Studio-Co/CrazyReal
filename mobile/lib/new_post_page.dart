@@ -25,7 +25,10 @@ class NewPage extends StatefulWidget {
 class _NewPageState extends State<NewPage> {
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
-  String? challengeText;
+  // Défis réalisables : global courant + défis de mes groupes actifs.
+  List<Map<String, dynamic>> _challenges = [];
+  int? _selectedChallengeId;
+  String? challengeError;
   bool isUploading = false;
   List<CameraDescription> _cameras = [];
   int _currentCameraIndex = 0;
@@ -35,7 +38,7 @@ class _NewPageState extends State<NewPage> {
   void initState() {
     super.initState();
     _initializeCamera();
-    fetchChallenge();
+    fetchChallenges();
   }
 
   Future<void> _initializeCamera() async {
@@ -106,7 +109,7 @@ class _NewPageState extends State<NewPage> {
     }
   }
 
-  Future<void> fetchChallenge() async {
+  Future<void> fetchChallenges() async {
     try {
       final authService = AuthService();
       final token = await authService.getAccessToken();
@@ -119,16 +122,19 @@ class _NewPageState extends State<NewPage> {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/challenge/current'),
+        Uri.parse('$baseUrl/challenges/available'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(response.body) as List<dynamic>;
         if (!mounted) return;
         setState(() {
-          challengeText = data['description']?.toString() ??
-              data['title']?.toString();
+          _challenges =
+              data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          _selectedChallengeId =
+              _challenges.isNotEmpty ? _challenges.first['id'] as int : null;
+          challengeError = null;
         });
       } else if (response.statusCode == 401) {
         if (mounted) {
@@ -137,15 +143,26 @@ class _NewPageState extends State<NewPage> {
       } else {
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
-          setState(() => challengeText = l10n.serverError('${response.statusCode}').replaceAll('{code}', '${response.statusCode}'));
+          setState(() => challengeError = l10n
+              .serverError('${response.statusCode}')
+              .replaceAll('{code}', '${response.statusCode}'));
         }
       }
     } catch (e) {
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
-        setState(() => challengeText = l10n.connectionError('$e'));
+        setState(() => challengeError = l10n.connectionError('$e'));
       }
     }
+  }
+
+  String _challengeLabel(Map<String, dynamic> c) {
+    final title = c['title']?.toString() ?? '';
+    final group = c['group'];
+    if (group is Map && group['name'] != null) {
+      return '${group['name']} · $title';
+    }
+    return title;
   }
 
   Future<void> takeAndUploadPicture() async {
@@ -173,10 +190,13 @@ class _NewPageState extends State<NewPage> {
 
       final image = await _controller!.takePicture();
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/posts'));
-      
+
       request.headers['Authorization'] = 'Bearer $token';
-      
+
       request.files.add(await http.MultipartFile.fromPath('file', image.path));
+      if (_selectedChallengeId != null) {
+        request.fields['challengeId'] = _selectedChallengeId.toString();
+      }
       var response = await request.send();
 
       print('Upload response status: ${response.statusCode}');
@@ -221,6 +241,61 @@ class _NewPageState extends State<NewPage> {
     super.dispose();
   }
 
+  Widget _buildChallengePicker(AppLocalizations l10n) {
+    if (challengeError != null) {
+      return Text(
+        challengeError!,
+        style: const TextStyle(fontSize: 14, color: Colors.red),
+        textAlign: TextAlign.center,
+      );
+    }
+    if (_challenges.isEmpty) {
+      return Text(
+        l10n.loadingChallenge,
+        style: const TextStyle(
+            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+        textAlign: TextAlign.center,
+      );
+    }
+
+    final selected = _challenges.firstWhere(
+      (c) => c['id'] == _selectedChallengeId,
+      orElse: () => _challenges.first,
+    );
+    final description = selected['description']?.toString() ?? '';
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DropdownButton<int>(
+          value: _selectedChallengeId,
+          isExpanded: true,
+          underline: const SizedBox.shrink(),
+          items: _challenges
+              .map((c) => DropdownMenuItem<int>(
+                    value: c['id'] as int,
+                    child: Text(
+                      _challengeLabel(c),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ))
+              .toList(),
+          onChanged: (id) => setState(() => _selectedChallengeId = id),
+        ),
+        if (description.isNotEmpty)
+          Text(
+            description,
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            textAlign: TextAlign.center,
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -229,18 +304,10 @@ class _NewPageState extends State<NewPage> {
       body: Column(
         children: [
           Container(
-            height: 90,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             color: const Color(0xFFF7EBD1),
             width: double.infinity,
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Text(
-                challengeText ?? l10n.loadingChallenge,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
-                textAlign: TextAlign.center,
-              ),
-            ),
+            child: _buildChallengePicker(l10n),
           ),
 
           // LA CAMÉRA

@@ -19,6 +19,12 @@ class FeedService {
     return FeedPost.listFromJson(data);
   }
 
+  /// Feed privé d'un groupe : posts réalisés sur les défis de ce groupe.
+  Future<List<FeedPost>> fetchGroupPosts(int conversationId) async {
+    final data = await _authedRequest('GET', '/chat/$conversationId/feed');
+    return FeedPost.listFromJson(data);
+  }
+
   Future<FeedChallengeSummary?> fetchCurrentChallenge() async {
     try {
       final token = await _authService.getAccessToken();

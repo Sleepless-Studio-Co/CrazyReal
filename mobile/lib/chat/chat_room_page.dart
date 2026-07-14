@@ -6,6 +6,8 @@ import '../services/chat_service.dart';
 import '../services/chat_socket_service.dart';
 import '../services/api_exception.dart';
 import 'group_members_page.dart';
+import 'group_challenges_tab.dart';
+import 'group_feed_tab.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final int conversationId;
@@ -382,26 +384,61 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.conversationName),
-        actions: [
-          if (widget.isGroup)
-            IconButton(
-              icon: const Icon(Icons.group),
-              tooltip: 'Membres du groupe',
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      GroupMembersPage(conversationId: widget.conversationId),
-                ),
-              ),
+    final appBarActions = [
+      if (widget.isGroup)
+        IconButton(
+          icon: const Icon(Icons.group),
+          tooltip: 'Membres du groupe',
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  GroupMembersPage(conversationId: widget.conversationId),
             ),
-        ],
+          ),
+        ),
+    ];
+
+    // Conversation 1-à-1 : pas d'onglets, juste le chat.
+    if (!widget.isGroup) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.conversationName),
+          actions: appBarActions,
+        ),
+        body: _buildChatBody(),
+      );
+    }
+
+    // Groupe : onglets Chat / Défis / Feed privé.
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.conversationName),
+          actions: appBarActions,
+          bottom: const TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.chat_bubble_outline), text: 'Chat'),
+              Tab(icon: Icon(Icons.emoji_events_outlined), text: 'Défis'),
+              Tab(icon: Icon(Icons.photo_library_outlined), text: 'Feed'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildChatBody(),
+            GroupChallengesTab(conversationId: widget.conversationId),
+            GroupFeedTab(conversationId: widget.conversationId),
+          ],
+        ),
       ),
-      body: Column(
-        children: [
+    );
+  }
+
+  Widget _buildChatBody() {
+    return Column(
+      children: [
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -437,8 +474,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
             ),
           _buildInput(),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildBubble(Map<String, dynamic> msg) {

@@ -32,7 +32,13 @@ model Challenge {
   updatedAt   DateTime      @default(now()) @updatedAt
   posts       Post[]
 
-  @@unique([date, type])
+  // null = challenge global (rotatif) ; sinon = défi propre à un groupe.
+  conversationId Int?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  // Fin explicite pour les défis de groupe ; null => durée dérivée du `type` (global).
+  endsAt         DateTime?
+
+  @@unique([date, type, conversationId])
 }
 
 model Post {
@@ -59,19 +65,19 @@ model UpVote {
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  password      String
-  username      String         @unique
-  avatarUrl     String?
-  avatarKey     String?
-  isPrivate     Boolean        @default(false)
-  createdAt     DateTime       @default(now())
-  posts         Post[]
-  upVotes       UpVote[]
-  refreshTokens RefreshToken[]
-  sentRequests Friendship[] @relation("SentRequests")
-  receivedRequests Friendship[] @relation("ReceivedRequests")
+  id               Int            @id @default(autoincrement())
+  email            String         @unique
+  password         String
+  username         String         @unique
+  avatarUrl        String?
+  avatarKey        String?
+  isPrivate        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  posts            Post[]
+  upVotes          UpVote[]
+  refreshTokens    RefreshToken[]
+  sentRequests     Friendship[]   @relation("SentRequests")
+  receivedRequests Friendship[]   @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
 }
@@ -108,6 +114,7 @@ model Conversation {
 
   messages     Message[]
   participants Participant[]
+  challenges   Challenge[]
 }
 
 model Participant {
@@ -117,19 +124,19 @@ model Participant {
   role           ParticipantRole @default(MEMBER)
   joinedAt       DateTime        @default(now())
 
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@unique([userId, conversationId])
 }
 
 model Message {
-  id             Int          @id @default(autoincrement())
+  id             Int      @id @default(autoincrement())
   content        String
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime @default(now())
   senderId       Int
   conversationId Int
-  
-  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 }
