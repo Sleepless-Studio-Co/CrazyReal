@@ -311,4 +311,57 @@ class AppLocalizationsFr extends AppLocalizations {
   String timeAgoDays(int days) {
     return 'Il y a $days j';
   }
+
+  @override
+  String get deleteAccount => 'Supprimer le compte';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Supprimer ton compte ?';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'Toutes tes données seront définitivement supprimées. Cette action est irréversible.';
+
+  @override
+  String get privacy => 'Confidentialité';
+
+  @override
+  String get blockedUsers => 'Utilisateurs bloqués';
+
+  @override
+  String get permissions => 'Autorisations';
+
+  @override
+  String get permissionsInfo =>
+      'Pour gérer l\'accès au micro, à la caméra et à la localisation, va dans Réglages > CrazyReal sur ton téléphone.';
+
+  @override
+  String get accessibility => 'Accessibilité';
+
+  @override
+  String get language => 'Langue';
+
+  @override
+  String get helpCenter => 'Aide';
+
+  @override
+  String get helpInfo =>
+      'Pour toute aide ou retour, contacte-nous à support@crazyreal.app';
+
+  @override
+  String get privateAccount => 'Compte privé';
+
+  @override
+  String get publicAccount => 'Compte public';
+
+  @override
+  String get privateAccountDesc =>
+      'Seuls tes amis acceptés voient ton profil et tes défis.';
+
+  @override
+  String get publicAccountDesc =>
+      'Tout le monde peut voir ton profil et tes défis.';
+
+  @override
+  String get comingSoon => 'Bientôt disponible';
 }

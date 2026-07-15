@@ -503,5 +503,53 @@
         "type": "int"
       }
     }
-  }
+  },
+
+  "deleteAccount": "Delete account",
+  "@deleteAccount": { "description": "Delete account button" },
+
+  "deleteAccountConfirmTitle": "Delete your account?",
+  "@deleteAccountConfirmTitle": { "description": "Confirm delete account dialog title" },
+
+  "deleteAccountConfirmBody": "All your data will be permanently deleted. This cannot be undone.",
+  "@deleteAccountConfirmBody": { "description": "Confirm delete account dialog body" },
+
+  "privacy": "Privacy",
+  "@privacy": { "description": "Privacy settings section header" },
+
+  "blockedUsers": "Blocked users",
+  "@blockedUsers": { "description": "Blocked users setting tile" },
+
+  "permissions": "Permissions",
+  "@permissions": { "description": "Permissions settings section header" },
+
+  "permissionsInfo": "To manage microphone, camera and location access for CrazyReal, go to your phone Settings > CrazyReal.",
+  "@permissionsInfo": { "description": "Info shown when user taps a permission tile" },
+
+  "accessibility": "Accessibility",
+  "@accessibility": { "description": "Accessibility settings section header" },
+
+  "language": "Language",
+  "@language": { "description": "Language setting tile" },
+
+  "helpCenter": "Help",
+  "@helpCenter": { "description": "Help section header and tile" },
+
+  "helpInfo": "For any help or feedback, contact us at support@crazyreal.app",
+  "@helpInfo": { "description": "Help dialog body" },
+
+  "privateAccount": "Private account",
+  "@privateAccount": { "description": "Private account label" },
+
+  "publicAccount": "Public account",
+  "@publicAccount": { "description": "Public account label" },
+
+  "privateAccountDesc": "Only accepted friends see your profile and challenges.",
+  "@privateAccountDesc": { "description": "Private account description" },
+
+  "publicAccountDesc": "Everyone can see your profile and challenges.",
+  "@publicAccountDesc": { "description": "Public account description" },
+
+  "comingSoon": "Coming soon",
+  "@comingSoon": { "description": "Coming soon message for unimplemented features" }
 }
