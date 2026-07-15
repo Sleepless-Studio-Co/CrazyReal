@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
@@ -146,14 +146,9 @@ class PostCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 InkWell(
-                  onTap: () async {
-                    await Clipboard.setData(ClipboardData(text: photoUrl));
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.photoLinkCopied)),
-                      );
-                    }
-                  },
+                  onTap: photoUrl.isEmpty
+                      ? null
+                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
                   borderRadius: BorderRadius.circular(20),
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
