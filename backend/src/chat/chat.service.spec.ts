@@ -27,6 +27,10 @@ describe('ChatService', () => {
       create: jest.Mock;
       findMany: jest.Mock;
     };
+    challenge: {
+      create: jest.Mock;
+      findMany: jest.Mock;
+    };
   };
 
   beforeEach(async () => {
@@ -49,6 +53,10 @@ describe('ChatService', () => {
         findMany: jest.fn(),
       },
       message: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+      },
+      challenge: {
         create: jest.fn(),
         findMany: jest.fn(),
       },
@@ -252,6 +260,46 @@ describe('ChatService', () => {
         data: { role: 'MEMBER' },
       });
       expect(result).toEqual({ id: 12, role: 'MEMBER' });
+    });
+  });
+
+  describe('createGroupChallenge', () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000);
+
+    it('should throw ForbiddenException when user is not a participant', async () => {
+      prismaService.participant.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.createGroupChallenge(1, 2, 'Défi', '', future),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prismaService.challenge.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when endsAt is in the past', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1 });
+      const past = new Date(Date.now() - 1000);
+
+      await expect(
+        service.createGroupChallenge(1, 1, 'Défi', '', past),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prismaService.challenge.create).not.toHaveBeenCalled();
+    });
+
+    it('should create the challenge scoped to the conversation', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1 });
+      prismaService.challenge.create.mockResolvedValue({ id: 7 });
+
+      const result = await service.createGroupChallenge(1, 1, 'Défi', 'desc', future);
+
+      expect(prismaService.challenge.create).toHaveBeenCalledWith({
+        data: {
+          title: 'Défi',
+          description: 'desc',
+          conversationId: 1,
+          endsAt: future,
+        },
+      });
+      expect(result).toEqual({ id: 7 });
     });
   });
 

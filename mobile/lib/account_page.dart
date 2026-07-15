@@ -1,73 +1,19 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
-
-final String _apiBaseUrl =
-  dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+import 'services/api_exception.dart';
+import 'utils/media_url.dart';
+import 'widgets/feed_avatar.dart';
 
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
 const Color _cardColor = Color(0xFFFFF7E6);
 const Color _accentColor = Color(0xFFB85C38);
-
-class _AvatarOption {
-  const _AvatarOption({
-    required this.id,
-    required this.background,
-    required this.foreground,
-    required this.icon,
-  });
-
-  final String id;
-  final Color background;
-  final Color foreground;
-  final IconData icon;
-}
-
-const List<_AvatarOption> _avatarOptions = [
-  _AvatarOption(
-    id: 'ember',
-    background: Color(0xFFE9B384),
-    foreground: Color(0xFF3C2A21),
-    icon: Icons.whatshot_outlined,
-  ),
-  _AvatarOption(
-    id: 'sea',
-    background: Color(0xFF9FC0B9),
-    foreground: Color(0xFF1E3D3A),
-    icon: Icons.waves_outlined,
-  ),
-  _AvatarOption(
-    id: 'citrus',
-    background: Color(0xFFF7E27C),
-    foreground: Color(0xFF5E4B0A),
-    icon: Icons.emoji_food_beverage_outlined,
-  ),
-  _AvatarOption(
-    id: 'berry',
-    background: Color(0xFFD4A5A5),
-    foreground: Color(0xFF4D2020),
-    icon: Icons.favorite_border,
-  ),
-  _AvatarOption(
-    id: 'noon',
-    background: Color(0xFFB1C5E5),
-    foreground: Color(0xFF1F2F4A),
-    icon: Icons.sports_tennis_outlined,
-  ),
-  _AvatarOption(
-    id: 'terra',
-    background: Color(0xFFCBB39B),
-    foreground: Color(0xFF4E3722),
-    icon: Icons.terrain_outlined,
-  ),
-];
 
 class AccountPage extends StatefulWidget {
   const AccountPage({
@@ -97,8 +43,6 @@ class _AccountPageState extends State<AccountPage> {
   String? _errorMessage;
   String? _avatarUrl;
   String? _avatarKey;
-  bool _isPrivate = false;
-  bool _isPrivacySaving = false;
   Uint8List? _pendingAvatarBytes;
 
   @override
@@ -156,7 +100,6 @@ class _AccountPageState extends State<AccountPage> {
   void _syncAvatarFromUser(Map<String, dynamic> user) {
     _avatarUrl = user['avatarUrl']?.toString();
     _avatarKey = user['avatarKey']?.toString();
-    _isPrivate = user['isPrivate'] == true;
   }
 
   void _startEditing() {
@@ -230,22 +173,19 @@ class _AccountPageState extends State<AccountPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated)),
       );
-    } catch (e) {
-      final message = e.toString().replaceFirst('Exception: ', '');
-      if (message.toLowerCase().contains('unauthorized')) {
-        if (mounted) {
-          setState(() {
-            _isSaving = false;
-          });
-          widget.onUnauthorized();
-        }
-        return;
+    } on UnauthorizedException {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+        widget.onUnauthorized();
       }
-
+      return;
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _errorMessage = message;
+        _errorMessage = e.toString();
       });
     }
   }
@@ -324,41 +264,11 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _removeCustomAvatar() async {
-    await _selectBaseAvatar(_avatarOptions.first.id);
-  }
-
-  Future<void> _togglePrivacy(bool value) async {
-    setState(() {
-      _isPrivacySaving = true;
-    });
-
-    try {
-      final result = await _authService.updatePrivacy(value);
-      final updatedUser = result['user'];
-      if (updatedUser is Map<String, dynamic>) {
-        _user = updatedUser;
-        _syncAvatarFromUser(updatedUser);
-      } else {
-        // Fallback in case the backend response shape changes: still
-        // reflect the toggle locally so the UI doesn't feel stuck.
-        setState(() {
-          _isPrivate = value;
-        });
-      }
-    } catch (e) {
-      _handleAvatarError(e);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isPrivacySaving = false;
-        });
-      }
-    }
+    await _selectBaseAvatar(kAvatarOptions.first.id);
   }
 
   void _handleAvatarError(Object error) {
-    final message = error.toString().replaceFirst('Exception: ', '');
-    if (message.toLowerCase().contains('unauthorized')) {
+    if (error is UnauthorizedException) {
       if (mounted) {
         widget.onUnauthorized();
       }
@@ -368,18 +278,18 @@ class _AccountPageState extends State<AccountPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(error.toString()),
         backgroundColor: Colors.red,
       ),
     );
   }
 
-  _AvatarOption _resolveAvatarOption() {
+  AvatarOption _resolveAvatarOption() {
     final id = _avatarKey;
-    if (id == null) return _avatarOptions.first;
-    return _avatarOptions.firstWhere(
+    if (id == null) return kAvatarOptions.first;
+    return kAvatarOptions.firstWhere(
       (option) => option.id == id,
-      orElse: () => _avatarOptions.first,
+      orElse: () => kAvatarOptions.first,
     );
   }
 
@@ -414,7 +324,7 @@ class _AccountPageState extends State<AccountPage> {
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
-                  children: _avatarOptions
+                  children: kAvatarOptions
                       .map(
                         (option) => _buildAvatarChoice(
                           option: option,
@@ -495,8 +405,6 @@ class _AccountPageState extends State<AccountPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _buildProfileHeader(l10n),
-        const SizedBox(height: 16),
-        _buildPrivacyCard(l10n),
         if (_isEditing) ...[
           const SizedBox(height: 16),
           _buildEditCard(l10n),
@@ -504,60 +412,6 @@ class _AccountPageState extends State<AccountPage> {
         const SizedBox(height: 16),
         _isEditing ? _buildSaveCard(l10n) : _buildLogoutCard(l10n),
       ],
-    );
-  }
-
-  Widget _buildPrivacyCard(AppLocalizations l10n) {
-    return _buildCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0DFC2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              _isPrivate ? Icons.lock_outline : Icons.public,
-              color: _accentColor,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  // TODO: move to AppLocalizations once the key is added
-                  // to the .arb files (e.g. l10n.privateAccount).
-                  _isPrivate ? 'Compte privé' : 'Compte public',
-                  style: _valueStyle(context),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _isPrivate
-                      ? 'Seuls tes amis acceptés voient ton profil et tes défis.'
-                      : 'Tout le monde peut voir ton profil et tes défis.',
-                  style: _mutedStyle(context),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          _isPrivacySaving
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Switch(
-                  value: _isPrivate,
-                  activeColor: _accentColor,
-                  onChanged: _togglePrivacy,
-                ),
-        ],
-      ),
     );
   }
 
@@ -814,7 +668,7 @@ class _AccountPageState extends State<AccountPage> {
         ),
       );
     } else if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
-      final resolvedAvatarUrl = _resolveMediaUrl(_avatarUrl!);
+      final resolvedAvatarUrl = resolveMediaUrl(_avatarUrl!)!;
       avatarInner = ClipOval(
         child: Image.network(
           resolvedAvatarUrl,
@@ -925,38 +779,8 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  String _resolveMediaUrl(String rawUrl) {
-    if (rawUrl.isEmpty) return rawUrl;
-
-    final configuredBase = _apiBaseUrl.endsWith('/')
-        ? _apiBaseUrl.substring(0, _apiBaseUrl.length - 1)
-        : _apiBaseUrl;
-    final configuredUri = Uri.tryParse(configuredBase);
-
-    if (rawUrl.startsWith('/')) {
-      return '$configuredBase$rawUrl';
-    }
-
-    final uri = Uri.tryParse(rawUrl);
-    if (uri != null && uri.hasScheme) {
-      final host = uri.host.toLowerCase();
-      if ((host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2') && configuredUri != null) {
-        return uri
-            .replace(
-              scheme: configuredUri.scheme,
-              host: configuredUri.host,
-              port: configuredUri.hasPort ? configuredUri.port : null,
-            )
-            .toString();
-      }
-      return rawUrl;
-    }
-
-    return '$configuredBase/$rawUrl';
-  }
-
   Widget _buildAvatarChoice({
-    required _AvatarOption option,
+    required AvatarOption option,
     required bool isSelected,
     required VoidCallback onTap,
   }) {

@@ -395,6 +395,31 @@
     "description": "Error message for an invalid friend request"
   },
 
+  "searchUsersHint": "Search by username",
+  "@searchUsersHint": {
+    "description": "Hint in the add-friend search field"
+  },
+
+  "accountPublic": "Public",
+  "@accountPublic": {
+    "description": "Badge for a public account"
+  },
+
+  "accountPrivate": "Private",
+  "@accountPrivate": {
+    "description": "Badge for a private account"
+  },
+
+  "noUsersFound": "No user found",
+  "@noUsersFound": {
+    "description": "Shown when a username search returns nothing"
+  },
+
+  "requestSentShort": "Sent",
+  "@requestSentShort": {
+    "description": "Short label shown after a friend request was sent"
+  },
+
   "myFriends": "My Friends",
   "@myFriends": {
     "description": "Title and tab label for friend list"

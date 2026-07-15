@@ -249,6 +249,21 @@ class AppLocalizationsFr extends AppLocalizations {
       'Erreur : Utilisateur introuvable ou demande existante.';
 
   @override
+  String get searchUsersHint => 'Rechercher un pseudo';
+
+  @override
+  String get accountPublic => 'Public';
+
+  @override
+  String get accountPrivate => 'Privé';
+
+  @override
+  String get noUsersFound => 'Aucun utilisateur trouvé';
+
+  @override
+  String get requestSentShort => 'Envoyée';
+
+  @override
   String get myFriends => 'Mes Amis';
 
   @override

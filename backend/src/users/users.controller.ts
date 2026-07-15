@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -27,15 +28,8 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
-
-const BASE_AVATAR_KEYS = new Set([
-  'ember',
-  'sea',
-  'citrus',
-  'berry',
-  'noon',
-  'terra',
-]);
+import { UpdatePrivacyDto } from './dto/update-privacy.dto';
+import { UpdateAvatarKeyDto } from './dto/update-avatar-key.dto';
 
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/jpeg',
@@ -55,6 +49,20 @@ const ALLOWED_AVATAR_EXTENSIONS = new Set([
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  // Must be declared before GET :id, otherwise "search" is parsed as an id.
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Search users by username' })
+  @ApiResponse({ status: 200, description: 'Matching users with privacy flag' })
+  search(@Query('q') q: string, @CurrentUser() user: ValidatedUser) {
+    const query = (q ?? '').trim();
+    if (query.length < 1) {
+      return [];
+    }
+    return this.usersService.searchByUsername(query, user.userId);
+  }
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
@@ -90,12 +98,8 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Privacy setting updated' })
   async updatePrivacy(
     @CurrentUser() user: ValidatedUser,
-    @Body() body: { isPrivate?: boolean },
+    @Body() body: UpdatePrivacyDto,
   ) {
-    if (typeof body.isPrivate !== 'boolean') {
-      throw new BadRequestException('isPrivate must be a boolean');
-    }
-
     const updatedUser = await this.usersService.updatePrivacy(
       user.userId,
       body.isPrivate,
@@ -111,24 +115,12 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Avatar updated successfully' })
   async updateAvatarKey(
     @CurrentUser() user: ValidatedUser,
-    @Body() body: { avatarKey?: string | null },
+    @Body() body: UpdateAvatarKeyDto,
   ) {
-    const avatarKey = body.avatarKey;
-
-    if (avatarKey == null || avatarKey.trim() === '') {
-      throw new BadRequestException('avatarKey is required');
-    }
-
-    if (!BASE_AVATAR_KEYS.has(avatarKey)) {
-      throw new BadRequestException(
-        `Invalid avatarKey. Allowed values: ${Array.from(BASE_AVATAR_KEYS).join(', ')}`,
-      );
-    }
-
     const previousAvatarUrl = user.avatarUrl;
 
     const updatedUser = await this.usersService.updateAvatar(user.userId, {
-      avatarKey,
+      avatarKey: body.avatarKey,
       avatarUrl: null,
     });
 

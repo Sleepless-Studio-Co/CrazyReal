@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../auth/auth_service.dart';
+import '../utils/media_url.dart';
 import 'api_exception.dart';
 
 class ChatService {
-  final String baseUrl = '${dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000'}/chat';
+  final String baseUrl = '$apiBaseUrl/chat';
   final AuthService _authService = AuthService();
 
   Future<String> _getToken() async {
@@ -113,6 +113,40 @@ class ChatService {
       return jsonDecode(response.body);
     }
     throw buildApiException(response);
+  }
+
+  Future<List<dynamic>> getGroupChallenges(int conversationId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/$conversationId/challenges'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw buildApiException(response);
+  }
+
+  Future<Map<String, dynamic>> createGroupChallenge(
+    int conversationId, {
+    required String title,
+    required String description,
+    required DateTime endsAt,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/$conversationId/challenges'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'title': title,
+        'description': description,
+        'endsAt': endsAt.toUtc().toIso8601String(),
+      }),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> sendMessage(int conversationId, String content) async {
