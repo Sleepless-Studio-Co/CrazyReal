@@ -207,6 +207,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         _chatSocket.joinRoom(widget.conversationId);
         if (_socketWasConnected) _syncMissedMessages();
         _socketWasConnected = true;
+      } else {
+        // WS just dropped : poll immédiatement pour ne pas attendre le prochain
+        // tick (jusqu'à 5 s) avant de récupérer un message arrivé pile à la coupure.
+        _syncMissedMessages();
       }
     });
   }
