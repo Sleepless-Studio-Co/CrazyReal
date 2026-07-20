@@ -72,6 +72,17 @@ export class UsersController {
     return this.usersService.findPublicProfile(id, user.userId);
   }
 
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Delete the authenticated user account' })
+  @ApiResponse({ status: 200, description: 'Account deleted' })
+  async deleteAccount(@CurrentUser() user: ValidatedUser) {
+    await this.deleteStoredAvatar(user.avatarUrl);
+    await this.usersService.deleteAccount(user.userId);
+    return { message: 'Account deleted' };
+  }
+
   @Patch('me/privacy')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')

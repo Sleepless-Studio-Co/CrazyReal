@@ -662,6 +662,102 @@ abstract class AppLocalizations {
   /// **'{days} d ago'**
   String timeAgoDays(int days);
 
+  /// Delete account button
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccount;
+
+  /// Confirm delete account dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete your account?'**
+  String get deleteAccountConfirmTitle;
+
+  /// Confirm delete account dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'All your data will be permanently deleted. This cannot be undone.'**
+  String get deleteAccountConfirmBody;
+
+  /// Privacy settings section header
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacy;
+
+  /// Blocked users setting tile
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked users'**
+  String get blockedUsers;
+
+  /// Permissions settings section header
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get permissions;
+
+  /// Info shown when user taps a permission tile
+  ///
+  /// In en, this message translates to:
+  /// **'To manage microphone, camera and location access for CrazyReal, go to your phone Settings > CrazyReal.'**
+  String get permissionsInfo;
+
+  /// Accessibility settings section header
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get accessibility;
+
+  /// Language setting tile
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// Help section header and tile
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get helpCenter;
+
+  /// Help dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'For any help or feedback, contact us at support@crazyreal.app'**
+  String get helpInfo;
+
+  /// Private account label
+  ///
+  /// In en, this message translates to:
+  /// **'Private account'**
+  String get privateAccount;
+
+  /// Public account label
+  ///
+  /// In en, this message translates to:
+  /// **'Public account'**
+  String get publicAccount;
+
+  /// Private account description
+  ///
+  /// In en, this message translates to:
+  /// **'Only accepted friends see your profile and challenges.'**
+  String get privateAccountDesc;
+
+  /// Public account description
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone can see your profile and challenges.'**
+  String get publicAccountDesc;
+
+  /// Coming soon message for unimplemented features
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get comingSoon;
+
   /// Title for friend request notification
   ///
   /// In en, this message translates to:

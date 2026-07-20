@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
+import 'locale_notifier.dart';
 import 'home_page.dart';
 import 'friend_page.dart';
 import 'new_post_page.dart';
@@ -18,6 +20,9 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  final prefs = await SharedPreferences.getInstance();
+  final savedLang = prefs.getString('app_locale') ?? 'en';
+  appLocale.value = Locale(savedLang, '');
   await NotificationService().init(navKey: navigatorKey);
   runApp(const MyApp());
 }
@@ -27,24 +32,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
+    return ValueListenableBuilder<Locale>(
+      valueListenable: appLocale,
+      builder: (context, locale, _) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
       title: 'CrazyReal',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        scaffoldBackgroundColor: const Color(0xFFF7EBD1),
-      ),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en', ''),
-        Locale('fr', ''),
-      ],
-      home: const AuthGate(),
+          locale: locale,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            scaffoldBackgroundColor: const Color(0xFFF7EBD1),
+          ),
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', ''),
+            Locale('fr', ''),
+          ],
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }
@@ -159,7 +170,10 @@ class _MainScreenState extends State<MainScreen> {
         onUnauthorized: widget.onUnauthorized,
         onPostCreated: _onPostCreated,
       ),
-      const SettingPage(),
+      SettingPage(
+        onLoggedOut: widget.onLoggedOut,
+        onUnauthorized: widget.onUnauthorized,
+      ),
       AccountPage(
         onLoggedOut: widget.onLoggedOut,
         onUnauthorized: widget.onUnauthorized,
