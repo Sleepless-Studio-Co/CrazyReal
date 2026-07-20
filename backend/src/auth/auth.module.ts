@@ -27,6 +27,6 @@ import { JWT_CONFIG_KEYS } from './jwt.config';
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

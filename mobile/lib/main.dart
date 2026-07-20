@@ -10,9 +10,15 @@ import 'account_page.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
 import 'services/chat_socket_service.dart';
+import 'services/notification_service.dart';
+import 'services/global_notification_service.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  await NotificationService().init(navKey: navigatorKey);
   runApp(const MyApp());
 }
 
@@ -22,6 +28,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'CrazyReal',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -59,13 +66,17 @@ class _AuthGateState extends State<AuthGate> {
   void initState() {
     super.initState();
     _checkAuth();
+    NotificationService().requestPermissions();
   }
 
   Future<void> _checkAuth() async {
     final isLoggedIn = await _authService.isLoggedIn();
     if (!mounted) return;
 
-    if (isLoggedIn) _chatSocket.connect();
+    if (isLoggedIn) {
+      _chatSocket.connect();
+      GlobalNotificationService().connect();
+    }
 
     setState(() {
       _isAuthenticated = isLoggedIn;
@@ -76,6 +87,7 @@ class _AuthGateState extends State<AuthGate> {
   void _handleAuthSuccess() {
     if (!mounted) return;
     _chatSocket.connect();
+    GlobalNotificationService().connect();
     setState(() {
       _isAuthenticated = true;
     });
@@ -83,6 +95,7 @@ class _AuthGateState extends State<AuthGate> {
 
   Future<void> _handleLogoutOrUnauthorized() async {
     _chatSocket.disconnect();
+    GlobalNotificationService().disconnect();
     await _authService.logout();
     if (!mounted) return;
 

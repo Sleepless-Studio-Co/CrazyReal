@@ -498,5 +498,30 @@
         "type": "int"
       }
     }
+  },
+
+  "notificationFriendRequestTitle": "Demande d'ami",
+  "@notificationFriendRequestTitle": {
+    "description": "Titre de la notification de demande d'ami"
+  },
+
+  "notificationFriendRequestBody": "{username} vous a envoyé une demande d'ami",
+  "@notificationFriendRequestBody": {
+    "description": "Corps de la notification de demande d'ami",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
+  "notificationNewMessageTitle": "Nouveau message de {username}",
+  "@notificationNewMessageTitle": {
+    "description": "Titre de la notification de nouveau message",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
   }
 }
