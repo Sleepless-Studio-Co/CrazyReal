@@ -2,7 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../auth/auth_service.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/media_url.dart';
+import 'notification_service.dart';
+import '../main.dart';
 
 /// Socket temps réel unique et persistant pour tout le chat.
 ///
@@ -84,10 +87,33 @@ class ChatSocketService {
     });
     socket.onError((err) => debugPrint('[chat-socket] error: $err'));
 
-    socket.on('newMessage', (data) {
+    socket.on('newMessage', (data) async {
       debugPrint('[chat-socket] newMessage reçu: $data');
       try {
-        _messageController.add(Map<String, dynamic>.from(data as Map));
+        final map = Map<String, dynamic>.from(data as Map);
+        _messageController.add(map);
+
+        // Show local notification only if not sent by current user
+        final currentUser = await _authService.getUser();
+        final currentUserId = currentUser?['id'];
+        final senderId = map['sender']['id'];
+
+        if (currentUserId != senderId) {
+          final context = navigatorKey.currentContext;
+          String title = 'Nouveau message de ${map['sender']['username']}';
+          if (context != null) {
+            final l10n = AppLocalizations.of(context);
+            if (l10n != null) {
+              title = l10n.notificationNewMessageTitle(map['sender']['username'] as String);
+            }
+          }
+
+          NotificationService().showNotification(
+            title: title,
+            body: map['content'] as String,
+            channelId: 'general',
+          );
+        }
       } catch (e) {
         debugPrint('[chat-socket] newMessage parse error: $e');
       }

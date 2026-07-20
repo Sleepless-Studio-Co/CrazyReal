@@ -500,6 +500,31 @@
     }
   },
 
+  "notificationFriendRequestTitle": "Friend Request",
+  "@notificationFriendRequestTitle": {
+    "description": "Title for friend request notification"
+  },
+
+  "notificationFriendRequestBody": "{username} sent you a friend request",
+  "@notificationFriendRequestBody": {
+    "description": "Body for friend request notification",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
+  "notificationNewMessageTitle": "New message from {username}",
+  "@notificationNewMessageTitle": {
+    "description": "Title for new message notification",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
   "deleteAccount": "Delete account",
   "@deleteAccount": { "description": "Delete account button" },
 
