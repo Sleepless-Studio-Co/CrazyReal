@@ -54,6 +54,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -73,6 +74,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -93,6 +95,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -112,6 +115,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -130,6 +134,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -162,7 +167,12 @@ export class UsersService {
 
   async updateProfile(
     userId: number,
-    updates: { email?: string; username?: string },
+    updates: {
+      email?: string;
+      username?: string;
+      emailVerified?: boolean;
+      emailVerifiedAt?: Date | null;
+    },
   ) {
     try {
       return this.prisma.user.update({
@@ -175,6 +185,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -198,6 +209,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -218,9 +230,26 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async deleteAccount(userId: number) {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.message.deleteMany({ where: { senderId: userId } }),
+        this.prisma.participant.deleteMany({ where: { userId } }),
+        this.prisma.friendship.deleteMany({
+          where: { OR: [{ userId }, { friendId: userId }] },
+        }),
+        this.prisma.post.deleteMany({ where: { userId } }),
+        this.prisma.user.delete({ where: { id: userId } }),
+      ]);
     } catch (error) {
       this.handlePrismaError(error);
     }
