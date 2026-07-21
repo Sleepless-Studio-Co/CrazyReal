@@ -54,6 +54,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -73,6 +74,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -93,6 +95,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -112,6 +115,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -130,6 +134,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -140,7 +145,12 @@ export class UsersService {
 
   async updateProfile(
     userId: number,
-    updates: { email?: string; username?: string },
+    updates: {
+      email?: string;
+      username?: string;
+      emailVerified?: boolean;
+      emailVerifiedAt?: Date | null;
+    },
   ) {
     try {
       return this.prisma.user.update({
@@ -153,6 +163,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -176,6 +187,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });
@@ -196,6 +208,7 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          emailVerified: true,
           createdAt: true,
         },
       });

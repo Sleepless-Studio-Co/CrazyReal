@@ -39,6 +39,7 @@ describe('AuthController (e2e)', () => {
     login: jest.Mock;
     refresh: jest.Mock;
     revokeRefreshToken: jest.Mock;
+    getMe: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -47,6 +48,7 @@ describe('AuthController (e2e)', () => {
       login: jest.fn(),
       refresh: jest.fn(),
       revokeRefreshToken: jest.fn(),
+      getMe: jest.fn(),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -161,17 +163,28 @@ describe('AuthController (e2e)', () => {
   });
 
   it('GET /auth/me should return current user with valid JWT', async () => {
+    authServiceMock.getMe.mockResolvedValue({
+      id: 1,
+      email: 'john@example.com',
+      username: 'john',
+      avatarUrl: null,
+      avatarKey: null,
+      emailVerified: false,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+
     await request(app.getHttpServer())
       .get('/auth/me')
       .set('Authorization', 'Bearer valid-token')
       .expect(200)
       .expect(({ body }) => {
-        expect(body).toEqual({
-          userId: 1,
-          email: 'john@example.com',
-          username: 'john',
-        });
+        expect(body.id).toBe(1);
+        expect(body.email).toBe('john@example.com');
+        expect(body.username).toBe('john');
+        expect(body.emailVerified).toBe(false);
       });
+
+    expect(authServiceMock.getMe).toHaveBeenCalledWith(1);
   });
 
   it('GET /auth/me should return proper error response without JWT', async () => {

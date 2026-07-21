@@ -85,6 +85,31 @@
     "description": "Label profil"
   },
 
+  "emailNotVerifiedTitle": "Vérifiez votre e-mail",
+  "@emailNotVerifiedTitle": {
+    "description": "Titre de la bannière de vérification d'e-mail"
+  },
+
+  "emailNotVerifiedMessage": "Nous avons envoyé un lien de confirmation à votre adresse e-mail. Vérifiez-la pour sécuriser votre compte.",
+  "@emailNotVerifiedMessage": {
+    "description": "Corps de la bannière de vérification d'e-mail"
+  },
+
+  "resendVerificationEmail": "Renvoyer l'e-mail",
+  "@resendVerificationEmail": {
+    "description": "Bouton qui renvoie l'e-mail de vérification"
+  },
+
+  "verificationEmailSent": "E-mail de vérification envoyé. Consultez votre boîte de réception.",
+  "@verificationEmailSent": {
+    "description": "Confirmation après l'envoi de l'e-mail de vérification"
+  },
+
+  "refresh": "Actualiser",
+  "@refresh": {
+    "description": "Libellé du bouton actualiser"
+  },
+
   "profileUpdated": "Profil mis à jour",
   "@profileUpdated": {
     "description": "Message affiche apres la mise a jour du profil"

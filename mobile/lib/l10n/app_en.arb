@@ -85,6 +85,31 @@
     "description": "Profile label"
   },
 
+  "emailNotVerifiedTitle": "Verify your email",
+  "@emailNotVerifiedTitle": {
+    "description": "Title of the email verification banner"
+  },
+
+  "emailNotVerifiedMessage": "We sent a confirmation link to your email address. Verify it to secure your account.",
+  "@emailNotVerifiedMessage": {
+    "description": "Body of the email verification banner"
+  },
+
+  "resendVerificationEmail": "Resend email",
+  "@resendVerificationEmail": {
+    "description": "Button that resends the verification email"
+  },
+
+  "verificationEmailSent": "Verification email sent. Check your inbox.",
+  "@verificationEmailSent": {
+    "description": "Confirmation shown after resending the verification email"
+  },
+
+  "refresh": "Refresh",
+  "@refresh": {
+    "description": "Refresh button label"
+  },
+
   "profileUpdated": "Profile updated",
   "@profileUpdated": {
     "description": "Message shown after profile update"
