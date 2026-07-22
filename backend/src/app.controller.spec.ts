@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { PrismaService } from './prisma/prisma.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { FeedGateway } from './feed/feed.gateway';
 
 describe('AppController', () => {
   let appController: AppController;
@@ -13,6 +14,9 @@ describe('AppController', () => {
       create: jest.Mock;
     };
   };
+  let feedGateway: {
+    broadcastNewPost: jest.Mock;
+  };
 
   beforeEach(async () => {
     prismaService = {
@@ -23,6 +27,9 @@ describe('AppController', () => {
         create: jest.fn(),
       },
     };
+    feedGateway = {
+      broadcastNewPost: jest.fn(),
+    };
 
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
@@ -30,6 +37,10 @@ describe('AppController', () => {
         {
           provide: PrismaService,
           useValue: prismaService,
+        },
+        {
+          provide: FeedGateway,
+          useValue: feedGateway,
         },
       ],
     }).compile();
