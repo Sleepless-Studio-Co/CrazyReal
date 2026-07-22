@@ -584,6 +584,36 @@ abstract class AppLocalizations {
   /// **'Error: User not found or request already exists.'**
   String get friendRequestError;
 
+  /// Hint in the add-friend search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search by username'**
+  String get searchUsersHint;
+
+  /// Badge for a public account
+  ///
+  /// In en, this message translates to:
+  /// **'Public'**
+  String get accountPublic;
+
+  /// Badge for a private account
+  ///
+  /// In en, this message translates to:
+  /// **'Private'**
+  String get accountPrivate;
+
+  /// Shown when a username search returns nothing
+  ///
+  /// In en, this message translates to:
+  /// **'No user found'**
+  String get noUsersFound;
+
+  /// Short label shown after a friend request was sent
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get requestSentShort;
+
   /// Title and tab label for friend list
   ///
   /// In en, this message translates to:

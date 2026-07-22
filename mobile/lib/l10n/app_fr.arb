@@ -405,6 +405,31 @@
     "description": "Bouton pour envoyer une action"
   },
 
+  "searchUsersHint": "Rechercher un pseudo",
+  "@searchUsersHint": {
+    "description": "Hint in the add-friend search field"
+  },
+
+  "accountPublic": "Public",
+  "@accountPublic": {
+    "description": "Badge for a public account"
+  },
+
+  "accountPrivate": "Privé",
+  "@accountPrivate": {
+    "description": "Badge for a private account"
+  },
+
+  "noUsersFound": "Aucun utilisateur trouvé",
+  "@noUsersFound": {
+    "description": "Shown when a username search returns nothing"
+  },
+
+  "requestSentShort": "Envoyée",
+  "@requestSentShort": {
+    "description": "Short label shown after a friend request was sent"
+  },
+
   "friendRequestSent": "Demande envoyée à {username} !",
   "@friendRequestSent": {
     "description": "Message affiché quand la demande d'ami est envoyée",

@@ -261,6 +261,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Error: User not found or request already exists.';
 
   @override
+  String get searchUsersHint => 'Search by username';
+
+  @override
+  String get accountPublic => 'Public';
+
+  @override
+  String get accountPrivate => 'Private';
+
+  @override
+  String get noUsersFound => 'No user found';
+
+  @override
+  String get requestSentShort => 'Sent';
+
+  @override
   String get myFriends => 'My Friends';
 
   @override
