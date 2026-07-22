@@ -282,12 +282,19 @@ Documentation interactive : **GET** `/api` (Swagger).
 
 ### Chat — `/chat`
 
+Chaque participant d'un groupe a un rôle : `ADMIN` (peut retirer un membre, promouvoir/rétrograder un autre admin) ou `MEMBER`. Le créateur du groupe devient automatiquement `ADMIN`. Un groupe garde toujours au moins un admin (promotion automatique du membre le plus ancien si le dernier admin quitte le groupe).
+
 | Méthode | Route | Description |
 |---------|-------|-------------|
 | `GET` | `/chat` | Conversations de l’utilisateur |
-| `POST` | `/chat/group` | Créer un groupe (`name`, `members[]`) |
+| `POST` | `/chat/group` | Créer un groupe (`name`, `members[]` doivent être des amis acceptés) |
+| `GET` | `/chat/:id/members` | Liste des membres et de leur rôle |
+| `DELETE` | `/chat/:id/leave` | Quitter un groupe |
+| `DELETE` | `/chat/:id/members/:memberId` | Retirer un membre (admin uniquement) |
+| `PATCH` | `/chat/:id/members/:memberId/promote` | Promouvoir un membre en admin (admin uniquement) |
+| `PATCH` | `/chat/:id/members/:memberId/demote` | Rétrograder un admin en membre (admin uniquement) |
 | `POST` | `/chat/:id/messages` | Envoyer un message |
-| `GET` | `/chat/:id/messages` | Historique des messages |
+| `GET` | `/chat/:id/messages` | Historique des messages (paginé : `limit`, `cursor`) |
 
 ### Utilisateurs — `/users`
 
@@ -297,16 +304,20 @@ Routes protégées pour le profil et la gestion des avatars (sélection prédéf
 
 ## Messagerie temps réel
 
-Le client se connecte via **Socket.io** sur la même origine que `API_BASE_URL`.
+Le client se connecte via **Socket.io** sur la même origine que `API_BASE_URL`, en passant le JWT d'accès dans `auth.token` lors du handshake (sinon le `WsJwtAuthGuard` refuse la connexion et aucun événement n'est jamais reçu).
 
 | Événement (client → serveur) | Description |
 |------------------------------|-------------|
 | `joinRoom` | Rejoindre une conversation (`conversationId`) |
+| `typing` | Signale que l'utilisateur est en train d'écrire (`conversationId`) |
+| `stopTyping` | Signale l'arrêt de la saisie (`conversationId`) |
 
 | Événement (serveur → client) | Description |
 |------------------------------|-------------|
 | `newMessage` | Nouveau message dans la room |
 | `joinRoomError` | Erreur d’authentification ou d’accès |
+| `userTyping` | Un autre participant est en train d'écrire (`userId`, `username`) |
+| `userStoppedTyping` | Un autre participant a arrêté d'écrire (`userId`, `username`) |
 
 L’authentification WebSocket utilise le JWT (guard `WsJwtAuthGuard`).
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../auth/auth_service.dart';
+import 'api_exception.dart';
 
 class FriendService {
   final String baseUrl = '${dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000'}/friends';
@@ -12,93 +13,73 @@ class FriendService {
     return token ?? '';
   }
 
-  Future<bool> sendRequest(String username) async {
-    try {
-      final token = await _getToken();
-      final response = await http.post(
-        Uri.parse('$baseUrl/request/$username'), 
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-      
-      return response.statusCode == 200 || response.statusCode == 201;
-    } catch (e) {
-      print('Erreur sendRequest: $e');
-      return false;
+  Future<Map<String, String>> _headers() async {
+    final token = await _getToken();
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
+
+  Future<void> sendRequest(String username) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/request/$username'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
     }
   }
 
-  Future<bool> acceptRequest(int requestId) async {
-    try {
-      final token = await _getToken();
-      final response = await http.patch(
-        Uri.parse('$baseUrl/accept/$requestId'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-      
-      return response.statusCode == 200;
-    } catch (e) {
-      print('Erreur acceptRequest: $e');
-      return false;
+  Future<void> acceptRequest(int requestId) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/accept/$requestId'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200) {
+      throw buildApiException(response);
+    }
+  }
+
+  Future<void> rejectRequest(int requestId) async {
+    final response = await http.patch(
+      Uri.parse('$baseUrl/reject/$requestId'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200) {
+      throw buildApiException(response);
+    }
+  }
+
+  Future<void> blockUser(String username) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/block/$username'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
     }
   }
 
   Future<List<dynamic>> getFriends() async {
-    try {
-      final token = await _getToken();
-      final response = await http.get(
-        Uri.parse(baseUrl),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
+    final response = await http.get(Uri.parse(baseUrl), headers: await _headers());
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized'); 
-      } else {
-        throw Exception('Erreur serveur: ${response.statusCode}');
-      }
-    } catch (e) {
-      if (e.toString().contains('Unauthorized')) {
-        rethrow;
-      }
-      print('Erreur getFriends: $e');
-      return [];
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
     }
+    throw buildApiException(response);
   }
 
   Future<List<dynamic>> getPendingRequests() async {
-    try {
-      final token = await _getToken();
-      final response = await http.get(
-        Uri.parse('$baseUrl/requests'), 
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
+    final response = await http.get(Uri.parse('$baseUrl/requests'), headers: await _headers());
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized'); 
-      } else {
-        throw Exception('Erreur serveur: ${response.statusCode}');
-      }
-    } catch (e) {
-      if (e.toString().contains('Unauthorized')) {
-        rethrow;
-      }
-      print('Erreur getPendingRequests: $e');
-      return [];
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
     }
+    throw buildApiException(response);
   }
 }

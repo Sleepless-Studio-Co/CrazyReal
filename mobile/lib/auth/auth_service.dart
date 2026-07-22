@@ -231,6 +231,40 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> updatePrivacy(bool isPrivate) async {
+    final token = await getAccessToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/users/me/privacy'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'isPrivate': isPrivate}),
+      );
+
+      if (response.statusCode == 401) {
+        throw Exception('Unauthorized');
+      }
+
+      if (response.statusCode != 200) {
+        throw _buildHttpException('Privacy update failed', response);
+      }
+
+      final data = _decodeResponseMap(response.body);
+      await _saveUserIfPresent(data['user']);
+      return data;
+    } on SocketException catch (e) {
+      throw Exception('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> uploadAvatarImage({
     required Uint8List bytes,
     required String filename,

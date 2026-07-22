@@ -21,6 +21,11 @@ enum Role {
   ADMIN
 }
 
+enum ParticipantRole {
+  ADMIN
+  MEMBER
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -43,6 +48,19 @@ model Post {
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId Int
   createdAt   DateTime  @default(now())
+  upVotes     UpVote[]
+}
+
+model UpVote {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
 }
 
 model User {
@@ -52,9 +70,11 @@ model User {
   username      String         @unique
   avatarUrl     String?
   avatarKey     String?
+  isPrivate     Boolean        @default(false)
   createdAt     DateTime       @default(now())
   role          Role           @default(USER)
   posts         Post[]
+  upVotes       UpVote[]
   refreshTokens RefreshToken[]
   sentRequests Friendship[] @relation("SentRequests")
   receivedRequests Friendship[] @relation("ReceivedRequests")
@@ -97,10 +117,11 @@ model Conversation {
 }
 
 model Participant {
-  id             Int          @id @default(autoincrement())
+  id             Int             @id @default(autoincrement())
   userId         Int
   conversationId Int
-  joinedAt       DateTime     @default(now())
+  role           ParticipantRole @default(MEMBER)
+  joinedAt       DateTime        @default(now())
 
   user           User         @relation(fields: [userId], references: [id])
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

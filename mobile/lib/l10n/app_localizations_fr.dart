@@ -264,6 +264,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get wantsToBeYourFriend => 'Veut être ton ami(e)';
 
   @override
+  String get rejectRequest => 'Refuser';
+
+  @override
+  String get friendRequestRejected => 'Demande refusée.';
+
+  @override
   String get group => 'Groupe';
 
   @override

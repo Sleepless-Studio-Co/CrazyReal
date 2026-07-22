@@ -21,24 +21,10 @@ import { CurrentUser } from './auth/current-user.decorator';
 import { ChallengeType } from '@prisma/client';
 import { FeedGateway } from './feed/feed.gateway';
 import type { ValidatedUser } from './auth/interfaces/auth-user.interface';
-
-const postInclude = {
-  user: {
-    select: {
-      id: true,
-      username: true,
-      avatarUrl: true,
-      avatarKey: true,
-    },
-  },
-  challenge: {
-    select: {
-      id: true,
-      title: true,
-      type: true,
-    },
-  },
-} as const;
+import {
+  formatPostWithUpvotes,
+  postIncludeWithUpvotes,
+} from './posts/post.utils';
 
 @ApiTags('CrazyReal')
 @ApiBearerAuth('access-token')
@@ -164,12 +150,14 @@ export class AppController {
         challengeId: currentChallenge.id,
         userId: user.userId,
       },
-      include: postInclude,
+      include: postIncludeWithUpvotes(user.userId),
     });
 
-    this.feedGateway.broadcastNewPost(post);
+    const formattedPost = formatPostWithUpvotes(post);
 
-    return post;
+    this.feedGateway.broadcastNewPost(formattedPost);
+
+    return formattedPost;
   }
 
   @Get('uploads')
@@ -186,14 +174,16 @@ export class AppController {
     const friendIds = await this.getAcceptedFriendIds(user.userId);
     const feedUserIds = [...new Set([...friendIds, user.userId])];
 
-    return this.prisma.post.findMany({
+    const posts = await this.prisma.post.findMany({
       where: {
         userId: { in: feedUserIds },
       },
       orderBy: {
         createdAt: 'desc',
       },
-      include: postInclude,
+      include: postIncludeWithUpvotes(user.userId),
     });
+
+    return posts.map(formatPostWithUpvotes);
   }
 }

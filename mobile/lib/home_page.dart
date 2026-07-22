@@ -98,7 +98,7 @@ class HomePageState extends State<HomePage> {
       return;
     }
 
-    final shouldUpdate = !FeedPost.sameIds(_posts, result.posts);
+    final shouldUpdate = !FeedPost.sameVoteState(_posts, result.posts);
     setState(() {
       if (shouldUpdate) {
         _posts = result.posts;
@@ -124,7 +124,7 @@ class HomePageState extends State<HomePage> {
 
   void _initSocket() {
     _socket = IO.io(
-      apiBaseUrl,
+      '$apiBaseUrl/feed',
       IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
     );
 
@@ -155,6 +155,42 @@ class HomePageState extends State<HomePage> {
         refreshFeed(showLoading: false);
       }
     });
+  }
+
+  Future<void> _toggleUpvote(int postId) async {
+    final index = _posts.indexWhere((p) => p.id == postId);
+    if (index == -1) return;
+
+    final original = _posts[index];
+    final wasUpvoted = original.hasUpvoted;
+
+    setState(() {
+      _posts[index] = original.copyWith(
+        hasUpvoted: !wasUpvoted,
+        upvoteCount: original.upvoteCount + (wasUpvoted ? -1 : 1),
+      );
+    });
+
+    final result = wasUpvoted
+        ? await _feedService.removeUpvote(postId)
+        : await _feedService.upvotePost(postId);
+
+    if (!mounted) return;
+
+    if (result.status == UpvoteStatus.unauthorized) {
+      setState(() => _posts[index] = original);
+      widget.onUnauthorized();
+      return;
+    }
+
+    if (result.status != UpvoteStatus.success) {
+      setState(() => _posts[index] = original);
+      return;
+    }
+
+    if (result.post != null) {
+      setState(() => _posts[index] = result.post!);
+    }
   }
 
   @override
@@ -284,9 +320,11 @@ class HomePageState extends State<HomePage> {
         itemCount: _posts.length,
         separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
+          final post = _posts[index];
           return PostCard(
-            post: _posts[index],
+            post: post,
             unknownUserLabel: l10n.unknownUser,
+            onUpvote: () => _toggleUpvote(post.id),
           );
         },
       ),

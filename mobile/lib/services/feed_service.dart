@@ -8,6 +8,8 @@ import '../utils/media_url.dart';
 
 enum FeedFetchStatus { success, unauthorized, error }
 
+enum UpvoteStatus { success, unauthorized, error }
+
 class FeedFetchResult {
   const FeedFetchResult({
     required this.status,
@@ -17,6 +19,18 @@ class FeedFetchResult {
 
   final FeedFetchStatus status;
   final List<FeedPost> posts;
+  final String? errorMessage;
+}
+
+class UpvoteResult {
+  const UpvoteResult({
+    required this.status,
+    this.post,
+    this.errorMessage,
+  });
+
+  final UpvoteStatus status;
+  final FeedPost? post;
   final String? errorMessage;
 }
 
@@ -84,6 +98,82 @@ class FeedService {
       return FeedChallengeSummary.fromJson(data);
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<UpvoteResult> upvotePost(int postId) async {
+    try {
+      final token = await _tokenOrNull();
+      if (token == null) {
+        return const UpvoteResult(status: UpvoteStatus.unauthorized);
+      }
+
+      final response = await http.post(
+        Uri.parse('$_baseUrl/posts/$postId/upvote'),
+        headers: _authHeaders(token),
+      );
+
+      if (response.statusCode == 401) {
+        return const UpvoteResult(status: UpvoteStatus.unauthorized);
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) {
+          return UpvoteResult(
+            status: UpvoteStatus.success,
+            post: FeedPost.fromJson(data),
+          );
+        }
+      }
+
+      return UpvoteResult(
+        status: UpvoteStatus.error,
+        errorMessage: 'HTTP ${response.statusCode}',
+      );
+    } catch (e) {
+      return UpvoteResult(
+        status: UpvoteStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<UpvoteResult> removeUpvote(int postId) async {
+    try {
+      final token = await _tokenOrNull();
+      if (token == null) {
+        return const UpvoteResult(status: UpvoteStatus.unauthorized);
+      }
+
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/posts/$postId/upvote'),
+        headers: _authHeaders(token),
+      );
+
+      if (response.statusCode == 401) {
+        return const UpvoteResult(status: UpvoteStatus.unauthorized);
+      }
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) {
+          return UpvoteResult(
+            status: UpvoteStatus.success,
+            post: FeedPost.fromJson(data),
+          );
+        }
+      }
+
+      return UpvoteResult(
+        status: UpvoteStatus.error,
+        errorMessage: 'HTTP ${response.statusCode}',
+      );
+    } catch (e) {
+      return UpvoteResult(
+        status: UpvoteStatus.error,
+        errorMessage: e.toString(),
+      );
     }
   }
 }

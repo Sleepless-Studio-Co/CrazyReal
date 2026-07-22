@@ -10,9 +10,17 @@ describe('ChatController', () => {
     conversation: {
       create: jest.Mock;
       findMany: jest.Mock;
+      findUnique: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
     };
     participant: {
       findUnique: jest.Mock;
+      findMany: jest.Mock;
+      delete: jest.Mock;
+    };
+    friendship: {
+      findMany: jest.Mock;
     };
     message: {
       create: jest.Mock;
@@ -28,9 +36,17 @@ describe('ChatController', () => {
       conversation: {
         create: jest.fn(),
         findMany: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
       },
       participant: {
         findUnique: jest.fn(),
+        findMany: jest.fn(),
+        delete: jest.fn(),
+      },
+      friendship: {
+        findMany: jest.fn(),
       },
       message: {
         create: jest.fn(),
