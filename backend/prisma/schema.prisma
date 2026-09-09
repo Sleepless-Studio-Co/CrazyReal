@@ -16,6 +16,11 @@ enum ChallengeType {
   SPECIAL
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum ParticipantRole {
   ADMIN
   MEMBER
@@ -69,6 +74,7 @@ model User {
   emailVerified Boolean        @default(false)
   emailVerifiedAt DateTime?
   createdAt     DateTime       @default(now())
+  role          Role           @default(USER)
   posts         Post[]
   upVotes       UpVote[]
   refreshTokens RefreshToken[]
