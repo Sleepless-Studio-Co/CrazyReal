@@ -143,6 +143,28 @@ export class UsersService {
     }
   }
 
+  async searchByUsername(query: string, requesterId: number) {
+    try {
+      return this.prisma.user.findMany({
+        where: {
+          username: { contains: query, mode: 'insensitive' },
+          NOT: { id: requesterId },
+        },
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+        },
+        orderBy: { username: 'asc' },
+        take: 20,
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
   async updateProfile(
     userId: number,
     updates: {
@@ -212,6 +234,22 @@ export class UsersService {
           createdAt: true,
         },
       });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async deleteAccount(userId: number) {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.message.deleteMany({ where: { senderId: userId } }),
+        this.prisma.participant.deleteMany({ where: { userId } }),
+        this.prisma.friendship.deleteMany({
+          where: { OR: [{ userId }, { friendId: userId }] },
+        }),
+        this.prisma.post.deleteMany({ where: { userId } }),
+        this.prisma.user.delete({ where: { id: userId } }),
+      ]);
     } catch (error) {
       this.handlePrismaError(error);
     }

@@ -13,33 +13,40 @@ function getWeekStart(date = new Date()) {
 
 async function main() {
   const weekStart = getWeekStart(new Date());
-  const middleOfWeek = new Date(weekStart.getTime() + 84 * 60 * 60 * 1000); // +3.5 days
 
+  const fs = require('fs');
+  const path = require('path');
+  const file = path.join(__dirname, 'challenges.json');
+
+  if (!fs.existsSync(file)) {
+    console.warn('⚠️  prisma/challenges.json not found — skipping seed to avoid clearing existing data.');
+    return;
+  }
+
+  // clear posts and challenges for a clean seed
   await prisma.$transaction([
     prisma.post.deleteMany({}),
     prisma.challenge.deleteMany({}),
   ]);
 
-  await prisma.challenge.createMany({
-    data: [
-      {
-        title: 'Global Challenge A',
-        description: 'Publie une photo créative de ton quotidien.',
-        date: weekStart,
-        type: ChallengeType.WEEKLY_A,
-        isActive: true,
-      },
-      {
-        title: 'Global Challenge B',
-        description: 'Capture un moment drôle avec tes amis.',
-        date: middleOfWeek,
-        type: ChallengeType.WEEKLY_B,
-        isActive: true,
-      },
-    ],
-  });
+  const raw = fs.readFileSync(file, 'utf-8');
+  const items = JSON.parse(raw);
 
-  console.log('✅ Seeded 2 global challenges for the current week.');
+  // Normalize dates if provided as ISO strings
+  const data = items.map((c) => ({
+    title: c.title,
+    description: c.description || '',
+    date: c.date ? new Date(c.date) : weekStart,
+    type: c.type || ChallengeType.WEEKLY_A,
+    isActive: c.isActive !== undefined ? c.isActive : true,
+  }));
+
+  if (data.length > 0) {
+    await prisma.challenge.createMany({ data });
+    console.log(`✅ Seeded ${data.length} challenges from prisma/challenges.json`);
+  } else {
+    console.log('ℹ️  No challenges found in prisma/challenges.json');
+  }
 }
 
 main()
