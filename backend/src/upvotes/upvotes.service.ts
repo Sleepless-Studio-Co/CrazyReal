@@ -64,28 +64,22 @@ export class UpVotesService {
   async upvote(userId: number, postId: number) {
     await this.assertPostInFeed(userId, postId);
 
-    const existing = await this.prisma.upVote.findUnique({
-      where: { userId_postId: { userId, postId } },
-    });
-
-    if (existing) {
-      return this.getFormattedPost(postId, userId);
-    }
-
     try {
       await this.prisma.upVote.create({
         data: { userId, postId },
       });
     } catch (error: unknown) {
+      // P2002 = already upvoted; treat as a no-op (idempotent).
       if (
-        error &&
-        typeof error === 'object' &&
-        'code' in error &&
-        error.code === 'P2002'
+        !(
+          error &&
+          typeof error === 'object' &&
+          'code' in error &&
+          error.code === 'P2002'
+        )
       ) {
-        return this.getFormattedPost(postId, userId);
+        throw error;
       }
-      throw error;
     }
 
     return this.getFormattedPost(postId, userId);
