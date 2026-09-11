@@ -200,6 +200,36 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get profile;
 
+  /// Title of the email verification banner
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get emailNotVerifiedTitle;
+
+  /// Body of the email verification banner
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a confirmation link to your email address. Verify it to secure your account.'**
+  String get emailNotVerifiedMessage;
+
+  /// Button that resends the verification email
+  ///
+  /// In en, this message translates to:
+  /// **'Resend email'**
+  String get resendVerificationEmail;
+
+  /// Confirmation shown after resending the verification email
+  ///
+  /// In en, this message translates to:
+  /// **'Verification email sent. Check your inbox.'**
+  String get verificationEmailSent;
+
+  /// Refresh button label
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
   /// Message shown after profile update
   ///
   /// In en, this message translates to:

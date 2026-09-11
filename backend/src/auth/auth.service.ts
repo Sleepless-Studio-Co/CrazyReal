@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { AuthUser, AuthUserWithPassword } from './interfaces/auth-user.interface';
+import { EmailVerificationService } from './email-verification.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private prisma: PrismaService,
+    private emailVerificationService: EmailVerificationService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<AuthUser | null> {
@@ -62,6 +64,13 @@ export class AuthService {
     // UsersService.create maps P2002 → ConflictException (single source of truth).
     const newUser = await this.usersService.create(email, password, username);
 
+    // Failures are handled inside the service so a mail outage never blocks account creation.
+    await this.emailVerificationService.createAndSend({
+      id: newUser.id,
+      email: newUser.email,
+      username: newUser.username,
+    });
+
     const accessToken = this.generateAccessToken(newUser);
     const refreshToken = await this.generateRefreshToken(newUser.id);
 
@@ -74,6 +83,7 @@ export class AuthService {
         username: newUser.username,
         avatarUrl: newUser.avatarUrl,
         avatarKey: newUser.avatarKey,
+        emailVerified: newUser.emailVerified,
       },
     };
   }
@@ -97,8 +107,38 @@ export class AuthService {
         username: user.username,
         avatarUrl: user.avatarUrl,
         avatarKey: user.avatarKey,
+        emailVerified: user.emailVerified,
       },
     };
+  }
+
+  async getMe(userId: number) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      avatarKey: user.avatarKey,
+      emailVerified: user.emailVerified,
+      createdAt: user.createdAt,
+    };
+  }
+
+  async verifyEmail(token: string) {
+    return this.emailVerificationService.verify(token);
+  }
+
+  async resendVerificationEmail(userId: number) {
+    await this.emailVerificationService.resendForUser(userId);
+    return { message: 'Verification email sent' };
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
   async refresh(refreshToken: string) {
@@ -138,11 +178,27 @@ export class AuthService {
     const normalizedUsername =
       typeof updates.username === 'string' ? updates.username.trim() : undefined;
 
-    // Email/username shape is validated by UpdateProfileDto (@IsEmail / @MinLength).
-    const payload: { email?: string; username?: string } = {};
+    const payload: {
+      email?: string;
+      username?: string;
+      emailVerified?: boolean;
+      emailVerifiedAt?: Date | null;
+    } = {};
+
+    let emailChanged = false;
 
     if (normalizedEmail) {
-      payload.email = normalizedEmail;
+      if (!this.isValidEmail(normalizedEmail)) {
+        throw new BadRequestException('Invalid email');
+      }
+      const current = await this.usersService.findById(userId);
+      if (current && current.email !== normalizedEmail) {
+        payload.email = normalizedEmail;
+        // A new address has to be re-verified.
+        payload.emailVerified = false;
+        payload.emailVerifiedAt = null;
+        emailChanged = true;
+      }
     }
 
     if (normalizedUsername) {
@@ -154,6 +210,15 @@ export class AuthService {
     }
 
     const updatedUser = await this.usersService.updateProfile(userId, payload);
+
+    if (emailChanged) {
+      await this.emailVerificationService.createAndSend({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        username: updatedUser.username,
+      });
+    }
+
     const accessToken = this.generateAccessToken(updatedUser);
 
     return {
@@ -164,6 +229,7 @@ export class AuthService {
         username: updatedUser.username,
         avatarUrl: updatedUser.avatarUrl,
         avatarKey: updatedUser.avatarKey,
+        emailVerified: updatedUser.emailVerified,
       },
     };
   }

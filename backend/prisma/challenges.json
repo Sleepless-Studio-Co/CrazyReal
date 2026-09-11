@@ -1,0 +1,65 @@
+[
+  {
+    "title": "Photo du café du matin",
+    "description": "Capture ta tasse de café préférée le matin.",
+    "date": "2026-06-01T00:00:00.000Z",
+    "type": "WEEKLY_A",
+    "isActive": true
+  },
+  {
+    "title": "Montre ton espace de travail",
+    "description": "Montre où tu travailles — bureau, coin lecture, etc.",
+    "date": "2026-06-02T00:00:00.000Z",
+    "type": "WEEKLY_A",
+    "isActive": true
+  },
+  {
+    "title": "Défi sourire",
+    "description": "Poste une photo où tu souris avec un ami.",
+    "date": "2026-06-03T00:00:00.000Z",
+    "type": "WEEKLY_A",
+    "isActive": true
+  },
+  {
+    "title": "Capture une scène de rue",
+    "description": "Trouve une scène urbaine intéressante.",
+    "date": "2026-06-01T00:00:00.000Z",
+    "type": "WEEKLY_B",
+    "isActive": true
+  },
+  {
+    "title": "Détail de la nature",
+    "description": "Zoom sur un détail de la nature près de chez toi.",
+    "date": "2026-06-02T00:00:00.000Z",
+    "type": "WEEKLY_B",
+    "isActive": true
+  },
+  {
+    "title": "Moment drôle avec un animal",
+    "description": "Partage un moment drôle avec un animal.",
+    "date": "2026-06-03T00:00:00.000Z",
+    "type": "WEEKLY_B",
+    "isActive": true
+  },
+  {
+    "title": "Spécial : photo rétro",
+    "description": "Fais une photo avec un filtre rétro.",
+    "date": "2026-06-01T00:00:00.000Z",
+    "type": "SPECIAL",
+    "isActive": true
+  },
+  {
+    "title": "Spécial : touche de couleur",
+    "description": "Poste une photo où une couleur domine.",
+    "date": "2026-06-02T00:00:00.000Z",
+    "type": "SPECIAL",
+    "isActive": true
+  },
+  {
+    "title": "Spécial : lumières nocturnes",
+    "description": "Capture les lumières nocturnes de la ville.",
+    "date": "2026-06-03T00:00:00.000Z",
+    "type": "SPECIAL",
+    "isActive": true
+  }
+]

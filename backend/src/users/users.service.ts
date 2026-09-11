@@ -57,7 +57,16 @@ export class UsersService {
           password: hashedPassword,
           username,
         },
-        select: USER_SELECT,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
       });
     } catch (error) {
       this.handlePrismaError(error);
@@ -68,7 +77,16 @@ export class UsersService {
     try {
       return await this.prisma.user.findUnique({
         where: { email },
-        select: USER_SELECT,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
       });
     } catch (error) {
       this.handlePrismaError(error);
@@ -79,7 +97,17 @@ export class UsersService {
     try {
       return await this.prisma.user.findUnique({
         where: { email },
-        select: { ...USER_SELECT, password: true },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          password: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
       });
     } catch (error) {
       this.handlePrismaError(error);
@@ -90,7 +118,16 @@ export class UsersService {
     try {
       return await this.prisma.user.findUnique({
         where: { id },
-        select: USER_SELECT,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
       });
     } catch (error) {
       this.handlePrismaError(error);
@@ -99,8 +136,17 @@ export class UsersService {
 
   async findAll() {
     try {
-      return await this.prisma.user.findMany({
-        select: USER_SELECT,
+      return this.prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
       });
     } catch (error) {
       this.handlePrismaError(error);
@@ -131,13 +177,27 @@ export class UsersService {
 
   async updateProfile(
     userId: number,
-    updates: { email?: string; username?: string },
+    updates: {
+      email?: string;
+      username?: string;
+      emailVerified?: boolean;
+      emailVerifiedAt?: Date | null;
+    },
   ) {
     try {
       return await this.prisma.user.update({
         where: { id: userId },
         data: updates,
-        select: USER_SELECT,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
       });
     } catch (error) {
       this.handlePrismaError(error);
@@ -152,7 +212,16 @@ export class UsersService {
       return await this.prisma.user.update({
         where: { id: userId },
         data: updates,
-        select: USER_SELECT,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
       });
     } catch (error) {
       this.handlePrismaError(error);
@@ -164,7 +233,16 @@ export class UsersService {
       return await this.prisma.user.update({
         where: { id: userId },
         data: { isPrivate },
-        select: USER_SELECT,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
       });
     } catch (error) {
       this.handlePrismaError(error);

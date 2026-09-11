@@ -16,6 +16,11 @@ enum ChallengeType {
   SPECIAL
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum ParticipantRole {
   ADMIN
   MEMBER
@@ -65,21 +70,36 @@ model UpVote {
 }
 
 model User {
-  id               Int            @id @default(autoincrement())
-  email            String         @unique
-  password         String
-  username         String         @unique
-  avatarUrl        String?
-  avatarKey        String?
-  isPrivate        Boolean        @default(false)
-  createdAt        DateTime       @default(now())
-  posts            Post[]
-  upVotes          UpVote[]
-  refreshTokens    RefreshToken[]
-  sentRequests     Friendship[]   @relation("SentRequests")
-  receivedRequests Friendship[]   @relation("ReceivedRequests")
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password      String
+  username      String         @unique
+  avatarUrl     String?
+  avatarKey     String?
+  isPrivate     Boolean        @default(false)
+  emailVerified Boolean        @default(false)
+  emailVerifiedAt DateTime?
+  createdAt     DateTime       @default(now())
+  role          Role           @default(USER)
+  posts         Post[]
+  upVotes       UpVote[]
+  refreshTokens RefreshToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  sentRequests Friendship[] @relation("SentRequests")
+  receivedRequests Friendship[] @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
+}
+
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model RefreshToken {

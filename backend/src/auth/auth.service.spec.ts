@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailVerificationService } from './email-verification.service';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -32,6 +33,12 @@ describe('AuthService', () => {
     },
   };
 
+  const emailVerificationServiceMock = {
+    createAndSend: jest.fn(),
+    verify: jest.fn(),
+    resendForUser: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -44,6 +51,7 @@ describe('AuthService', () => {
 
     jwtServiceMock.sign.mockReturnValue('access-token');
     prismaServiceMock.refreshToken.create.mockResolvedValue({});
+    emailVerificationServiceMock.createAndSend.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -63,6 +71,10 @@ describe('AuthService', () => {
         {
           provide: PrismaService,
           useValue: prismaServiceMock,
+        },
+        {
+          provide: EmailVerificationService,
+          useValue: emailVerificationServiceMock,
         },
       ],
     }).compile();

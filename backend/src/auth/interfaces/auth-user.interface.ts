@@ -4,6 +4,7 @@ export interface AuthUser {
   username: string;
   avatarUrl?: string | null;
   avatarKey?: string | null;
+  emailVerified?: boolean;
   createdAt: Date;
 }
 

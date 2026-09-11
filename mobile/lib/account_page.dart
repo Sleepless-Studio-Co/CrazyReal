@@ -40,6 +40,7 @@ class _AccountPageState extends State<AccountPage> {
   bool _isEditing = false;
   bool _isSaving = false;
   bool _isAvatarLoading = false;
+  bool _isResendingVerification = false;
   String? _errorMessage;
   String? _avatarUrl;
   String? _avatarKey;
@@ -83,6 +84,63 @@ class _AccountPageState extends State<AccountPage> {
     setState(() {
       _isLoading = false;
     });
+
+    // Refresh from the API in the background so the verification status is
+    // up to date (e.g. after the user clicked the link in their email).
+    await _refreshProfile();
+  }
+
+  Future<void> _refreshProfile() async {
+    try {
+      final fresh = await _authService.fetchProfile();
+      if (fresh != null && mounted) {
+        setState(() {
+          _user = fresh;
+          if (!_isEditing) {
+            _populateControllers(fresh);
+          }
+          _syncAvatarFromUser(fresh);
+        });
+      }
+    } catch (_) {
+      // Non-fatal: keep showing the cached profile.
+    }
+  }
+
+  bool get _isEmailVerified => _user?['emailVerified'] == true;
+
+  Future<void> _resendVerificationEmail() async {
+    if (_isResendingVerification) return;
+    setState(() {
+      _isResendingVerification = true;
+    });
+
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await _authService.resendVerificationEmail();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.verificationEmailSent)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(e))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResendingVerification = false;
+        });
+      }
+    }
+  }
+
+  String _friendlyError(Object error) {
+    final message = error.toString();
+    return message.startsWith('Exception: ')
+        ? message.substring('Exception: '.length)
+        : message;
   }
 
   Future<void> _logout() async {
@@ -405,6 +463,12 @@ class _AccountPageState extends State<AccountPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _buildProfileHeader(l10n),
+        const SizedBox(height: 16),
+        _buildPrivacyCard(l10n),
+        if (!_isEmailVerified) ...[
+          const SizedBox(height: 16),
+          _buildVerificationBanner(l10n),
+        ],
         if (_isEditing) ...[
           const SizedBox(height: 16),
           _buildEditCard(l10n),
@@ -412,6 +476,138 @@ class _AccountPageState extends State<AccountPage> {
         const SizedBox(height: 16),
         _isEditing ? _buildSaveCard(l10n) : _buildLogoutCard(l10n),
       ],
+    );
+  }
+
+  Widget _buildPrivacyCard(AppLocalizations l10n) {
+    return _buildCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0DFC2),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              _isPrivate ? Icons.lock_outline : Icons.public,
+              color: _accentColor,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  // TODO: move to AppLocalizations once the key is added
+                  // to the .arb files (e.g. l10n.privateAccount).
+                  _isPrivate ? 'Compte privé' : 'Compte public',
+                  style: _valueStyle(context),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _isPrivate
+                      ? 'Seuls tes amis acceptés voient ton profil et tes défis.'
+                      : 'Tout le monde peut voir ton profil et tes défis.',
+                  style: _mutedStyle(context),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _isPrivacySaving
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Switch(
+                  value: _isPrivate,
+                  activeColor: _accentColor,
+                  onChanged: _togglePrivacy,
+                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerificationBanner(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7E6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _accentColor.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.mark_email_unread_outlined, color: _accentColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.emailNotVerifiedTitle,
+                      style: GoogleFonts.nunito(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _inkColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.emailNotVerifiedMessage,
+                      style: GoogleFonts.nunito(
+                        fontSize: 13,
+                        color: _inkMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed:
+                      _isResendingVerification ? null : _resendVerificationEmail,
+                  icon: _isResendingVerification
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.send_outlined, size: 18),
+                  label: Text(l10n.resendVerificationEmail),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _accentColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: _refreshProfile,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(l10n.refresh),
+                style: OutlinedButton.styleFrom(foregroundColor: _inkColor),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

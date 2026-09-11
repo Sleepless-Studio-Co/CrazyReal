@@ -9,6 +9,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AdminBootstrapService } from './bootstrap/admin-bootstrap.service';
 import { FriendsModule } from './friends/friends.module';
 import { ChatModule } from './chat/chat.module';
+import { AdminModule } from './admin/admin.module';
 import { FeedModule } from './feed/feed.module';
 import { UpVotesModule } from './upvotes/upvotes.module';
 
@@ -27,6 +28,7 @@ import { UpVotesModule } from './upvotes/upvotes.module';
     ]),
     UsersModule,
     AuthModule,
+    AdminModule,
     FriendsModule,
     ChatModule,
     FeedModule,

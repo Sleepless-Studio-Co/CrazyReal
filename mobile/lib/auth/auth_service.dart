@@ -98,6 +98,96 @@ class AuthService {
     return token != null;
   }
 
+  /// Fetches the current profile from the API and refreshes the cached user.
+  /// Returns null when unauthenticated.
+  Future<Map<String, dynamic>?> fetchProfile() async {
+    final token = await getAccessToken();
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 401) {
+        return null;
+      }
+
+      if (response.statusCode != 200) {
+        throw _buildHttpException('Failed to load profile', response);
+      }
+
+      final data = _decodeResponseMap(response.body);
+      await _saveUser(data);
+      return data;
+    } on SocketException catch (e) {
+      throw Exception('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  /// Asks the backend to resend the email-verification message.
+  Future<void> resendVerificationEmail() async {
+    final token = await getAccessToken();
+    if (token == null || token.isEmpty) {
+      throw Exception('Unauthorized');
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/resend-verification'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 401) {
+        throw Exception('Unauthorized');
+      }
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw _buildHttpException('Could not resend verification email', response);
+      }
+    } on SocketException catch (e) {
+      throw Exception('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  Future<void> _saveTokens(String accessToken, String refreshToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_accessTokenKey, accessToken);
+    await prefs.setString(_refreshTokenKey, refreshToken);
+  }
+
+  Future<void> _updateAccessToken(String accessToken) async {
+    final refreshToken = await getRefreshToken();
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _saveTokens(accessToken, refreshToken);
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_accessTokenKey, accessToken);
+  }
+
+  Future<void> _saveUser(Map<String, dynamic> user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userKey, jsonEncode(user));
+  }
+
+  Future<void> _saveUserIfPresent(dynamic user) async {
+    if (user is Map<String, dynamic>) {
+      await _saveUser(user);
+    }
+  }
+
   Future<Map<String, dynamic>> updateProfile({
     String? email,
     String? username,
