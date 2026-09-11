@@ -41,6 +41,8 @@ class _AccountPageState extends State<AccountPage> {
   bool _isSaving = false;
   bool _isAvatarLoading = false;
   bool _isResendingVerification = false;
+  bool _isPrivate = false;
+  bool _isPrivacySaving = false;
   String? _errorMessage;
   String? _avatarUrl;
   String? _avatarKey;
@@ -78,6 +80,7 @@ class _AccountPageState extends State<AccountPage> {
     if (_user != null) {
       _populateControllers(_user!);
       _syncAvatarFromUser(_user!);
+      _isPrivate = _user!['isPrivate'] == true;
     }
 
     if (!mounted) return;
@@ -100,6 +103,7 @@ class _AccountPageState extends State<AccountPage> {
             _populateControllers(fresh);
           }
           _syncAvatarFromUser(fresh);
+          _isPrivate = fresh['isPrivate'] == true;
         });
       }
     } catch (_) {
@@ -147,6 +151,42 @@ class _AccountPageState extends State<AccountPage> {
     await _authService.logout();
     if (mounted) {
       widget.onLoggedOut();
+    }
+  }
+
+  Future<void> _togglePrivacy(bool value) async {
+    setState(() {
+      _isPrivacySaving = true;
+    });
+
+    try {
+      final result = await _authService.updatePrivacy(value);
+      final updatedUser = result['user'];
+      if (!mounted) return;
+      setState(() {
+        _isPrivate = updatedUser is Map
+            ? updatedUser['isPrivate'] == true
+            : value;
+        if (updatedUser is Map<String, dynamic>) {
+          _user = updatedUser;
+        }
+      });
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_friendlyError(e)),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPrivacySaving = false;
+        });
+      }
     }
   }
 

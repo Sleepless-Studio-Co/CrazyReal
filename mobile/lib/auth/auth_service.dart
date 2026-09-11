@@ -117,7 +117,7 @@ class AuthService {
       }
 
       if (response.statusCode != 200) {
-        throw _buildHttpException('Failed to load profile', response);
+        throw buildApiException(response);
       }
 
       final data = _decodeResponseMap(response.body);
@@ -151,7 +151,7 @@ class AuthService {
       }
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw _buildHttpException('Could not resend verification email', response);
+        throw buildApiException(response);
       }
     } on SocketException catch (e) {
       throw Exception('Network error: $e');
@@ -346,26 +346,6 @@ class AuthService {
       throw buildApiException(response);
     }
     return response;
-  }
-
-  // ─── Token / user persistence ──────────────────────────────────────────────
-
-  Future<void> _saveTokens(String accessToken, String refreshToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, accessToken);
-    await prefs.setString(_refreshTokenKey, refreshToken);
-  }
-
-  Future<void> _updateAccessToken(String accessToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, accessToken);
-  }
-
-  Future<void> _saveUserIfPresent(dynamic user) async {
-    if (user is Map<String, dynamic>) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userKey, jsonEncode(user));
-    }
   }
 
   Future<void> _clearTokens() async {
