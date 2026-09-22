@@ -114,8 +114,8 @@ export class AppController {
   }
 
   private resolveMediaType(mimetype: string, originalname: string): MediaType {
-    const extension = extname(originalname).toLowerCase();
-    const isVideo = mimetype.startsWith('video/') || [
+    const extension = extname(originalname || '').toLowerCase();
+    const isVideo = (mimetype || '').startsWith('video/') || [
       '.mp4',
       '.mov',
       '.webm',
@@ -215,9 +215,16 @@ export class AppController {
       destination: './uploads',
       filename: (req, file, callback) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = extname(file.originalname) || (file.mimetype.startsWith('video/') ? '.mp4' : '.jpg');
-        const prefix = file.mimetype.startsWith('video/') ? 'video' : 'image';
-        callback(null, `${prefix}-${uniqueSuffix}${ext}`);
+        const originalExtension = extname(file.originalname).toLowerCase();
+        const isVideo = file.mimetype.startsWith('video/') || [
+          '.mp4',
+          '.mov',
+          '.webm',
+          '.3gp',
+        ].includes(originalExtension);
+        const prefix = isVideo ? 'video' : 'image';
+        const extension = isVideo ? '.mp4' : '.jpg';
+        callback(null, `${prefix}-${uniqueSuffix}${extension}`);
       },
     }),
   }))
