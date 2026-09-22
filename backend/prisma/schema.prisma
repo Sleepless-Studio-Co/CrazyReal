@@ -26,6 +26,11 @@ enum ParticipantRole {
   MEMBER
 }
 
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -45,6 +50,7 @@ model Post {
   userId      Int
   user        User      @relation(fields: [userId], references: [id])
   photoUrl    String
+  mediaType   MediaType @default(PHOTO)
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId Int
   createdAt   DateTime  @default(now())

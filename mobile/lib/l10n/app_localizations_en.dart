@@ -173,6 +173,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorSendingPhoto => '❌ Error sending photo';
 
   @override
+  String get captureModePhoto => 'Photo';
+
+  @override
+  String get captureModeVideo => 'Video';
+
+  @override
+  String get videoSentToFeed => 'Video sent to your Feed!';
+
+  @override
+  String get errorSendingVideo => '❌ Error sending video';
+
+  @override
+  String get recordingVideo => 'Recording...';
+
+  @override
   String get pleaseLoginFirst => '🔒 Please login first';
 
   @override
