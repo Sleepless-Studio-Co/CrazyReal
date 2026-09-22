@@ -10,8 +10,6 @@ import 'auth/auth_service.dart';
 
 final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
 
-enum CaptureMode { photo, video }
-
 class NewPage extends StatefulWidget {
   const NewPage({
     super.key,
@@ -35,7 +33,6 @@ class _NewPageState extends State<NewPage> {
   List<CameraDescription> _cameras = [];
   int _currentCameraIndex = 0;
   FlashMode _currentFlashMode = FlashMode.off;
-  CaptureMode _captureMode = CaptureMode.photo;
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
 
@@ -62,7 +59,7 @@ class _NewPageState extends State<NewPage> {
     _controller = CameraController(
       _cameras[cameraIndex],
       ResolutionPreset.veryHigh,
-      enableAudio: _captureMode == CaptureMode.video,
+      enableAudio: true,
     );
     _initializeControllerFuture = _controller!.initialize();
     if (_currentFlashMode != FlashMode.off) {
@@ -72,12 +69,6 @@ class _NewPageState extends State<NewPage> {
       } catch (_) {}
     }
     if (mounted) setState(() {});
-  }
-
-  Future<void> _switchCaptureMode(CaptureMode mode) async {
-    if (_captureMode == mode || isRecording || isUploading) return;
-    setState(() => _captureMode = mode);
-    await _setupCameraController(_currentCameraIndex);
   }
 
   Future<void> _switchCamera() async {
@@ -96,7 +87,7 @@ class _NewPageState extends State<NewPage> {
   }
 
   Future<void> _toggleFlash() async {
-    if (_controller == null || _captureMode == CaptureMode.video) return;
+    if (_controller == null || isRecording) return;
 
     try {
       switch (_currentFlashMode) {
@@ -313,8 +304,10 @@ class _NewPageState extends State<NewPage> {
     return '$minutes:$seconds';
   }
 
-  Future<void> _toggleVideoRecording() async {
+  Future<void> _startVideoRecording() async {
     final l10n = AppLocalizations.of(context)!;
+
+    if (isUploading || isRecording) return;
 
     if (_controller == null || !_controller!.value.isInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -324,16 +317,9 @@ class _NewPageState extends State<NewPage> {
     }
 
     try {
-      if (isRecording) {
-        final video = await _controller!.stopVideoRecording();
-        _stopRecordingTimer();
-        setState(() => isRecording = false);
-        await _uploadMedia(video.path, isVideo: true);
-      } else {
-        await _controller!.startVideoRecording();
-        _startRecordingTimer();
-        setState(() => isRecording = true);
-      }
+      await _controller!.startVideoRecording();
+      _startRecordingTimer();
+      if (mounted) setState(() => isRecording = true);
     } catch (e) {
       print('Exception during video recording: $e');
       _stopRecordingTimer();
@@ -346,12 +332,24 @@ class _NewPageState extends State<NewPage> {
     }
   }
 
-  void _onShutterPressed() {
-    if (isUploading) return;
-    if (_captureMode == CaptureMode.photo) {
-      takeAndUploadPicture();
-    } else {
-      _toggleVideoRecording();
+  Future<void> _stopVideoRecording() async {
+    if (!isRecording || _controller == null) return;
+
+    try {
+      final video = await _controller!.stopVideoRecording();
+      _stopRecordingTimer();
+      if (mounted) setState(() => isRecording = false);
+      await _uploadMedia(video.path, isVideo: true);
+    } catch (e) {
+      print('Exception while stopping video recording: $e');
+      _stopRecordingTimer();
+      if (mounted) {
+        setState(() => isRecording = false);
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorSendingVideo)),
+        );
+      }
     }
   }
 
@@ -362,43 +360,7 @@ class _NewPageState extends State<NewPage> {
     super.dispose();
   }
 
-  Widget _buildModeSwitch(AppLocalizations l10n) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7EBD1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8D5B5)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ModeButton(
-              label: l10n.captureModePhoto,
-              icon: Icons.photo_camera_outlined,
-              selected: _captureMode == CaptureMode.photo,
-              enabled: !isRecording && !isUploading,
-              onTap: () => _switchCaptureMode(CaptureMode.photo),
-            ),
-          ),
-          Expanded(
-            child: _ModeButton(
-              label: l10n.captureModeVideo,
-              icon: Icons.videocam_outlined,
-              selected: _captureMode == CaptureMode.video,
-              enabled: !isRecording && !isUploading,
-              onTap: () => _switchCaptureMode(CaptureMode.video),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildShutterButton() {
-    final isVideoMode = _captureMode == CaptureMode.video;
-
     if (isUploading) {
       return const SizedBox(
         width: 80,
@@ -412,47 +374,32 @@ class _NewPageState extends State<NewPage> {
       );
     }
 
-    if (isVideoMode) {
-      return GestureDetector(
-        onTap: _onShutterPressed,
-        child: Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isRecording ? Colors.red : Colors.white,
-              width: 4,
-            ),
+    return GestureDetector(
+      onTap: isRecording ? null : takeAndUploadPicture,
+      onLongPressStart: (_) => _startVideoRecording(),
+      onLongPressEnd: (_) => _stopVideoRecording(),
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isRecording ? Colors.red : Colors.white,
+            width: 4,
           ),
-          child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: isRecording ? 32 : 56,
-              height: isRecording ? 32 : 56,
-              decoration: BoxDecoration(
-                color: Colors.red,
-                shape: isRecording ? BoxShape.rectangle : BoxShape.circle,
-                borderRadius: isRecording ? BorderRadius.circular(8) : null,
-              ),
+        ),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: isRecording ? 32 : 56,
+            height: isRecording ? 32 : 56,
+            decoration: BoxDecoration(
+              color: isRecording ? Colors.red : Colors.white,
+              shape: isRecording ? BoxShape.rectangle : BoxShape.circle,
+              borderRadius: isRecording ? BorderRadius.circular(8) : null,
             ),
           ),
         ),
-      );
-    }
-
-    return SizedBox(
-      width: 80,
-      height: 80,
-      child: FloatingActionButton(
-        heroTag: 'photo',
-        onPressed: _onShutterPressed,
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        splashColor: Colors.grey.withOpacity(0.3),
-        focusColor: Colors.grey.withOpacity(0.2),
-        elevation: 0,
-        child: const Icon(Icons.circle_outlined, size: 80),
       ),
     );
   }
@@ -482,11 +429,10 @@ class _NewPageState extends State<NewPage> {
               ),
             ),
           ),
-          _buildModeSwitch(l10n),
           Container(
-            height: 560,
+            height: 600,
             width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 20),
+            margin: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(25),
               color: Colors.black,
@@ -583,71 +529,22 @@ class _NewPageState extends State<NewPage> {
               child: const Icon(Icons.flip_camera_ios),
             ),
           ),
-          if (_captureMode == CaptureMode.photo)
-            Positioned(
-              bottom: 12,
-              left: 42,
-              child: FloatingActionButton(
-                heroTag: 'flash',
-                onPressed: isRecording || isUploading ? null : _toggleFlash,
-                backgroundColor: const Color(0xFF195A3B),
-                foregroundColor: Colors.white,
-                splashColor: const Color(0xFFE54128),
-                focusColor: const Color(0xFFE54128),
-                child: Icon(_getFlashIcon()),
-              ),
+          Positioned(
+            bottom: 12,
+            left: 42,
+            child: FloatingActionButton(
+              heroTag: 'flash',
+              onPressed: isRecording || isUploading ? null : _toggleFlash,
+              backgroundColor: const Color(0xFF195A3B),
+              foregroundColor: Colors.white,
+              splashColor: const Color(0xFFE54128),
+              focusColor: const Color(0xFFE54128),
+              child: Icon(_getFlashIcon()),
             ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ModeButton extends StatelessWidget {
-  const _ModeButton({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool selected;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: selected ? const Color(0xFF195A3B) : Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: selected ? Colors.white : const Color(0xFF195A3B),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: selected ? Colors.white : const Color(0xFF195A3B),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
