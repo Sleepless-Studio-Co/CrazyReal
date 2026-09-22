@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../auth/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/api_exception.dart';
+import '../widgets/feed_avatar.dart';
+import '../widgets/paper.dart';
 
 class GroupMembersPage extends StatefulWidget {
   final int conversationId;
@@ -51,7 +53,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
         setState(() => _isLoading = false);
         final message = e is ApiException ? e.message : 'Erreur lors du chargement des membres';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
       }
     }
@@ -76,19 +78,16 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   }
 
   Future<void> _remove(int userId, String username) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Retirer du groupe'),
-        content: Text('Veux-tu vraiment retirer $username du groupe ?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Retirer')),
-        ],
-      ),
+    final confirmed = await paperConfirm(
+      context,
+      title: 'Retirer du groupe',
+      message: 'Veux-tu vraiment retirer $username du groupe ?',
+      confirmLabel: 'Retirer',
+      cancelLabel: 'Annuler',
+      danger: true,
     );
 
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     try {
       await _chatService.removeMember(widget.conversationId, userId);
@@ -101,52 +100,142 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   void _showError(Object error) {
     final message = error is ApiException ? error.message : 'Une erreur est survenue';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: paperDanger),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Membres du groupe')),
+      backgroundColor: paperBg,
+      appBar: paperAppBar(
+        title: 'Membres',
+        subtitle: _isLoading ? null : '${_members.length} membre(s)',
+      ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: paperAccent))
           : RefreshIndicator(
               onRefresh: _load,
-              child: ListView.builder(
+              color: paperAccent,
+              child: ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                 itemCount: _members.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final member = _members[index];
-                  final user = member['user'];
+                  final user = member['user'] as Map<String, dynamic>;
+                  final username = user['username']?.toString() ?? '';
                   final isAdmin = member['role'] == 'ADMIN';
                   final isMe = user['id'] == _currentUserId;
 
-                  return ListTile(
-                    leading: CircleAvatar(
-                      child: Text(user['username'].toString().substring(0, 1).toUpperCase()),
-                    ),
-                    title: Text(user['username'] + (isMe ? ' (toi)' : '')),
-                    subtitle: Text(isAdmin ? 'Admin' : 'Membre'),
-                    trailing: (_isCurrentUserAdmin && !isMe)
-                        ? PopupMenuButton<String>(
+                  return Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: paperCardDecoration(),
+                    child: Row(
+                      children: [
+                        ExcludeSemantics(
+                          child: FeedAvatar(
+                            username: username,
+                            avatarUrl: user['avatarUrl']?.toString(),
+                            avatarKey: user['avatarKey']?.toString(),
+                            size: 46,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: MergeSemantics(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isMe ? '$username (toi)' : username,
+                                  style: paperValue(fontSize: 16),
+                                ),
+                                const SizedBox(height: 4),
+                                _RoleChip(isAdmin: isAdmin),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_isCurrentUserAdmin && !isMe)
+                          PopupMenuButton<String>(
+                            tooltip: 'Gérer $username',
+                            icon: const Icon(Icons.more_vert),
+                            color: paperCard,
+                            iconColor: paperInk,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                             onSelected: (action) {
                               if (action == 'promote') _promote(user['id']);
                               if (action == 'demote') _demote(user['id']);
-                              if (action == 'remove') _remove(user['id'], user['username']);
+                              if (action == 'remove') {
+                                _remove(user['id'], username);
+                              }
                             },
                             itemBuilder: (context) => [
                               if (!isAdmin)
-                                const PopupMenuItem(value: 'promote', child: Text('Promouvoir admin')),
+                                PopupMenuItem(
+                                  value: 'promote',
+                                  child: Text('Promouvoir admin',
+                                      style: paperValue(fontSize: 14)),
+                                ),
                               if (isAdmin)
-                                const PopupMenuItem(value: 'demote', child: Text('Rétrograder membre')),
-                              const PopupMenuItem(value: 'remove', child: Text('Retirer du groupe')),
+                                PopupMenuItem(
+                                  value: 'demote',
+                                  child: Text('Rétrograder membre',
+                                      style: paperValue(fontSize: 14)),
+                                ),
+                              PopupMenuItem(
+                                value: 'remove',
+                                child: Text(
+                                  'Retirer du groupe',
+                                  style: paperValue(
+                                    fontSize: 14,
+                                    color: paperDanger,
+                                  ),
+                                ),
+                              ),
                             ],
-                          )
-                        : null,
+                          ),
+                      ],
+                    ),
                   );
                 },
               ),
             ),
+    );
+  }
+}
+
+class _RoleChip extends StatelessWidget {
+  const _RoleChip({required this.isAdmin});
+
+  final bool isAdmin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: paperChip,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ExcludeSemantics(
+            child: Icon(
+              isAdmin ? Icons.shield_outlined : Icons.person_outline,
+              size: 13,
+              color: paperInkMuted,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(isAdmin ? 'Admin' : 'Membre', style: paperLabel(fontSize: 11)),
+        ],
+      ),
     );
   }
 }

@@ -41,6 +41,8 @@ export class ChatService {
           select: {
             id: true,
             username: true,
+            avatarUrl: true,
+            avatarKey: true,
           },
         },
       },
@@ -100,6 +102,8 @@ export class ChatService {
               select: {
                 id: true,
                 username: true,
+                avatarUrl: true,
+                avatarKey: true,
               },
             },
           },
@@ -124,6 +128,8 @@ export class ChatService {
               select: {
                 id: true,
                 username: true,
+                avatarUrl: true,
+                avatarKey: true,
               },
             },
           },
@@ -349,6 +355,8 @@ export class ChatService {
           select: {
             id: true,
             username: true,
+            avatarUrl: true,
+            avatarKey: true,
           },
         },
       },
@@ -383,6 +391,8 @@ export class ChatService {
           select: {
             id: true,
             username: true,
+            avatarUrl: true,
+            avatarKey: true,
           },
         },
       },

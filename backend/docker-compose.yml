@@ -2,7 +2,9 @@ services:
   # Ton backend (NOUVEAU)
   api:
     build: .
-    command: sh -c "npx prisma db push && npm run start:dev"
+    # --accept-data-loss : stack de dev, `db push` refuse sinon toute
+    # création de contrainte unique (ex. Challenge date/type/conversationId).
+    command: sh -c "npx prisma db push --accept-data-loss && npm run start:dev"
     ports:
       - "3000:3000" # Ajuste si ton backend utilise un autre port
     volumes:
