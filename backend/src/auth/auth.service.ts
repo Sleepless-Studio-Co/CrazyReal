@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -62,45 +61,31 @@ export class AuthService {
   }
 
   async register(email: string, password: string, username: string) {
-    const existingUser = await this.usersService.findByEmail(email);
-    if (existingUser) {
-      throw new ConflictException('mail already in use');
-    }
+    // UsersService.create maps P2002 → ConflictException (single source of truth).
+    const newUser = await this.usersService.create(email, password, username);
 
-    try {
-      const newUser = await this.usersService.create(email, password, username);
+    // Failures are handled inside the service so a mail outage never blocks account creation.
+    await this.emailVerificationService.createAndSend({
+      id: newUser.id,
+      email: newUser.email,
+      username: newUser.username,
+    });
 
-      // Fire off the verification email. Failures are handled inside the
-      // service so a mail outage never blocks account creation.
-      await this.emailVerificationService.createAndSend({
+    const accessToken = this.generateAccessToken(newUser);
+    const refreshToken = await this.generateRefreshToken(newUser.id);
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
         id: newUser.id,
         email: newUser.email,
         username: newUser.username,
-      });
-
-      const accessToken = this.generateAccessToken(newUser);
-      const refreshToken = await this.generateRefreshToken(newUser.id);
-
-      return {
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          username: newUser.username,
-          avatarUrl: newUser.avatarUrl,
-          avatarKey: newUser.avatarKey,
-          emailVerified: newUser.emailVerified,
-        },
-      };
-    } catch (error) {
-      // Handle Prisma unique constraint violation (P2002)
-      if (error.code === 'P2002') {
-        throw new ConflictException('mail already in use');
-      }
-      // Re-throw other errors
-      throw error;
-    }
+        avatarUrl: newUser.avatarUrl,
+        avatarKey: newUser.avatarKey,
+        emailVerified: newUser.emailVerified,
+      },
+    };
   }
 
   async login(email: string, password: string) {
@@ -150,6 +135,10 @@ export class AuthService {
   async resendVerificationEmail(userId: number) {
     await this.emailVerificationService.resendForUser(userId);
     return { message: 'Verification email sent' };
+  }
+
+  private isValidEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
   async refresh(refreshToken: string) {
@@ -213,9 +202,6 @@ export class AuthService {
     }
 
     if (normalizedUsername) {
-      if (normalizedUsername.length < 3) {
-        throw new BadRequestException('Username too short');
-      }
       payload.username = normalizedUsername;
     }
 
@@ -246,9 +232,5 @@ export class AuthService {
         emailVerified: updatedUser.emailVerified,
       },
     };
-  }
-
-  private isValidEmail(email: string): boolean {
-    return /^[^@]+@[^@]+\.[^@]+$/.test(email);
   }
 }

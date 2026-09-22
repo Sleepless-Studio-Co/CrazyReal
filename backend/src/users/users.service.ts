@@ -8,6 +8,16 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 
+const USER_SELECT = {
+  id: true,
+  email: true,
+  username: true,
+  avatarUrl: true,
+  avatarKey: true,
+  isPrivate: true,
+  createdAt: true,
+} as const;
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -41,7 +51,7 @@ export class UsersService {
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      return this.prisma.user.create({
+      return await this.prisma.user.create({
         data: {
           email,
           password: hashedPassword,
@@ -65,7 +75,7 @@ export class UsersService {
 
   async findByEmail(email: string) {
     try {
-      return this.prisma.user.findUnique({
+      return await this.prisma.user.findUnique({
         where: { email },
         select: {
           id: true,
@@ -85,7 +95,7 @@ export class UsersService {
 
   async findByEmailWithPassword(email: string) {
     try {
-      return this.prisma.user.findUnique({
+      return await this.prisma.user.findUnique({
         where: { email },
         select: {
           id: true,
@@ -106,7 +116,7 @@ export class UsersService {
 
   async findById(id: number) {
     try {
-      return this.prisma.user.findUnique({
+      return await this.prisma.user.findUnique({
         where: { id },
         select: {
           id: true,
@@ -175,7 +185,7 @@ export class UsersService {
     },
   ) {
     try {
-      return this.prisma.user.update({
+      return await this.prisma.user.update({
         where: { id: userId },
         data: updates,
         select: {
@@ -199,7 +209,7 @@ export class UsersService {
     updates: { avatarUrl?: string | null; avatarKey?: string | null },
   ) {
     try {
-      return this.prisma.user.update({
+      return await this.prisma.user.update({
         where: { id: userId },
         data: updates,
         select: {
@@ -220,7 +230,7 @@ export class UsersService {
 
   async updatePrivacy(userId: number, isPrivate: boolean) {
     try {
-      return this.prisma.user.update({
+      return await this.prisma.user.update({
         where: { id: userId },
         data: { isPrivate },
         select: {
@@ -241,15 +251,9 @@ export class UsersService {
 
   async deleteAccount(userId: number) {
     try {
-      await this.prisma.$transaction([
-        this.prisma.message.deleteMany({ where: { senderId: userId } }),
-        this.prisma.participant.deleteMany({ where: { userId } }),
-        this.prisma.friendship.deleteMany({
-          where: { OR: [{ userId }, { friendId: userId }] },
-        }),
-        this.prisma.post.deleteMany({ where: { userId } }),
-        this.prisma.user.delete({ where: { id: userId } }),
-      ]);
+      // Dependent rows (posts, messages, participants, friendships, upvotes,
+      // refresh tokens) are removed by ON DELETE CASCADE at the DB level.
+      await this.prisma.user.delete({ where: { id: userId } });
     } catch (error) {
       this.handlePrismaError(error);
     }
