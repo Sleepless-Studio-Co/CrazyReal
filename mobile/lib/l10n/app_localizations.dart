@@ -200,6 +200,36 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get profile;
 
+  /// Title of the email verification banner
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get emailNotVerifiedTitle;
+
+  /// Body of the email verification banner
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a confirmation link to your email address. Verify it to secure your account.'**
+  String get emailNotVerifiedMessage;
+
+  /// Button that resends the verification email
+  ///
+  /// In en, this message translates to:
+  /// **'Resend email'**
+  String get resendVerificationEmail;
+
+  /// Confirmation shown after resending the verification email
+  ///
+  /// In en, this message translates to:
+  /// **'Verification email sent. Check your inbox.'**
+  String get verificationEmailSent;
+
+  /// Refresh button label
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
   /// Message shown after profile update
   ///
   /// In en, this message translates to:
@@ -553,6 +583,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error: User not found or request already exists.'**
   String get friendRequestError;
+
+  /// Hint in the add-friend search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search by username'**
+  String get searchUsersHint;
+
+  /// Badge for a public account
+  ///
+  /// In en, this message translates to:
+  /// **'Public'**
+  String get accountPublic;
+
+  /// Badge for a private account
+  ///
+  /// In en, this message translates to:
+  /// **'Private'**
+  String get accountPrivate;
+
+  /// Shown when a username search returns nothing
+  ///
+  /// In en, this message translates to:
+  /// **'No user found'**
+  String get noUsersFound;
+
+  /// Short label shown after a friend request was sent
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get requestSentShort;
 
   /// Title and tab label for friend list
   ///

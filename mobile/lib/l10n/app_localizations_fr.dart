@@ -60,6 +60,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get profile => 'Profil';
 
   @override
+  String get emailNotVerifiedTitle => 'Vérifiez votre e-mail';
+
+  @override
+  String get emailNotVerifiedMessage =>
+      'Nous avons envoyé un lien de confirmation à votre adresse e-mail. Vérifiez-la pour sécuriser votre compte.';
+
+  @override
+  String get resendVerificationEmail => 'Renvoyer l\'e-mail';
+
+  @override
+  String get verificationEmailSent =>
+      'E-mail de vérification envoyé. Consultez votre boîte de réception.';
+
+  @override
+  String get refresh => 'Actualiser';
+
+  @override
   String get profileUpdated => 'Profil mis à jour';
 
   @override
@@ -247,6 +264,21 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get friendRequestError =>
       'Erreur : Utilisateur introuvable ou demande existante.';
+
+  @override
+  String get searchUsersHint => 'Rechercher un pseudo';
+
+  @override
+  String get accountPublic => 'Public';
+
+  @override
+  String get accountPrivate => 'Privé';
+
+  @override
+  String get noUsersFound => 'Aucun utilisateur trouvé';
+
+  @override
+  String get requestSentShort => 'Envoyée';
 
   @override
   String get myFriends => 'Mes Amis';

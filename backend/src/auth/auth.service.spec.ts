@@ -5,6 +5,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailVerificationService } from './email-verification.service';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -32,6 +33,12 @@ describe('AuthService', () => {
     },
   };
 
+  const emailVerificationServiceMock = {
+    createAndSend: jest.fn(),
+    verify: jest.fn(),
+    resendForUser: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -44,6 +51,7 @@ describe('AuthService', () => {
 
     jwtServiceMock.sign.mockReturnValue('access-token');
     prismaServiceMock.refreshToken.create.mockResolvedValue({});
+    emailVerificationServiceMock.createAndSend.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -64,6 +72,10 @@ describe('AuthService', () => {
           provide: PrismaService,
           useValue: prismaServiceMock,
         },
+        {
+          provide: EmailVerificationService,
+          useValue: emailVerificationServiceMock,
+        },
       ],
     }).compile();
 
@@ -72,7 +84,6 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should register a user successfully', async () => {
-      usersServiceMock.findByEmail.mockResolvedValue(null);
       usersServiceMock.create.mockResolvedValue({
         id: 1,
         email: 'john@example.com',
@@ -90,7 +101,6 @@ describe('AuthService', () => {
           username: 'john',
         },
       });
-      expect(usersServiceMock.findByEmail).toHaveBeenCalledWith('john@example.com');
       expect(usersServiceMock.create).toHaveBeenCalledWith(
         'john@example.com',
         'StrongPassword123!',
@@ -111,13 +121,13 @@ describe('AuthService', () => {
     });
 
     it('should throw ConflictException when email is already used', async () => {
-      usersServiceMock.findByEmail.mockResolvedValue({ id: 99, email: 'john@example.com' });
+      // UsersService.create is the single source of truth for the P2002 → 409 mapping.
+      usersServiceMock.create.mockRejectedValue(new ConflictException('mail already in use'));
 
       await expect(
         service.register('john@example.com', 'StrongPassword123!', 'john'),
       ).rejects.toThrow(ConflictException);
 
-      expect(usersServiceMock.create).not.toHaveBeenCalled();
       expect(jwtServiceMock.sign).not.toHaveBeenCalled();
       expect(prismaServiceMock.refreshToken.create).not.toHaveBeenCalled();
     });
