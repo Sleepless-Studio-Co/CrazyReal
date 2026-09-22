@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
@@ -93,6 +94,7 @@ class PostCard extends StatelessWidget {
                 ? null
                 : () {
                     if (post.isVideo) {
+                      _VideoPreview.pauseActiveVideo();
                       FullScreenVideoPage.open(
                         context,
                         videoUrl: photoUrl,
@@ -224,13 +226,21 @@ class _VideoPreview extends StatefulWidget {
 
   final String mediaUrl;
 
+  static void pauseActiveVideo() {
+    _VideoPreviewState._activePreview?._pauseForAnotherVideo();
+    _VideoPreviewState._activePreview = null;
+  }
+
   @override
   State<_VideoPreview> createState() => _VideoPreviewState();
 }
 
 class _VideoPreviewState extends State<_VideoPreview> {
+  static _VideoPreviewState? _activePreview;
+
   late final VideoPlayerController _controller;
   late final Future<void> _initializeFuture;
+  double _visibleFraction = 0;
 
   @override
   void initState() {
@@ -239,66 +249,78 @@ class _VideoPreviewState extends State<_VideoPreview> {
     _initializeFuture = _controller.initialize().then((_) async {
       await _controller.setLooping(true);
       await _controller.setVolume(0);
-      await _controller.play();
+      if (_visibleFraction >= 0.6) {
+        _playIfVisible();
+      }
     });
+  }
+
+  void _onVisibilityChanged(VisibilityInfo info) {
+    _visibleFraction = info.visibleFraction;
+    if (_visibleFraction >= 0.6) {
+      _playIfVisible();
+    } else if (_controller.value.isPlaying) {
+      _controller.pause();
+      if (identical(_activePreview, this)) _activePreview = null;
+    }
+  }
+
+  void _playIfVisible() {
+    if (!mounted || !_controller.value.isInitialized || _visibleFraction < 0.6) {
+      return;
+    }
+
+    if (_activePreview != null && !identical(_activePreview, this)) {
+      _activePreview!._pauseForAnotherVideo();
+    }
+    _activePreview = this;
+    _controller.play();
+  }
+
+  void _pauseForAnotherVideo() {
+    if (_controller.value.isPlaying) _controller.pause();
   }
 
   @override
   void dispose() {
+    if (identical(_activePreview, this)) _activePreview = null;
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<void>(
-      future: _initializeFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done ||
-            snapshot.hasError) {
-          return Container(
-            color: const Color(0xFF2A211C),
-            child: const Center(
-              child: Icon(
-                Icons.videocam_outlined,
-                color: Colors.white38,
-                size: 56,
-              ),
-            ),
-          );
-        }
-
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            FittedBox(
-              fit: BoxFit.cover,
-              clipBehavior: Clip.hardEdge,
-              child: SizedBox(
-                width: _controller.value.size.width,
-                height: _controller.value.size.height,
-                child: VideoPlayer(_controller),
-              ),
-            ),
-            IgnorePointer(
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.35),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow_rounded,
-                    color: Colors.white,
-                    size: 42,
-                  ),
+    return VisibilityDetector(
+      key: Key('video-${widget.mediaUrl}'),
+      onVisibilityChanged: _onVisibilityChanged,
+      child: FutureBuilder<void>(
+        future: _initializeFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done ||
+              snapshot.hasError) {
+            return Container(
+              color: const Color(0xFF2A211C),
+              child: const Center(
+                child: Icon(
+                  Icons.videocam_outlined,
+                  color: Colors.white38,
+                  size: 56,
                 ),
               ),
+            );
+          }
+
+          return FittedBox(
+            fit: BoxFit.cover,
+            clipBehavior: Clip.hardEdge,
+            child: SizedBox(
+              width: _controller.value.size.width,
+              height: _controller.value.size.height,
+              child: VideoPlayer(_controller),
             ),
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
