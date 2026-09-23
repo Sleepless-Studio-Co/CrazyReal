@@ -342,6 +342,19 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get notificationFriendRequestTitle => 'Demande d\'ami';
+
+  @override
+  String notificationFriendRequestBody(String username) {
+    return '$username vous a envoyé une demande d\'ami';
+  }
+
+  @override
+  String notificationNewMessageTitle(String username) {
+    return 'Nouveau message de $username';
+  }
+
+  @override
   String get deleteAccount => 'Supprimer le compte';
 
   @override
@@ -393,4 +406,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get comingSoon => 'Bientôt disponible';
+
+  @override
+  String get deleteAccountConfirmWord => 'SUPPRIMER';
+
+  @override
+  String deleteAccountConfirmPrompt(String word) {
+    return 'Pour confirmer, écris $word ci-dessous.';
+  }
+
+  @override
+  String get newGroup => 'Nouveau groupe';
+
+  @override
+  String get acceptRequest => 'Accepter';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get deleteAccountConfirmHint => 'Mot de confirmation';
 }

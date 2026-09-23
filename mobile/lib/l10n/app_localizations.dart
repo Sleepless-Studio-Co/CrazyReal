@@ -722,6 +722,24 @@ abstract class AppLocalizations {
   /// **'{days} d ago'**
   String timeAgoDays(int days);
 
+  /// Title for friend request notification
+  ///
+  /// In en, this message translates to:
+  /// **'Friend Request'**
+  String get notificationFriendRequestTitle;
+
+  /// Body for friend request notification
+  ///
+  /// In en, this message translates to:
+  /// **'{username} sent you a friend request'**
+  String notificationFriendRequestBody(String username);
+
+  /// Title for new message notification
+  ///
+  /// In en, this message translates to:
+  /// **'New message from {username}'**
+  String notificationNewMessageTitle(String username);
+
   /// Delete account button
   ///
   /// In en, this message translates to:
@@ -817,6 +835,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Coming soon'**
   String get comingSoon;
+
+  /// Word the user must type to confirm account deletion
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get deleteAccountConfirmWord;
+
+  /// Prompt asking the user to type the confirmation word
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm, type {word} below.'**
+  String deleteAccountConfirmPrompt(String word);
+
+  /// Create a new group chat button
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get newGroup;
+
+  /// Accept friend request button
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get acceptRequest;
+
+  /// Messages / conversations screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get messages;
+
+  /// Label of the deletion confirmation text field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation word'**
+  String get deleteAccountConfirmHint;
 }
 
 class _AppLocalizationsDelegate

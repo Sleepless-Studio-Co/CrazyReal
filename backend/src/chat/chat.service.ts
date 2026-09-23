@@ -2,6 +2,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { formatPostWithUpvotes, postIncludeWithUpvotes } from '../posts/post.utils';
 
+const MAX_GROUP_MEMBERS = 50;
+
 @Injectable()
 export class ChatService {
   constructor(private prisma: PrismaService) {}
@@ -41,6 +43,8 @@ export class ChatService {
           select: {
             id: true,
             username: true,
+            avatarUrl: true,
+            avatarKey: true,
           },
         },
       },
@@ -57,30 +61,11 @@ export class ChatService {
       throw new BadRequestException("Un groupe doit avoir au moins 2 membres.");
     }
 
-    if (totalMembers > 50) {
+    if (totalMembers > MAX_GROUP_MEMBERS) {
       throw new BadRequestException("Un groupe ne peut pas dépasser 50 membres.");
     }
 
-    const acceptedFriendships = await this.prisma.friendship.findMany({
-      where: {
-        status: 'ACCEPTED',
-        OR: [
-          { userId: creatorId, friendId: { in: uniqueParticipantIds } },
-          { friendId: creatorId, userId: { in: uniqueParticipantIds } },
-        ],
-      },
-    });
-
-    const friendIds = new Set(
-      acceptedFriendships.map((f) => (f.userId === creatorId ? f.friendId : f.userId)),
-    );
-
-    const invalidIds = uniqueParticipantIds.filter((id) => !friendIds.has(id));
-    if (invalidIds.length > 0) {
-      throw new BadRequestException(
-        `Les utilisateurs suivants ne sont pas dans ta liste d'amis : ${invalidIds.join(', ')}.`,
-      );
-    }
+    await this.requireFriends(creatorId, uniqueParticipantIds);
 
     return this.prisma.conversation.create({
       data: {
@@ -100,6 +85,8 @@ export class ChatService {
               select: {
                 id: true,
                 username: true,
+                avatarUrl: true,
+                avatarKey: true,
               },
             },
           },
@@ -124,6 +111,8 @@ export class ChatService {
               select: {
                 id: true,
                 username: true,
+                avatarUrl: true,
+                avatarKey: true,
               },
             },
           },
@@ -179,6 +168,65 @@ export class ChatService {
     }
 
     return { success: true, deleted: false };
+  }
+
+  /// Tous les ids doivent être des amis acceptés de `userId` — même règle à la
+  /// création du groupe et à l'ajout de membres.
+  private async requireFriends(userId: number, targetIds: number[]) {
+    if (targetIds.length === 0) return;
+
+    const acceptedFriendships = await this.prisma.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [
+          { userId: userId, friendId: { in: targetIds } },
+          { friendId: userId, userId: { in: targetIds } },
+        ],
+      },
+    });
+
+    const friendIds = new Set(
+      acceptedFriendships.map((f) => (f.userId === userId ? f.friendId : f.userId)),
+    );
+
+    const invalidIds = targetIds.filter((id) => !friendIds.has(id));
+    if (invalidIds.length > 0) {
+      throw new BadRequestException(
+        `Les utilisateurs suivants ne sont pas dans ta liste d'amis : ${invalidIds.join(', ')}.`,
+      );
+    }
+  }
+
+  async addMembers(conversationId: number, requesterId: number, userIds: number[]) {
+    await this.requireAdmin(conversationId, requesterId);
+
+    const current = await this.prisma.participant.findMany({
+      where: { conversationId },
+      select: { userId: true },
+    });
+    const currentIds = new Set(current.map((p) => p.userId));
+
+    const toAdd = [...new Set(userIds)].filter((id) => !currentIds.has(id));
+    if (toAdd.length === 0) {
+      throw new BadRequestException('Ces utilisateurs font déjà partie du groupe.');
+    }
+
+    if (currentIds.size + toAdd.length > MAX_GROUP_MEMBERS) {
+      throw new BadRequestException("Un groupe ne peut pas dépasser 50 membres.");
+    }
+
+    await this.requireFriends(requesterId, toAdd);
+
+    await this.prisma.participant.createMany({
+      data: toAdd.map((userId) => ({
+        userId,
+        conversationId,
+        role: 'MEMBER' as const,
+      })),
+      skipDuplicates: true,
+    });
+
+    return this.getMembers(conversationId, requesterId);
   }
 
   private async requireAdmin(conversationId: number, userId: number) {
@@ -349,6 +397,8 @@ export class ChatService {
           select: {
             id: true,
             username: true,
+            avatarUrl: true,
+            avatarKey: true,
           },
         },
       },
@@ -383,6 +433,8 @@ export class ChatService {
           select: {
             id: true,
             username: true,
+            avatarUrl: true,
+            avatarKey: true,
           },
         },
       },

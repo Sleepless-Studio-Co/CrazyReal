@@ -550,6 +550,31 @@
     }
   },
 
+  "notificationFriendRequestTitle": "Demande d'ami",
+  "@notificationFriendRequestTitle": {
+    "description": "Titre de la notification de demande d'ami"
+  },
+
+  "notificationFriendRequestBody": "{username} vous a envoyé une demande d'ami",
+  "@notificationFriendRequestBody": {
+    "description": "Corps de la notification de demande d'ami",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
+  "notificationNewMessageTitle": "Nouveau message de {username}",
+  "@notificationNewMessageTitle": {
+    "description": "Titre de la notification de nouveau message",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
   "deleteAccount": "Supprimer le compte",
   "@deleteAccount": { "description": "Bouton supprimer le compte" },
 
@@ -596,5 +621,26 @@
   "@publicAccountDesc": { "description": "Description compte public" },
 
   "comingSoon": "Bientôt disponible",
-  "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" }
+  "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" },
+
+  "deleteAccountConfirmWord": "SUPPRIMER",
+  "@deleteAccountConfirmWord": { "description": "Mot à saisir pour confirmer la suppression du compte" },
+
+  "deleteAccountConfirmPrompt": "Pour confirmer, écris {word} ci-dessous.",
+  "@deleteAccountConfirmPrompt": {
+    "description": "Invite demandant de saisir le mot de confirmation",
+    "placeholders": { "word": { "type": "String" } }
+  },
+
+  "newGroup": "Nouveau groupe",
+  "@newGroup": { "description": "Bouton de création d'un groupe de discussion" },
+
+  "acceptRequest": "Accepter",
+  "@acceptRequest": { "description": "Bouton accepter une demande d'ami" },
+
+  "messages": "Messages",
+  "@messages": { "description": "Titre de l'écran des discussions" },
+
+  "deleteAccountConfirmHint": "Mot de confirmation",
+  "@deleteAccountConfirmHint": { "description": "Label du champ de confirmation de suppression" }
 }
