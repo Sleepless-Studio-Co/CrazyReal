@@ -7,10 +7,13 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt.strategy';
 import { JWT_CONFIG_KEYS } from './jwt.config';
+import { EmailVerificationService } from './email-verification.service';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     UsersModule,
+    MailModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -25,7 +28,7 @@ import { JWT_CONFIG_KEYS } from './jwt.config';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, EmailVerificationService],
   controllers: [AuthController],
   exports: [AuthService],
 })

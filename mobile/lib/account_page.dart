@@ -1,73 +1,19 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
-
-final String _apiBaseUrl =
-  dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+import 'services/api_exception.dart';
+import 'utils/media_url.dart';
+import 'widgets/feed_avatar.dart';
 
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
 const Color _cardColor = Color(0xFFFFF7E6);
 const Color _accentColor = Color(0xFFB85C38);
-
-class _AvatarOption {
-  const _AvatarOption({
-    required this.id,
-    required this.background,
-    required this.foreground,
-    required this.icon,
-  });
-
-  final String id;
-  final Color background;
-  final Color foreground;
-  final IconData icon;
-}
-
-const List<_AvatarOption> _avatarOptions = [
-  _AvatarOption(
-    id: 'ember',
-    background: Color(0xFFE9B384),
-    foreground: Color(0xFF3C2A21),
-    icon: Icons.whatshot_outlined,
-  ),
-  _AvatarOption(
-    id: 'sea',
-    background: Color(0xFF9FC0B9),
-    foreground: Color(0xFF1E3D3A),
-    icon: Icons.waves_outlined,
-  ),
-  _AvatarOption(
-    id: 'citrus',
-    background: Color(0xFFF7E27C),
-    foreground: Color(0xFF5E4B0A),
-    icon: Icons.emoji_food_beverage_outlined,
-  ),
-  _AvatarOption(
-    id: 'berry',
-    background: Color(0xFFD4A5A5),
-    foreground: Color(0xFF4D2020),
-    icon: Icons.favorite_border,
-  ),
-  _AvatarOption(
-    id: 'noon',
-    background: Color(0xFFB1C5E5),
-    foreground: Color(0xFF1F2F4A),
-    icon: Icons.sports_tennis_outlined,
-  ),
-  _AvatarOption(
-    id: 'terra',
-    background: Color(0xFFCBB39B),
-    foreground: Color(0xFF4E3722),
-    icon: Icons.terrain_outlined,
-  ),
-];
 
 class AccountPage extends StatefulWidget {
   const AccountPage({
@@ -94,11 +40,12 @@ class _AccountPageState extends State<AccountPage> {
   bool _isEditing = false;
   bool _isSaving = false;
   bool _isAvatarLoading = false;
+  bool _isResendingVerification = false;
+  bool _isPrivate = false;
+  bool _isPrivacySaving = false;
   String? _errorMessage;
   String? _avatarUrl;
   String? _avatarKey;
-  bool _isPrivate = false;
-  bool _isPrivacySaving = false;
   Uint8List? _pendingAvatarBytes;
 
   @override
@@ -133,18 +80,113 @@ class _AccountPageState extends State<AccountPage> {
     if (_user != null) {
       _populateControllers(_user!);
       _syncAvatarFromUser(_user!);
+      _isPrivate = _user!['isPrivate'] == true;
     }
 
     if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
+
+    // Refresh from the API in the background so the verification status is
+    // up to date (e.g. after the user clicked the link in their email).
+    await _refreshProfile();
+  }
+
+  Future<void> _refreshProfile() async {
+    try {
+      final fresh = await _authService.fetchProfile();
+      if (fresh != null && mounted) {
+        setState(() {
+          _user = fresh;
+          if (!_isEditing) {
+            _populateControllers(fresh);
+          }
+          _syncAvatarFromUser(fresh);
+          _isPrivate = fresh['isPrivate'] == true;
+        });
+      }
+    } catch (_) {
+      // Non-fatal: keep showing the cached profile.
+    }
+  }
+
+  bool get _isEmailVerified => _user?['emailVerified'] == true;
+
+  Future<void> _resendVerificationEmail() async {
+    if (_isResendingVerification) return;
+    setState(() {
+      _isResendingVerification = true;
+    });
+
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      await _authService.resendVerificationEmail();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.verificationEmailSent)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_friendlyError(e))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResendingVerification = false;
+        });
+      }
+    }
+  }
+
+  String _friendlyError(Object error) {
+    final message = error.toString();
+    return message.startsWith('Exception: ')
+        ? message.substring('Exception: '.length)
+        : message;
   }
 
   Future<void> _logout() async {
     await _authService.logout();
     if (mounted) {
       widget.onLoggedOut();
+    }
+  }
+
+  Future<void> _togglePrivacy(bool value) async {
+    setState(() {
+      _isPrivacySaving = true;
+    });
+
+    try {
+      final result = await _authService.updatePrivacy(value);
+      final updatedUser = result['user'];
+      if (!mounted) return;
+      setState(() {
+        _isPrivate = updatedUser is Map
+            ? updatedUser['isPrivate'] == true
+            : value;
+        if (updatedUser is Map<String, dynamic>) {
+          _user = updatedUser;
+        }
+      });
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_friendlyError(e)),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPrivacySaving = false;
+        });
+      }
     }
   }
 
@@ -156,7 +198,6 @@ class _AccountPageState extends State<AccountPage> {
   void _syncAvatarFromUser(Map<String, dynamic> user) {
     _avatarUrl = user['avatarUrl']?.toString();
     _avatarKey = user['avatarKey']?.toString();
-    _isPrivate = user['isPrivate'] == true;
   }
 
   void _startEditing() {
@@ -230,22 +271,19 @@ class _AccountPageState extends State<AccountPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.profileUpdated)),
       );
-    } catch (e) {
-      final message = e.toString().replaceFirst('Exception: ', '');
-      if (message.toLowerCase().contains('unauthorized')) {
-        if (mounted) {
-          setState(() {
-            _isSaving = false;
-          });
-          widget.onUnauthorized();
-        }
-        return;
+    } on UnauthorizedException {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+        widget.onUnauthorized();
       }
-
+      return;
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _errorMessage = message;
+        _errorMessage = e.toString();
       });
     }
   }
@@ -324,41 +362,11 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _removeCustomAvatar() async {
-    await _selectBaseAvatar(_avatarOptions.first.id);
-  }
-
-  Future<void> _togglePrivacy(bool value) async {
-    setState(() {
-      _isPrivacySaving = true;
-    });
-
-    try {
-      final result = await _authService.updatePrivacy(value);
-      final updatedUser = result['user'];
-      if (updatedUser is Map<String, dynamic>) {
-        _user = updatedUser;
-        _syncAvatarFromUser(updatedUser);
-      } else {
-        // Fallback in case the backend response shape changes: still
-        // reflect the toggle locally so the UI doesn't feel stuck.
-        setState(() {
-          _isPrivate = value;
-        });
-      }
-    } catch (e) {
-      _handleAvatarError(e);
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isPrivacySaving = false;
-        });
-      }
-    }
+    await _selectBaseAvatar(kAvatarOptions.first.id);
   }
 
   void _handleAvatarError(Object error) {
-    final message = error.toString().replaceFirst('Exception: ', '');
-    if (message.toLowerCase().contains('unauthorized')) {
+    if (error is UnauthorizedException) {
       if (mounted) {
         widget.onUnauthorized();
       }
@@ -368,18 +376,18 @@ class _AccountPageState extends State<AccountPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(error.toString()),
         backgroundColor: Colors.red,
       ),
     );
   }
 
-  _AvatarOption _resolveAvatarOption() {
+  AvatarOption _resolveAvatarOption() {
     final id = _avatarKey;
-    if (id == null) return _avatarOptions.first;
-    return _avatarOptions.firstWhere(
+    if (id == null) return kAvatarOptions.first;
+    return kAvatarOptions.firstWhere(
       (option) => option.id == id,
-      orElse: () => _avatarOptions.first,
+      orElse: () => kAvatarOptions.first,
     );
   }
 
@@ -414,7 +422,7 @@ class _AccountPageState extends State<AccountPage> {
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
-                  children: _avatarOptions
+                  children: kAvatarOptions
                       .map(
                         (option) => _buildAvatarChoice(
                           option: option,
@@ -497,6 +505,10 @@ class _AccountPageState extends State<AccountPage> {
         _buildProfileHeader(l10n),
         const SizedBox(height: 16),
         _buildPrivacyCard(l10n),
+        if (!_isEmailVerified) ...[
+          const SizedBox(height: 16),
+          _buildVerificationBanner(l10n),
+        ],
         if (_isEditing) ...[
           const SizedBox(height: 16),
           _buildEditCard(l10n),
@@ -556,6 +568,84 @@ class _AccountPageState extends State<AccountPage> {
                   activeColor: _accentColor,
                   onChanged: _togglePrivacy,
                 ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerificationBanner(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7E6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _accentColor.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.mark_email_unread_outlined, color: _accentColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.emailNotVerifiedTitle,
+                      style: GoogleFonts.nunito(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _inkColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.emailNotVerifiedMessage,
+                      style: GoogleFonts.nunito(
+                        fontSize: 13,
+                        color: _inkMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed:
+                      _isResendingVerification ? null : _resendVerificationEmail,
+                  icon: _isResendingVerification
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.send_outlined, size: 18),
+                  label: Text(l10n.resendVerificationEmail),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _accentColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: _refreshProfile,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: Text(l10n.refresh),
+                style: OutlinedButton.styleFrom(foregroundColor: _inkColor),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -814,7 +904,7 @@ class _AccountPageState extends State<AccountPage> {
         ),
       );
     } else if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
-      final resolvedAvatarUrl = _resolveMediaUrl(_avatarUrl!);
+      final resolvedAvatarUrl = resolveMediaUrl(_avatarUrl!)!;
       avatarInner = ClipOval(
         child: Image.network(
           resolvedAvatarUrl,
@@ -925,38 +1015,8 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  String _resolveMediaUrl(String rawUrl) {
-    if (rawUrl.isEmpty) return rawUrl;
-
-    final configuredBase = _apiBaseUrl.endsWith('/')
-        ? _apiBaseUrl.substring(0, _apiBaseUrl.length - 1)
-        : _apiBaseUrl;
-    final configuredUri = Uri.tryParse(configuredBase);
-
-    if (rawUrl.startsWith('/')) {
-      return '$configuredBase$rawUrl';
-    }
-
-    final uri = Uri.tryParse(rawUrl);
-    if (uri != null && uri.hasScheme) {
-      final host = uri.host.toLowerCase();
-      if ((host == 'localhost' || host == '127.0.0.1' || host == '10.0.2.2') && configuredUri != null) {
-        return uri
-            .replace(
-              scheme: configuredUri.scheme,
-              host: configuredUri.host,
-              port: configuredUri.hasPort ? configuredUri.port : null,
-            )
-            .toString();
-      }
-      return rawUrl;
-    }
-
-    return '$configuredBase/$rawUrl';
-  }
-
   Widget _buildAvatarChoice({
-    required _AvatarOption option,
+    required AvatarOption option,
     required bool isSelected,
     required VoidCallback onTap,
   }) {

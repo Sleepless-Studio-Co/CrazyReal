@@ -1,5 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { formatPostWithUpvotes, postIncludeWithUpvotes } from '../posts/post.utils';
 
 @Injectable()
 export class ChatService {
@@ -267,6 +268,60 @@ export class ChatService {
       where: { id: participant.id },
       data: { role: 'MEMBER' },
     });
+  }
+
+  async createGroupChallenge(
+    conversationId: number,
+    userId: number,
+    title: string,
+    description: string,
+    endsAt: Date,
+  ) {
+    const isParticipant = await this.isParticipant(conversationId, userId);
+    if (!isParticipant) {
+      throw new ForbiddenException("Tu n'as pas accès à ce groupe.");
+    }
+
+    if (endsAt.getTime() <= Date.now()) {
+      throw new BadRequestException("La date de fin doit être dans le futur.");
+    }
+
+    return this.prisma.challenge.create({
+      data: {
+        title,
+        description,
+        conversationId,
+        endsAt,
+        // date = now : le défi démarre à sa création (fenêtre [date, endsAt]).
+      },
+    });
+  }
+
+  async getGroupChallenges(conversationId: number, userId: number) {
+    const isParticipant = await this.isParticipant(conversationId, userId);
+    if (!isParticipant) {
+      throw new ForbiddenException("Tu n'as pas accès à ce groupe.");
+    }
+
+    return this.prisma.challenge.findMany({
+      where: { conversationId },
+      orderBy: { date: 'desc' },
+    });
+  }
+
+  async getGroupFeed(conversationId: number, userId: number) {
+    const isParticipant = await this.isParticipant(conversationId, userId);
+    if (!isParticipant) {
+      throw new ForbiddenException("Tu n'as pas accès à ce groupe.");
+    }
+
+    const posts = await this.prisma.post.findMany({
+      where: { challenge: { is: { conversationId } } },
+      orderBy: { createdAt: 'desc' },
+      include: postIncludeWithUpvotes(userId),
+    });
+
+    return posts.map(formatPostWithUpvotes);
   }
 
   async sendMessage(conversationId: number, senderId: number, content: string) {
