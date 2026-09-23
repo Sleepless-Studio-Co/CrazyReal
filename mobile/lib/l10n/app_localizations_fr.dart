@@ -393,4 +393,115 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get comingSoon => 'Bientôt disponible';
+
+  @override
+  String get administration => 'Administration';
+
+  @override
+  String get administrationDesc => 'Gérer les défis globaux';
+
+  @override
+  String get adminChallengesTitle => 'Défis';
+
+  @override
+  String get adminNewChallenge => 'Nouveau défi';
+
+  @override
+  String get adminEditChallenge => 'Modifier le défi';
+
+  @override
+  String get adminChallengeTitleLabel => 'Titre';
+
+  @override
+  String get adminChallengeDescriptionLabel => 'Description (optionnel)';
+
+  @override
+  String get adminChallengeStartLabel => 'Début le';
+
+  @override
+  String get adminChallengeTypeLabel => 'Type';
+
+  @override
+  String get adminChallengeActiveLabel => 'Actif';
+
+  @override
+  String get adminTypeWeeklyA => 'Hebdo A (84h)';
+
+  @override
+  String get adminTypeWeeklyB => 'Hebdo B (84h)';
+
+  @override
+  String get adminTypeSpecial => 'Spécial (24h)';
+
+  @override
+  String get adminStatusRunning => 'En cours';
+
+  @override
+  String get adminStatusUpcoming => 'À venir';
+
+  @override
+  String get adminStatusFinished => 'Terminé';
+
+  @override
+  String get adminStatusDisabled => 'Désactivé';
+
+  @override
+  String get adminNoChallenges => 'Aucun défi';
+
+  @override
+  String get adminNoChallengesHint =>
+      'Créez le premier avec le bouton ci-dessous.';
+
+  @override
+  String get adminChallengeCreated => 'Défi créé';
+
+  @override
+  String get adminChallengeUpdated => 'Défi mis à jour';
+
+  @override
+  String get adminChallengeDeleted => 'Défi supprimé';
+
+  @override
+  String get adminDeleteConfirmTitle => 'Supprimer ce défi ?';
+
+  @override
+  String get adminDeleteConfirmBody => 'Cette action est irréversible.';
+
+  @override
+  String get adminTitleRequired => 'Le titre est obligatoire';
+
+  @override
+  String adminEndsOn(String date) {
+    return 'Fin le $date';
+  }
+
+  @override
+  String adminPostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count publications',
+      one: '1 publication',
+      zero: 'Aucune publication',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminImportFromFile => 'Importer depuis challenges.json';
+
+  @override
+  String adminImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count défis importés',
+      one: '1 défi importé',
+      zero: 'Aucun défi importé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminLoadError => 'Impossible de charger les défis';
 }

@@ -596,5 +596,104 @@
   "@publicAccountDesc": { "description": "Description compte public" },
 
   "comingSoon": "Bientôt disponible",
-  "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" }
+  "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" },
+
+  "administration": "Administration",
+  "@administration": { "description": "En-tête et tuile admin dans les réglages" },
+
+  "administrationDesc": "Gérer les défis globaux",
+  "@administrationDesc": { "description": "Sous-titre de la tuile administration" },
+
+  "adminChallengesTitle": "Défis",
+  "@adminChallengesTitle": { "description": "Titre de la page admin des défis" },
+
+  "adminNewChallenge": "Nouveau défi",
+  "@adminNewChallenge": { "description": "Bouton de création et titre de la boîte de dialogue" },
+
+  "adminEditChallenge": "Modifier le défi",
+  "@adminEditChallenge": { "description": "Titre de la boîte de dialogue d'édition" },
+
+  "adminChallengeTitleLabel": "Titre",
+  "@adminChallengeTitleLabel": { "description": "Label du champ titre" },
+
+  "adminChallengeDescriptionLabel": "Description (optionnel)",
+  "@adminChallengeDescriptionLabel": { "description": "Label du champ description" },
+
+  "adminChallengeStartLabel": "Début le",
+  "@adminChallengeStartLabel": { "description": "Label du champ date de début" },
+
+  "adminChallengeTypeLabel": "Type",
+  "@adminChallengeTypeLabel": { "description": "Label du champ type" },
+
+  "adminChallengeActiveLabel": "Actif",
+  "@adminChallengeActiveLabel": { "description": "Label de l'interrupteur actif" },
+
+  "adminTypeWeeklyA": "Hebdo A (84h)",
+  "@adminTypeWeeklyA": { "description": "Label du type WEEKLY_A" },
+
+  "adminTypeWeeklyB": "Hebdo B (84h)",
+  "@adminTypeWeeklyB": { "description": "Label du type WEEKLY_B" },
+
+  "adminTypeSpecial": "Spécial (24h)",
+  "@adminTypeSpecial": { "description": "Label du type SPECIAL" },
+
+  "adminStatusRunning": "En cours",
+  "@adminStatusRunning": { "description": "Statut d'un défi ouvert" },
+
+  "adminStatusUpcoming": "À venir",
+  "@adminStatusUpcoming": { "description": "Statut d'un défi pas encore commencé" },
+
+  "adminStatusFinished": "Terminé",
+  "@adminStatusFinished": { "description": "Statut d'un défi dont la fenêtre est passée" },
+
+  "adminStatusDisabled": "Désactivé",
+  "@adminStatusDisabled": { "description": "Statut d'un défi inactif" },
+
+  "adminNoChallenges": "Aucun défi",
+  "@adminNoChallenges": { "description": "État vide de la liste des défis" },
+
+  "adminNoChallengesHint": "Créez le premier avec le bouton ci-dessous.",
+  "@adminNoChallengesHint": { "description": "Indication de l'état vide" },
+
+  "adminChallengeCreated": "Défi créé",
+  "@adminChallengeCreated": { "description": "Confirmation après création" },
+
+  "adminChallengeUpdated": "Défi mis à jour",
+  "@adminChallengeUpdated": { "description": "Confirmation après modification" },
+
+  "adminChallengeDeleted": "Défi supprimé",
+  "@adminChallengeDeleted": { "description": "Confirmation après suppression" },
+
+  "adminDeleteConfirmTitle": "Supprimer ce défi ?",
+  "@adminDeleteConfirmTitle": { "description": "Titre de la confirmation de suppression" },
+
+  "adminDeleteConfirmBody": "Cette action est irréversible.",
+  "@adminDeleteConfirmBody": { "description": "Corps de la confirmation de suppression" },
+
+  "adminTitleRequired": "Le titre est obligatoire",
+  "@adminTitleRequired": { "description": "Erreur de validation quand le titre est vide" },
+
+  "adminEndsOn": "Fin le {date}",
+  "@adminEndsOn": {
+    "description": "Date de fin du défi, dérivée de son type",
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "adminPostsCount": "{count, plural, =0{Aucune publication} =1{1 publication} other{{count} publications}}",
+  "@adminPostsCount": {
+    "description": "Nombre de publications liées au défi",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "adminImportFromFile": "Importer depuis challenges.json",
+  "@adminImportFromFile": { "description": "Label de l'import en masse" },
+
+  "adminImported": "{count, plural, =0{Aucun défi importé} =1{1 défi importé} other{{count} défis importés}}",
+  "@adminImported": {
+    "description": "Résultat de l'import en masse",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "adminLoadError": "Impossible de charger les défis",
+  "@adminLoadError": { "description": "Erreur au chargement de la liste" }
 }

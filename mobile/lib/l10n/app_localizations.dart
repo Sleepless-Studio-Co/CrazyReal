@@ -817,6 +817,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Coming soon'**
   String get comingSoon;
+
+  /// Admin section header and tile in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Administration'**
+  String get administration;
+
+  /// Subtitle of the administration tile
+  ///
+  /// In en, this message translates to:
+  /// **'Manage global challenges'**
+  String get administrationDesc;
+
+  /// Title of the admin challenges page
+  ///
+  /// In en, this message translates to:
+  /// **'Challenges'**
+  String get adminChallengesTitle;
+
+  /// Create challenge button and dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'New challenge'**
+  String get adminNewChallenge;
+
+  /// Edit challenge dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Edit challenge'**
+  String get adminEditChallenge;
+
+  /// Challenge title field label
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get adminChallengeTitleLabel;
+
+  /// Challenge description field label
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get adminChallengeDescriptionLabel;
+
+  /// Challenge start date field label
+  ///
+  /// In en, this message translates to:
+  /// **'Starts on'**
+  String get adminChallengeStartLabel;
+
+  /// Challenge type field label
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get adminChallengeTypeLabel;
+
+  /// Challenge active switch label
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get adminChallengeActiveLabel;
+
+  /// WEEKLY_A challenge type label
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly A (84h)'**
+  String get adminTypeWeeklyA;
+
+  /// WEEKLY_B challenge type label
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly B (84h)'**
+  String get adminTypeWeeklyB;
+
+  /// SPECIAL challenge type label
+  ///
+  /// In en, this message translates to:
+  /// **'Special (24h)'**
+  String get adminTypeSpecial;
+
+  /// Status of a challenge currently open
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get adminStatusRunning;
+
+  /// Status of a challenge that has not started
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get adminStatusUpcoming;
+
+  /// Status of a challenge whose window is over
+  ///
+  /// In en, this message translates to:
+  /// **'Finished'**
+  String get adminStatusFinished;
+
+  /// Status of an inactive challenge
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get adminStatusDisabled;
+
+  /// Empty state of the admin challenge list
+  ///
+  /// In en, this message translates to:
+  /// **'No challenge yet'**
+  String get adminNoChallenges;
+
+  /// Empty state hint of the admin challenge list
+  ///
+  /// In en, this message translates to:
+  /// **'Create the first one with the button below.'**
+  String get adminNoChallengesHint;
+
+  /// Confirmation after creating a challenge
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge created'**
+  String get adminChallengeCreated;
+
+  /// Confirmation after updating a challenge
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge updated'**
+  String get adminChallengeUpdated;
+
+  /// Confirmation after deleting a challenge
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge deleted'**
+  String get adminChallengeDeleted;
+
+  /// Delete challenge confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this challenge?'**
+  String get adminDeleteConfirmTitle;
+
+  /// Delete challenge confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'This action cannot be undone.'**
+  String get adminDeleteConfirmBody;
+
+  /// Validation error when the title is empty
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required'**
+  String get adminTitleRequired;
+
+  /// End date of a challenge, derived from its type
+  ///
+  /// In en, this message translates to:
+  /// **'Ends on {date}'**
+  String adminEndsOn(String date);
+
+  /// Number of posts attached to a challenge
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No post} =1{1 post} other{{count} posts}}'**
+  String adminPostsCount(int count);
+
+  /// Bulk import action label
+  ///
+  /// In en, this message translates to:
+  /// **'Import from challenges.json'**
+  String get adminImportFromFile;
+
+  /// Result of the bulk import
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No challenge imported} =1{1 challenge imported} other{{count} challenges imported}}'**
+  String adminImported(int count);
+
+  /// Error shown when the challenge list fails to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load challenges'**
+  String get adminLoadError;
 }
 
 class _AppLocalizationsDelegate
