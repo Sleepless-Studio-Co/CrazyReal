@@ -722,6 +722,24 @@ abstract class AppLocalizations {
   /// **'{days} d ago'**
   String timeAgoDays(int days);
 
+  /// Title for friend request notification
+  ///
+  /// In en, this message translates to:
+  /// **'Friend Request'**
+  String get notificationFriendRequestTitle;
+
+  /// Body for friend request notification
+  ///
+  /// In en, this message translates to:
+  /// **'{username} sent you a friend request'**
+  String notificationFriendRequestBody(String username);
+
+  /// Title for new message notification
+  ///
+  /// In en, this message translates to:
+  /// **'New message from {username}'**
+  String notificationNewMessageTitle(String username);
+
   /// Delete account button
   ///
   /// In en, this message translates to:
