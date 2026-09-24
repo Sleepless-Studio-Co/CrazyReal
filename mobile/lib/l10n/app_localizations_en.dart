@@ -337,6 +337,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notificationFriendRequestTitle => 'Friend Request';
+
+  @override
+  String notificationFriendRequestBody(String username) {
+    return '$username sent you a friend request';
+  }
+
+  @override
+  String notificationNewMessageTitle(String username) {
+    return 'New message from $username';
+  }
+
+  @override
   String get deleteAccount => 'Delete account';
 
   @override
