@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'admin/admin_page.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
@@ -29,21 +30,42 @@ class SettingPage extends StatefulWidget {
 class _SettingPageState extends State<SettingPage> {
   final _authService = AuthService();
   bool _isPrivate = false;
+  bool _isAdmin = false;
   bool _isPrivacySaving = false;
   bool _isDeleting = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPrivacy();
+    _loadUser();
   }
 
-  Future<void> _loadPrivacy() async {
-    final user = await _authService.getUser();
-    if (!mounted) return;
+  Future<void> _loadUser() async {
+    _applyUser(await _authService.getUser());
+
+    // Le rôle n'est renvoyé que par /auth/me : on rafraîchit le profil pour
+    // savoir si l'entrée d'administration doit apparaître.
+    try {
+      _applyUser(await _authService.fetchProfile());
+    } catch (_) {
+      // Hors ligne : on garde ce que le cache local nous a donné.
+    }
+  }
+
+  void _applyUser(Map<String, dynamic>? user) {
+    if (user == null || !mounted) return;
     setState(() {
-      _isPrivate = user?['isPrivate'] == true;
+      _isPrivate = user['isPrivate'] == true;
+      _isAdmin = user['role'] == 'ADMIN';
     });
+  }
+
+  void _openAdmin() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AdminPage(onUnauthorized: widget.onUnauthorized),
+      ),
+    );
   }
 
   Future<void> _togglePrivacy(bool value) async {
@@ -162,6 +184,18 @@ class _SettingPageState extends State<SettingPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
+          if (_isAdmin) ...[
+            _SectionHeader(l10n.administration),
+            _SettingCard(children: [
+              _NavTile(
+                icon: Icons.shield_outlined,
+                title: l10n.administration,
+                subtitle: l10n.administrationDesc,
+                onTap: _openAdmin,
+              ),
+            ]),
+            const SizedBox(height: 16),
+          ],
           _SectionHeader(l10n.account),
           _SettingCard(children: [
             _SwitchTile(

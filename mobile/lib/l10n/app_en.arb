@@ -621,5 +621,104 @@
   "@publicAccountDesc": { "description": "Public account description" },
 
   "comingSoon": "Coming soon",
-  "@comingSoon": { "description": "Coming soon message for unimplemented features" }
+  "@comingSoon": { "description": "Coming soon message for unimplemented features" },
+
+  "administration": "Administration",
+  "@administration": { "description": "Admin section header and tile in settings" },
+
+  "administrationDesc": "Manage global challenges",
+  "@administrationDesc": { "description": "Subtitle of the administration tile" },
+
+  "adminChallengesTitle": "Challenges",
+  "@adminChallengesTitle": { "description": "Title of the admin challenges page" },
+
+  "adminNewChallenge": "New challenge",
+  "@adminNewChallenge": { "description": "Create challenge button and dialog title" },
+
+  "adminEditChallenge": "Edit challenge",
+  "@adminEditChallenge": { "description": "Edit challenge dialog title" },
+
+  "adminChallengeTitleLabel": "Title",
+  "@adminChallengeTitleLabel": { "description": "Challenge title field label" },
+
+  "adminChallengeDescriptionLabel": "Description (optional)",
+  "@adminChallengeDescriptionLabel": { "description": "Challenge description field label" },
+
+  "adminChallengeStartLabel": "Starts on",
+  "@adminChallengeStartLabel": { "description": "Challenge start date field label" },
+
+  "adminChallengeTypeLabel": "Type",
+  "@adminChallengeTypeLabel": { "description": "Challenge type field label" },
+
+  "adminChallengeActiveLabel": "Active",
+  "@adminChallengeActiveLabel": { "description": "Challenge active switch label" },
+
+  "adminTypeWeeklyA": "Weekly A (84h)",
+  "@adminTypeWeeklyA": { "description": "WEEKLY_A challenge type label" },
+
+  "adminTypeWeeklyB": "Weekly B (84h)",
+  "@adminTypeWeeklyB": { "description": "WEEKLY_B challenge type label" },
+
+  "adminTypeSpecial": "Special (24h)",
+  "@adminTypeSpecial": { "description": "SPECIAL challenge type label" },
+
+  "adminStatusRunning": "In progress",
+  "@adminStatusRunning": { "description": "Status of a challenge currently open" },
+
+  "adminStatusUpcoming": "Upcoming",
+  "@adminStatusUpcoming": { "description": "Status of a challenge that has not started" },
+
+  "adminStatusFinished": "Finished",
+  "@adminStatusFinished": { "description": "Status of a challenge whose window is over" },
+
+  "adminStatusDisabled": "Disabled",
+  "@adminStatusDisabled": { "description": "Status of an inactive challenge" },
+
+  "adminNoChallenges": "No challenge yet",
+  "@adminNoChallenges": { "description": "Empty state of the admin challenge list" },
+
+  "adminNoChallengesHint": "Create the first one with the button below.",
+  "@adminNoChallengesHint": { "description": "Empty state hint of the admin challenge list" },
+
+  "adminChallengeCreated": "Challenge created",
+  "@adminChallengeCreated": { "description": "Confirmation after creating a challenge" },
+
+  "adminChallengeUpdated": "Challenge updated",
+  "@adminChallengeUpdated": { "description": "Confirmation after updating a challenge" },
+
+  "adminChallengeDeleted": "Challenge deleted",
+  "@adminChallengeDeleted": { "description": "Confirmation after deleting a challenge" },
+
+  "adminDeleteConfirmTitle": "Delete this challenge?",
+  "@adminDeleteConfirmTitle": { "description": "Delete challenge confirmation title" },
+
+  "adminDeleteConfirmBody": "This action cannot be undone.",
+  "@adminDeleteConfirmBody": { "description": "Delete challenge confirmation body" },
+
+  "adminTitleRequired": "Title is required",
+  "@adminTitleRequired": { "description": "Validation error when the title is empty" },
+
+  "adminEndsOn": "Ends on {date}",
+  "@adminEndsOn": {
+    "description": "End date of a challenge, derived from its type",
+    "placeholders": { "date": { "type": "String" } }
+  },
+
+  "adminPostsCount": "{count, plural, =0{No post} =1{1 post} other{{count} posts}}",
+  "@adminPostsCount": {
+    "description": "Number of posts attached to a challenge",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "adminImportFromFile": "Import from challenges.json",
+  "@adminImportFromFile": { "description": "Bulk import action label" },
+
+  "adminImported": "{count, plural, =0{No challenge imported} =1{1 challenge imported} other{{count} challenges imported}}",
+  "@adminImported": {
+    "description": "Result of the bulk import",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "adminLoadError": "Could not load challenges",
+  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" }
 }

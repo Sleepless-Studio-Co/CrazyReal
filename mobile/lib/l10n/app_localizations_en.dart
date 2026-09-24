@@ -401,4 +401,115 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get comingSoon => 'Coming soon';
+
+  @override
+  String get administration => 'Administration';
+
+  @override
+  String get administrationDesc => 'Manage global challenges';
+
+  @override
+  String get adminChallengesTitle => 'Challenges';
+
+  @override
+  String get adminNewChallenge => 'New challenge';
+
+  @override
+  String get adminEditChallenge => 'Edit challenge';
+
+  @override
+  String get adminChallengeTitleLabel => 'Title';
+
+  @override
+  String get adminChallengeDescriptionLabel => 'Description (optional)';
+
+  @override
+  String get adminChallengeStartLabel => 'Starts on';
+
+  @override
+  String get adminChallengeTypeLabel => 'Type';
+
+  @override
+  String get adminChallengeActiveLabel => 'Active';
+
+  @override
+  String get adminTypeWeeklyA => 'Weekly A (84h)';
+
+  @override
+  String get adminTypeWeeklyB => 'Weekly B (84h)';
+
+  @override
+  String get adminTypeSpecial => 'Special (24h)';
+
+  @override
+  String get adminStatusRunning => 'In progress';
+
+  @override
+  String get adminStatusUpcoming => 'Upcoming';
+
+  @override
+  String get adminStatusFinished => 'Finished';
+
+  @override
+  String get adminStatusDisabled => 'Disabled';
+
+  @override
+  String get adminNoChallenges => 'No challenge yet';
+
+  @override
+  String get adminNoChallengesHint =>
+      'Create the first one with the button below.';
+
+  @override
+  String get adminChallengeCreated => 'Challenge created';
+
+  @override
+  String get adminChallengeUpdated => 'Challenge updated';
+
+  @override
+  String get adminChallengeDeleted => 'Challenge deleted';
+
+  @override
+  String get adminDeleteConfirmTitle => 'Delete this challenge?';
+
+  @override
+  String get adminDeleteConfirmBody => 'This action cannot be undone.';
+
+  @override
+  String get adminTitleRequired => 'Title is required';
+
+  @override
+  String adminEndsOn(String date) {
+    return 'Ends on $date';
+  }
+
+  @override
+  String adminPostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count posts',
+      one: '1 post',
+      zero: 'No post',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminImportFromFile => 'Import from challenges.json';
+
+  @override
+  String adminImported(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count challenges imported',
+      one: '1 challenge imported',
+      zero: 'No challenge imported',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminLoadError => 'Could not load challenges';
 }
