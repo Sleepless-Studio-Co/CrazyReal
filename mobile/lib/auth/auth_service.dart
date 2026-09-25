@@ -6,6 +6,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/api_exception.dart';
+
 class AuthService {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
@@ -30,63 +32,40 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>?> login(String email, String password) async {
-    try {
-      final response = await _client.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
+    final response = await _unauthedPost('/auth/login', {
+      'email': email,
+      'password': password,
+    });
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw _buildHttpException('Login failed', response);
-      }
-
-      final data = _decodeResponseMap(response.body);
-      final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
-      final refreshToken = _extractToken(data, ['refresh_token', 'refreshToken']);
-
-      if (accessToken == null || refreshToken == null) {
-        throw Exception('Login response missing auth tokens');
-      }
-
-      await _saveTokens(accessToken, refreshToken);
-      await _saveUserIfPresent(data['user']);
-      return data;
-    } on SocketException catch (e) {
-      throw Exception('Network error: $e');
-    } on http.ClientException catch (e) {
-      throw Exception('Network error: $e');
-    }
+    final data = _decodeResponseMap(response.body);
+    await _persistSession(data);
+    return data;
   }
 
-  Future<Map<String, dynamic>?> register(String email, String password, String username) async {
-    try {
-      final response = await _client.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password, 'username': username}),
-      );
+  Future<Map<String, dynamic>?> register(
+    String email,
+    String password,
+    String username,
+  ) async {
+    final response = await _unauthedPost('/auth/register', {
+      'email': email,
+      'password': password,
+      'username': username,
+    });
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw _buildHttpException('Registration failed', response);
-      }
+    final data = _decodeResponseMap(response.body);
+    await _persistSession(data);
+    return data;
+  }
 
-      final data = _decodeResponseMap(response.body);
-      final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
-      final refreshToken = _extractToken(data, ['refresh_token', 'refreshToken']);
-
-      if (accessToken == null || refreshToken == null) {
-        throw Exception('Registration response missing auth tokens');
-      }
-
-      await _saveTokens(accessToken, refreshToken);
-      await _saveUserIfPresent(data['user']);
-      return data;
-    } on SocketException catch (e) {
-      throw Exception('Network error: $e');
-    } on http.ClientException catch (e) {
-      throw Exception('Network error: $e');
+  Future<void> _persistSession(Map<String, dynamic> data) async {
+    final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+    final refreshToken = _extractToken(data, ['refresh_token', 'refreshToken']);
+    if (accessToken == null || refreshToken == null) {
+      throw ApiException('Auth response missing tokens');
     }
+    await _saveTokens(accessToken, refreshToken);
+    await _saveUserIfPresent(data['user']);
   }
 
   Future<void> logout() async {
@@ -180,7 +159,7 @@ class AuthService {
       }
 
       if (response.statusCode != 200) {
-        throw _buildHttpException('Failed to load profile', response);
+        throw buildApiException(response);
       }
 
       final data = _decodeResponseMap(response.body);
@@ -214,7 +193,7 @@ class AuthService {
       }
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw _buildHttpException('Could not resend verification email', response);
+        throw buildApiException(response);
       }
     } on SocketException catch (e) {
       throw Exception('Network error: $e');
@@ -253,12 +232,7 @@ class AuthService {
     String? email,
     String? username,
   }) async {
-    final token = await getAccessToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('Unauthorized');
-    }
-
-    final payload = <String, String>{};
+    final payload = <String, dynamic>{};
     if (email != null && email.isNotEmpty) {
       payload['email'] = email;
     }
@@ -267,107 +241,36 @@ class AuthService {
     }
 
     if (payload.isEmpty) {
-      throw Exception('No updates provided');
+      throw ApiException('No updates provided');
     }
 
-    try {
-      final response = await _client.patch(
-        Uri.parse('$baseUrl/auth/me'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(payload),
-      );
-
-      if (response.statusCode == 401) {
-        throw Exception('Unauthorized');
-      }
-
-      if (response.statusCode != 200) {
-        throw _buildHttpException('Profile update failed', response);
-      }
-
-      final data = _decodeResponseMap(response.body);
-      final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
-      if (accessToken != null) {
-        await _updateAccessToken(accessToken);
-      }
-      await _saveUserIfPresent(data['user']);
-      return data;
-    } on SocketException catch (e) {
-      throw Exception('Network error: $e');
-    } on http.ClientException catch (e) {
-      throw Exception('Network error: $e');
+    final data = await _authedJson('PATCH', '/auth/me', body: payload);
+    final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+    if (accessToken != null) {
+      await _updateAccessToken(accessToken);
     }
+    await _saveUserIfPresent(data['user']);
+    return data;
   }
 
   Future<Map<String, dynamic>> updateAvatarKey(String avatarKey) async {
-    final token = await getAccessToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('Unauthorized');
-    }
-
-    try {
-      final response = await _client.patch(
-        Uri.parse('$baseUrl/users/me/avatar'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'avatarKey': avatarKey}),
-      );
-
-      if (response.statusCode == 401) {
-        throw Exception('Unauthorized');
-      }
-
-      if (response.statusCode != 200) {
-        throw _buildHttpException('Avatar update failed', response);
-      }
-
-      final data = _decodeResponseMap(response.body);
-      await _saveUserIfPresent(data['user']);
-      return data;
-    } on SocketException catch (e) {
-      throw Exception('Network error: $e');
-    } on http.ClientException catch (e) {
-      throw Exception('Network error: $e');
-    }
+    final data = await _authedJson(
+      'PATCH',
+      '/users/me/avatar',
+      body: {'avatarKey': avatarKey},
+    );
+    await _saveUserIfPresent(data['user']);
+    return data;
   }
 
   Future<Map<String, dynamic>> updatePrivacy(bool isPrivate) async {
-    final token = await getAccessToken();
-    if (token == null || token.isEmpty) {
-      throw Exception('Unauthorized');
-    }
-
-    try {
-      final response = await _client.patch(
-        Uri.parse('$baseUrl/users/me/privacy'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'isPrivate': isPrivate}),
-      );
-
-      if (response.statusCode == 401) {
-        throw Exception('Unauthorized');
-      }
-
-      if (response.statusCode != 200) {
-        throw _buildHttpException('Privacy update failed', response);
-      }
-
-      final data = _decodeResponseMap(response.body);
-      await _saveUserIfPresent(data['user']);
-      return data;
-    } on SocketException catch (e) {
-      throw Exception('Network error: $e');
-    } on http.ClientException catch (e) {
-      throw Exception('Network error: $e');
-    }
+    final data = await _authedJson(
+      'PATCH',
+      '/users/me/privacy',
+      body: {'isPrivate': isPrivate},
+    );
+    await _saveUserIfPresent(data['user']);
+    return data;
   }
 
   Future<Map<String, dynamic>> uploadAvatarImage({
@@ -376,7 +279,7 @@ class AuthService {
   }) async {
     final token = await getAccessToken();
     if (token == null || token.isEmpty) {
-      throw Exception('Unauthorized');
+      throw UnauthorizedException();
     }
 
     try {
@@ -386,54 +289,103 @@ class AuthService {
       );
       request.headers['Authorization'] = 'Bearer $token';
       request.files.add(
-        http.MultipartFile.fromBytes(
-          'file',
-          bytes,
-          filename: filename,
-        ),
+        http.MultipartFile.fromBytes('file', bytes, filename: filename),
       );
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
 
-      if (response.statusCode == 401) {
-        throw Exception('Unauthorized');
-      }
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw _buildHttpException('Avatar upload failed', response);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw buildApiException(response);
       }
 
       final data = _decodeResponseMap(response.body);
       await _saveUserIfPresent(data['user']);
       return data;
     } on SocketException catch (e) {
-      throw Exception('Network error: $e');
+      throw ApiException('Network error: $e');
     } on http.ClientException catch (e) {
-      throw Exception('Network error: $e');
+      throw ApiException('Network error: $e');
     }
   }
 
   Future<void> deleteAccount() async {
+    await _authedJson('DELETE', '/users/me');
+    await _clearTokens();
+  }
+
+  // ─── Shared request helpers ────────────────────────────────────────────────
+
+  /// Authenticated JSON request. Throws [UnauthorizedException] when no token
+  /// is stored or the server replies 401, and [ApiException] for other errors.
+  Future<Map<String, dynamic>> _authedJson(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
     final token = await getAccessToken();
     if (token == null || token.isEmpty) {
-      throw Exception('Unauthorized');
+      throw UnauthorizedException();
     }
+
+    final uri = Uri.parse('$baseUrl$path');
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+    final encodedBody = body == null ? null : jsonEncode(body);
+
+    http.Response response;
     try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/users/me'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (response.statusCode == 401) throw Exception('Unauthorized');
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw _buildHttpException('Delete account failed', response);
+      switch (method) {
+        case 'POST':
+          response = await _client.post(uri, headers: headers, body: encodedBody);
+          break;
+        case 'PATCH':
+          response = await _client.patch(uri, headers: headers, body: encodedBody);
+          break;
+        case 'DELETE':
+          response = await _client.delete(uri, headers: headers, body: encodedBody);
+          break;
+        default:
+          response = await _client.get(uri, headers: headers);
       }
-      await _clearTokens();
     } on SocketException catch (e) {
-      throw Exception('Network error: $e');
+      throw ApiException('Network error: $e');
     } on http.ClientException catch (e) {
-      throw Exception('Network error: $e');
+      throw ApiException('Network error: $e');
     }
+
+    // buildApiException maps 401 → UnauthorizedException.
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw buildApiException(response);
+    }
+
+    if (response.body.isEmpty) return <String, dynamic>{};
+    return _decodeResponseMap(response.body);
+  }
+
+  Future<http.Response> _unauthedPost(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
+    http.Response response;
+    try {
+      response = await _client.post(
+        Uri.parse('$baseUrl$path'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+    } on SocketException catch (e) {
+      throw ApiException('Network error: $e');
+    } on http.ClientException catch (e) {
+      throw ApiException('Network error: $e');
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw buildApiException(response);
+    }
+    return response;
   }
 
   Future<void> _clearTokens() async {
@@ -473,7 +425,7 @@ class AuthService {
     if (decoded is Map<String, dynamic>) {
       return decoded;
     }
-    throw Exception('Unexpected response format');
+    throw ApiException('Unexpected response format');
   }
 
   String? _extractToken(Map<String, dynamic> data, List<String> keys) {
@@ -484,24 +436,5 @@ class AuthService {
       }
     }
     return null;
-  }
-
-  Exception _buildHttpException(String fallbackMessage, http.Response response) {
-    try {
-      final error = jsonDecode(response.body);
-      if (error is Map<String, dynamic>) {
-        final message = error['message'];
-        if (message is String && message.isNotEmpty) {
-          return Exception(message);
-        }
-        if (message is List && message.isNotEmpty) {
-          return Exception(message.join(', '));
-        }
-      }
-    } catch (_) {
-      // Keep fallback error below when response is not JSON.
-    }
-
-    return Exception('$fallbackMessage (status ${response.statusCode})');
   }
 }

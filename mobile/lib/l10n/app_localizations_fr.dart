@@ -342,6 +342,19 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get notificationFriendRequestTitle => 'Demande d\'ami';
+
+  @override
+  String notificationFriendRequestBody(String username) {
+    return '$username vous a envoyé une demande d\'ami';
+  }
+
+  @override
+  String notificationNewMessageTitle(String username) {
+    return 'Nouveau message de $username';
+  }
+
+  @override
   String get deleteAccount => 'Supprimer le compte';
 
   @override

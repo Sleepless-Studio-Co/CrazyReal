@@ -108,14 +108,6 @@ class FeedPost {
         .toList();
   }
 
-  static bool sameIds(List<FeedPost> a, List<FeedPost> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i].id != b[i].id) return false;
-    }
-    return true;
-  }
-
   static bool sameVoteState(List<FeedPost> a, List<FeedPost> b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
