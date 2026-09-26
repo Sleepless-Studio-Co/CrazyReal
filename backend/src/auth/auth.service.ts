@@ -12,6 +12,7 @@ import { randomBytes } from 'crypto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { AuthUser, AuthUserWithPassword } from './interfaces/auth-user.interface';
 import { EmailVerificationService } from './email-verification.service';
+import { GoogleAuthService } from './google-auth.service';
 
 @Injectable()
 export class AuthService {
@@ -21,11 +22,13 @@ export class AuthService {
     private configService: ConfigService,
     private prisma: PrismaService,
     private emailVerificationService: EmailVerificationService,
+    private googleAuthService: GoogleAuthService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<AuthUser | null> {
     const user: AuthUserWithPassword | null = await this.usersService.findByEmailWithPassword(email);
-    if (!user) {
+    if (!user || !user.password) {
+      // Unknown account or a password-less account (e.g. Google-only).
       return null;
     }
 
@@ -93,6 +96,59 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Email ou mot de passe incorrect');
+    }
+
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = await this.generateRefreshToken(user.id);
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+        avatarKey: user.avatarKey,
+        emailVerified: user.emailVerified,
+      },
+    };
+  }
+
+  /**
+   * Signs in (or signs up) a user from a Google ID token. Existing accounts
+   * sharing the same email are linked to the Google identity.
+   */
+  async googleLogin(idToken: string) {
+    const profile = await this.googleAuthService.verify(idToken);
+
+    if (!profile.emailVerified) {
+      throw new UnauthorizedException('Google account email is not verified');
+    }
+
+    let user: AuthUser | null = await this.usersService.findByGoogleId(
+      profile.googleId,
+    );
+
+    if (!user) {
+      const existing = await this.usersService.findByEmail(profile.email);
+      if (existing) {
+        user = await this.usersService.linkGoogleAccount(existing.id, {
+          googleId: profile.googleId,
+          avatarUrl: profile.picture ?? null,
+        });
+      } else {
+        user = await this.usersService.createGoogleUser({
+          email: profile.email,
+          username: profile.name || profile.email.split('@')[0],
+          googleId: profile.googleId,
+          avatarUrl: profile.picture ?? null,
+        });
+      }
+    }
+
+    if (!user) {
+      throw new UnauthorizedException('Unable to sign in with Google');
     }
 
     const accessToken = this.generateAccessToken(user);

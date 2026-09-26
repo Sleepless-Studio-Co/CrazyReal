@@ -93,6 +93,130 @@ export class UsersService {
     }
   }
 
+  async findByGoogleId(googleId: string) {
+    try {
+      return await this.prisma.user.findUnique({
+        where: { googleId },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async findByUsername(username: string) {
+    try {
+      return await this.prisma.user.findUnique({
+        where: { username },
+        select: { id: true },
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  /** Builds a unique username close to [base] by appending a numeric suffix. */
+  async generateUniqueUsername(base: string): Promise<string> {
+    const sanitized =
+      base
+        .toLowerCase()
+        .replace(/[^a-z0-9_.]/g, '')
+        .slice(0, 20) || 'user';
+
+    let candidate = sanitized;
+    let suffix = 1;
+    while (await this.findByUsername(candidate)) {
+      suffix += 1;
+      const suffixText = String(suffix);
+      candidate = `${sanitized.slice(0, 24 - suffixText.length)}${suffixText}`;
+    }
+    return candidate;
+  }
+
+  /**
+   * Creates a password-less account for a user signing in with Google.
+   * Google has already verified the email address, so it is marked verified.
+   */
+  async createGoogleUser(params: {
+    email: string;
+    username: string;
+    googleId: string;
+    avatarUrl?: string | null;
+  }) {
+    try {
+      const username = await this.generateUniqueUsername(params.username);
+      return await this.prisma.user.create({
+        data: {
+          email: params.email,
+          username,
+          googleId: params.googleId,
+          avatarUrl: params.avatarUrl ?? null,
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
+        },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  /** Links an existing password account to a Google account. */
+  async linkGoogleAccount(
+    userId: number,
+    updates: { googleId: string; avatarUrl?: string | null },
+  ) {
+    try {
+      const existing = await this.findById(userId);
+
+      const data: Prisma.UserUpdateInput = {
+        googleId: updates.googleId,
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
+      };
+
+      // Only adopt the Google picture when the user has no avatar yet.
+      if (!existing?.avatarUrl && updates.avatarUrl) {
+        data.avatarUrl = updates.avatarUrl;
+      }
+
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          avatarUrl: true,
+          avatarKey: true,
+          isPrivate: true,
+          emailVerified: true,
+          createdAt: true,
+        },
+      });
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
   async findByEmailWithPassword(email: string) {
     try {
       return await this.prisma.user.findUnique({

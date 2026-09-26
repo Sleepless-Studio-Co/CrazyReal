@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailVerificationService } from './email-verification.service';
+import { GoogleAuthService } from './google-auth.service';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -15,6 +16,9 @@ describe('AuthService', () => {
     findByEmail: jest.fn(),
     create: jest.fn(),
     findByEmailWithPassword: jest.fn(),
+    findByGoogleId: jest.fn(),
+    linkGoogleAccount: jest.fn(),
+    createGoogleUser: jest.fn(),
   };
 
   const jwtServiceMock = {
@@ -37,6 +41,10 @@ describe('AuthService', () => {
     createAndSend: jest.fn(),
     verify: jest.fn(),
     resendForUser: jest.fn(),
+  };
+
+  const googleAuthServiceMock = {
+    verify: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -75,6 +83,10 @@ describe('AuthService', () => {
         {
           provide: EmailVerificationService,
           useValue: emailVerificationServiceMock,
+        },
+        {
+          provide: GoogleAuthService,
+          useValue: googleAuthServiceMock,
         },
       ],
     }).compile();
@@ -173,6 +185,115 @@ describe('AuthService', () => {
       await expect(service.login('jane@example.com', 'wrong-password')).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('googleLogin', () => {
+    const profile = {
+      googleId: 'google-123',
+      email: 'new@example.com',
+      emailVerified: true,
+      name: 'New User',
+      picture: 'https://example.com/pic.png',
+    };
+
+    it('creates a new account when no account matches', async () => {
+      googleAuthServiceMock.verify.mockResolvedValue(profile);
+      usersServiceMock.findByGoogleId.mockResolvedValue(null);
+      usersServiceMock.findByEmail.mockResolvedValue(null);
+      usersServiceMock.createGoogleUser.mockResolvedValue({
+        id: 5,
+        email: 'new@example.com',
+        username: 'newuser',
+        avatarUrl: 'https://example.com/pic.png',
+        avatarKey: null,
+        emailVerified: true,
+      });
+
+      const result = await service.googleLogin('id-token');
+
+      expect(result.access_token).toBe('access-token');
+      expect(result.refresh_token).toEqual(expect.any(String));
+      expect(result.user).toEqual({
+        id: 5,
+        email: 'new@example.com',
+        username: 'newuser',
+        avatarUrl: 'https://example.com/pic.png',
+        avatarKey: null,
+        emailVerified: true,
+      });
+      expect(usersServiceMock.createGoogleUser).toHaveBeenCalledWith({
+        email: 'new@example.com',
+        username: 'New User',
+        googleId: 'google-123',
+        avatarUrl: 'https://example.com/pic.png',
+      });
+    });
+
+    it('links an existing email account to the Google identity', async () => {
+      googleAuthServiceMock.verify.mockResolvedValue(profile);
+      usersServiceMock.findByGoogleId.mockResolvedValue(null);
+      usersServiceMock.findByEmail.mockResolvedValue({
+        id: 7,
+        email: 'new@example.com',
+      });
+      usersServiceMock.linkGoogleAccount.mockResolvedValue({
+        id: 7,
+        email: 'new@example.com',
+        username: 'existing',
+        avatarUrl: null,
+        avatarKey: null,
+        emailVerified: true,
+      });
+
+      const result = await service.googleLogin('id-token');
+
+      expect(result.user.id).toBe(7);
+      expect(usersServiceMock.linkGoogleAccount).toHaveBeenCalledWith(7, {
+        googleId: 'google-123',
+        avatarUrl: 'https://example.com/pic.png',
+      });
+      expect(usersServiceMock.createGoogleUser).not.toHaveBeenCalled();
+    });
+
+    it('signs in directly when the Google id is already linked', async () => {
+      googleAuthServiceMock.verify.mockResolvedValue(profile);
+      usersServiceMock.findByGoogleId.mockResolvedValue({
+        id: 9,
+        email: 'new@example.com',
+        username: 'linked',
+        avatarUrl: null,
+        avatarKey: null,
+        emailVerified: true,
+      });
+
+      const result = await service.googleLogin('id-token');
+
+      expect(result.user.id).toBe(9);
+      expect(usersServiceMock.findByEmail).not.toHaveBeenCalled();
+    });
+
+    it('rejects when the Google token is invalid', async () => {
+      googleAuthServiceMock.verify.mockRejectedValue(
+        new UnauthorizedException('Invalid Google token'),
+      );
+
+      await expect(service.googleLogin('bad-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(jwtServiceMock.sign).not.toHaveBeenCalled();
+    });
+
+    it('rejects unverified Google emails', async () => {
+      googleAuthServiceMock.verify.mockResolvedValue({
+        ...profile,
+        emailVerified: false,
+      });
+
+      await expect(service.googleLogin('id-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(usersServiceMock.findByGoogleId).not.toHaveBeenCalled();
     });
   });
 });
