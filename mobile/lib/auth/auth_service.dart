@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,6 +13,9 @@ class AuthService {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userKey = 'user';
+
+  /// Google Sign-In must be initialized exactly once per process.
+  static bool _googleInitialized = false;
 
   final String baseUrl = apiBaseUrl;
 
@@ -23,6 +28,70 @@ class AuthService {
     final data = _decodeResponseMap(response.body);
     await _persistSession(data);
     return data;
+  }
+
+  /// Runs the native Google Sign-In flow and exchanges the Google ID token for
+  /// a CrazyReal session.
+  ///
+  /// Throws [GoogleSignInCancelledException] when the user dismisses the sheet.
+  Future<Map<String, dynamic>?> loginWithGoogle() async {
+    await _ensureGoogleInitialized();
+
+    final googleSignIn = GoogleSignIn.instance;
+    if (!googleSignIn.supportsAuthenticate()) {
+      throw ApiException('Google Sign-In is not supported on this platform');
+    }
+
+    final GoogleSignInAccount account;
+    try {
+      account = await googleSignIn.authenticate();
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        throw GoogleSignInCancelledException();
+      }
+      final detail = e.description?.trim();
+      throw ApiException(
+        detail != null && detail.isNotEmpty
+            ? 'Google sign-in failed: $detail'
+            : 'Google sign-in failed (${e.code.name})',
+      );
+    }
+
+    final idToken = account.authentication.idToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw ApiException(
+        'Google did not return an ID token. Check the server client ID configuration.',
+      );
+    }
+
+    final response = await _unauthedPost('/auth/google', {'idToken': idToken});
+    final data = _decodeResponseMap(response.body);
+    await _persistSession(data);
+    return data;
+  }
+
+  Future<void> _ensureGoogleInitialized() async {
+    if (_googleInitialized) return;
+
+    final clientId = dotenv.env['GOOGLE_CLIENT_ID'];
+    final serverClientId = dotenv.env['GOOGLE_SERVER_CLIENT_ID'];
+    final hasClientId = clientId != null && clientId.isNotEmpty;
+    final hasServerClientId =
+        serverClientId != null && serverClientId.isNotEmpty;
+
+    // Android requires the Web client ID as the ID-token audience.
+    if (Platform.isAndroid && !hasServerClientId) {
+      throw ApiException(
+        'Google sign-in is not configured: set GOOGLE_SERVER_CLIENT_ID '
+        '(your Web client ID) in mobile/.env',
+      );
+    }
+
+    await GoogleSignIn.instance.initialize(
+      clientId: hasClientId ? clientId : null,
+      serverClientId: hasServerClientId ? serverClientId : null,
+    );
+    _googleInitialized = true;
   }
 
   Future<Map<String, dynamic>?> register(
@@ -72,11 +141,22 @@ class AuthService {
       }
     }
     await _clearTokens();
+    await _signOutGoogleIfNeeded();
   }
 
   Future<String?> getAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_accessTokenKey);
+  }
+
+  /// Signs the current Google account out of the SDK, if it was initialized.
+  Future<void> _signOutGoogleIfNeeded() async {
+    if (!_googleInitialized) return;
+    try {
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {
+      // A Google sign-out failure must never block the app logout.
+    }
   }
 
   Future<String?> getRefreshToken() async {
@@ -305,7 +385,8 @@ class AuthService {
           response = await http.patch(uri, headers: headers, body: encodedBody);
           break;
         case 'DELETE':
-          response = await http.delete(uri, headers: headers, body: encodedBody);
+          response =
+              await http.delete(uri, headers: headers, body: encodedBody);
           break;
         default:
           response = await http.get(uri, headers: headers);

@@ -621,5 +621,11 @@
   "@publicAccountDesc": { "description": "Public account description" },
 
   "comingSoon": "Coming soon",
-  "@comingSoon": { "description": "Coming soon message for unimplemented features" }
+  "@comingSoon": { "description": "Coming soon message for unimplemented features" },
+
+  "signInWithGoogle": "Sign in with Google",
+  "@signInWithGoogle": { "description": "Button that starts the Google sign-in flow" },
+
+  "orDivider": "or",
+  "@orDivider": { "description": "Separator label between login methods" }
 }

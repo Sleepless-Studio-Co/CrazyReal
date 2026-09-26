@@ -32,7 +32,7 @@ Projet **EIP** (Epitech) — monorepo **Flutter** (client) + **NestJS** (API).
 |--------|-------------|
 | **Challenges** | Défis hebdomadaires et spéciaux, actifs sur une fenêtre temporelle définie |
 | **Publications** | Prise de photo via la caméra, upload lié au challenge en cours, fil d’actualité |
-| **Comptes** | Inscription, connexion JWT (access + refresh), profil et avatars |
+| **Comptes** | Inscription, connexion JWT (access + refresh), connexion Google (SSO), profil et avatars |
 | **Amis** | Demandes, acceptation, liste d’amis |
 | **Chat** | Conversations 1-à-1 et groupes, messages via REST + notifications WebSocket |
 | **i18n** | Interface mobile FR / EN ; messages API localisés (EN par défaut) |
@@ -43,7 +43,7 @@ Projet **EIP** (Epitech) — monorepo **Flutter** (client) + **NestJS** (API).
 
 | Couche | Technologies |
 |--------|----------------|
-| **Mobile** | Flutter 3.x, Dart 3.5+, `http`, `socket_io_client`, `camera`, `flutter_dotenv` |
+| **Mobile** | Flutter 3.x, Dart 3.5+, `http`, `socket_io_client`, `camera`, `google_sign_in`, `flutter_dotenv` |
 | **Backend** | NestJS 11, Prisma 6, PostgreSQL 15, Passport JWT, Socket.io |
 | **Outils** | Docker Compose, Swagger, semantic-release (tags) |
 
@@ -139,6 +139,7 @@ Fichier : `backend/.env` (voir `backend/.env.example`).
 | `BOOTSTRAP_ADMIN_EMAIL` | Email admin (si bootstrap actif) | `admin@example.com` |
 | `BOOTSTRAP_ADMIN_PASSWORD` | Mot de passe admin | *(à définir)* |
 | `BOOTSTRAP_ADMIN_USERNAME` | Pseudo admin | `admin` |
+| `GOOGLE_CLIENT_ID` | Audiences acceptées pour les ID tokens Google (séparées par des virgules) | `xxxx.apps.googleusercontent.com` |
 
 Avec **Docker Compose**, `DATABASE_URL` est déjà injectée :
 
@@ -153,6 +154,8 @@ Fichier : `mobile/.env` (voir `mobile/.env.example`).
 | Variable | Description |
 |----------|-------------|
 | `API_BASE_URL` | URL de base de l’API (sans slash final) |
+| `GOOGLE_SERVER_CLIENT_ID` | ID client OAuth **Web** (obligatoire sur Android) |
+| `GOOGLE_CLIENT_ID` | ID client OAuth **iOS** (optionnel si défini dans `Info.plist`) |
 
 Exemples :
 
@@ -166,6 +169,19 @@ API_BASE_URL=http://10.0.2.2:3000
 # Appareil physique (même réseau Wi‑Fi)
 API_BASE_URL=http://192.168.1.42:3000
 ```
+
+### Connexion avec Google (SSO)
+
+Le bouton **« Se connecter avec Google »** de l’écran de connexion utilise le flux natif Google (`google_sign_in`) puis échange l’ID token auprès de l’API (`POST /auth/google`). Côté serveur, le token est vérifié avec `google-auth-library`, puis le compte est créé ou rattaché par email.
+
+Configuration (Google Cloud Console → *APIs & Services* → *Credentials*) :
+
+1. Créer un **ID client OAuth** de type **Web** → le renseigner dans `backend/.env` (`GOOGLE_CLIENT_ID`) **et** dans `mobile/.env` (`GOOGLE_SERVER_CLIENT_ID`). C’est l’audience du token et l’élément requis sur Android.
+2. Créer un **ID client OAuth** de type **iOS** → le renseigner dans `mobile/.env` (`GOOGLE_CLIENT_ID`) ou dans `ios/Runner/Info.plist`, et remplacer le champ `GIDClientID` ainsi que le scheme `CFBundleURLSchemes` (`com.googleusercontent.apps.<CLIENT_ID>` inversé).
+3. Sur **Android**, enregistrer le package de l’application (`applicationId`, par défaut `com.example.mobile`) et l’empreinte **SHA‑1** de la clé de signature (celle du debug pour le développement) dans la console Google.
+4. Plusieurs audiences peuvent être acceptées côté API : séparer les IDs par des virgules dans `GOOGLE_CLIENT_ID`.
+
+Les comptes Google disposent d’un `password` nul en base et leur email est marqué comme vérifié.
 
 ---
 
@@ -258,6 +274,7 @@ Documentation interactive : **GET** `/api` (Swagger).
 |---------|-------|------|-------------|
 | `POST` | `/auth/register` | Non | Inscription (`email`, `password`, `username`) |
 | `POST` | `/auth/login` | Non | Connexion |
+| `POST` | `/auth/google` | Non | Connexion / inscription via Google (`idToken`) |
 | `POST` | `/auth/refresh` | Non | Renouvellement du token |
 | `POST` | `/auth/logout` | Oui | Révocation du refresh token |
 | `GET` | `/auth/me` | Oui | Profil courant |

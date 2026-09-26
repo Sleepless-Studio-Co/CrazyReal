@@ -621,5 +621,11 @@
   "@publicAccountDesc": { "description": "Description compte public" },
 
   "comingSoon": "Bientôt disponible",
-  "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" }
+  "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" },
+
+  "signInWithGoogle": "Se connecter avec Google",
+  "@signInWithGoogle": { "description": "Bouton de connexion via Google" },
+
+  "orDivider": "ou",
+  "@orDivider": { "description": "Séparateur entre les méthodes de connexion" }
 }
