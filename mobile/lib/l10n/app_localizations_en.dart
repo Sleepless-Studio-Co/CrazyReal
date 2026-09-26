@@ -63,15 +63,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emailNotVerifiedTitle => 'Verify your email';
 
   @override
-  String get emailNotVerifiedMessage =>
-      'We sent a confirmation link to your email address. Verify it to secure your account.';
+  String get emailNotVerifiedMessage => 'We sent a confirmation link to your email address. Verify it to secure your account.';
 
   @override
   String get resendVerificationEmail => 'Resend email';
 
   @override
-  String get verificationEmailSent =>
-      'Verification email sent. Check your inbox.';
+  String get verificationEmailSent => 'Verification email sent. Check your inbox.';
 
   @override
   String get refresh => 'Refresh';
@@ -257,8 +255,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get friendRequestError =>
-      'Error: User not found or request already exists.';
+  String get friendRequestError => 'Error: User not found or request already exists.';
 
   @override
   String get searchUsersHint => 'Search by username';
@@ -315,8 +312,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get publishFirstPost => 'Publish a photo';
 
   @override
-  String get publishFirstPostHint =>
-      'Answer the current challenge to fill your feed.';
+  String get publishFirstPostHint => 'Answer the current challenge to fill your feed.';
 
   @override
   String get feedJustNow => 'Just now';
@@ -356,8 +352,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAccountConfirmTitle => 'Delete your account?';
 
   @override
-  String get deleteAccountConfirmBody =>
-      'All your data will be permanently deleted. This cannot be undone.';
+  String get deleteAccountConfirmBody => 'All your data will be permanently deleted. This cannot be undone.';
 
   @override
   String get privacy => 'Privacy';
@@ -369,8 +364,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissions => 'Permissions';
 
   @override
-  String get permissionsInfo =>
-      'To manage microphone, camera and location access for CrazyReal, go to your phone Settings > CrazyReal.';
+  String get permissionsInfo => 'To manage microphone, camera and location access for CrazyReal, go to your phone Settings > CrazyReal.';
 
   @override
   String get accessibility => 'Accessibility';
@@ -382,8 +376,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpCenter => 'Help';
 
   @override
-  String get helpInfo =>
-      'For any help or feedback, contact us at support@crazyreal.app';
+  String get helpInfo => 'For any help or feedback, contact us at support@crazyreal.app';
 
   @override
   String get privateAccount => 'Private account';
@@ -392,13 +385,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get publicAccount => 'Public account';
 
   @override
-  String get privateAccountDesc =>
-      'Only accepted friends see your profile and challenges.';
+  String get privateAccountDesc => 'Only accepted friends see your profile and challenges.';
 
   @override
-  String get publicAccountDesc =>
-      'Everyone can see your profile and challenges.';
+  String get publicAccountDesc => 'Everyone can see your profile and challenges.';
 
   @override
   String get comingSoon => 'Coming soon';
+
+  @override
+  String get signInWithGoogle => 'Sign in with Google';
+
+  @override
+  String get orDivider => 'or';
 }

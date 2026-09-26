@@ -15,6 +15,13 @@ class UnauthorizedException extends ApiException {
   UnauthorizedException() : super('Unauthorized', statusCode: 401);
 }
 
+/// Thrown when the user dismisses the native Google sign-in sheet. Callers
+/// typically clear their loading state without showing an error.
+class GoogleSignInCancelledException implements Exception {
+  @override
+  String toString() => 'Google sign-in cancelled';
+}
+
 ApiException buildApiException(http.Response response) {
   if (response.statusCode == 401) {
     return UnauthorizedException();
@@ -23,12 +30,14 @@ ApiException buildApiException(http.Response response) {
   try {
     final body = jsonDecode(response.body);
     final rawMessage = body['message'];
-    final message = rawMessage is List ? rawMessage.join('\n') : rawMessage?.toString();
+    final message =
+        rawMessage is List ? rawMessage.join('\n') : rawMessage?.toString();
     return ApiException(
       message ?? 'Erreur serveur (${response.statusCode})',
       statusCode: response.statusCode,
     );
   } catch (_) {
-    return ApiException('Erreur serveur (${response.statusCode})', statusCode: response.statusCode);
+    return ApiException('Erreur serveur (${response.statusCode})',
+        statusCode: response.statusCode);
   }
 }
