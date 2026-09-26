@@ -78,8 +78,11 @@ model UpVote {
 model User {
   id            Int            @id @default(autoincrement())
   email         String         @unique
-  password      String
+  // Null for accounts created through an external provider (Google).
+  password      String?
   username      String         @unique
+  // Google account identifier (`sub` claim), null for password accounts.
+  googleId      String?        @unique
   avatarUrl     String?
   avatarKey     String?
   isPrivate     Boolean        @default(false)

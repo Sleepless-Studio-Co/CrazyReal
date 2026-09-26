@@ -8,6 +8,7 @@ import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt.strategy';
 import { JWT_CONFIG_KEYS } from './jwt.config';
 import { EmailVerificationService } from './email-verification.service';
+import { GoogleAuthService } from './google-auth.service';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
@@ -28,7 +29,12 @@ import { MailModule } from '../mail/mail.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService, JwtStrategy, EmailVerificationService],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    EmailVerificationService,
+    GoogleAuthService,
+  ],
   controllers: [AuthController],
   exports: [AuthService, JwtModule],
 })

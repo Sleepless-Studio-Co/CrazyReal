@@ -17,6 +17,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import type { ValidatedUser } from './interfaces/auth-user.interface';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
@@ -38,6 +39,12 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto.email, loginDto.password);
+  }
+
+  @Post('google')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async googleLogin(@Body() body: GoogleLoginDto) {
+    return this.authService.googleLogin(body.idToken);
   }
 
   @Post('refresh')
