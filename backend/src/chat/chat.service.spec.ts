@@ -32,6 +32,8 @@ describe('ChatService', () => {
       create: jest.Mock;
       findMany: jest.Mock;
     };
+    $executeRaw: jest.Mock;
+    $transaction: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -62,6 +64,9 @@ describe('ChatService', () => {
         create: jest.fn(),
         findMany: jest.fn(),
       },
+      $executeRaw: jest.fn(),
+      // Le callback reçoit le mock lui-même comme client de transaction.
+      $transaction: jest.fn((fn) => fn(prismaService)),
     };
 
     const module: TestingModule = await Test.createTestingModule({

@@ -200,30 +200,36 @@ export class ChatService {
   async addMembers(conversationId: number, requesterId: number, userIds: number[]) {
     await this.requireAdmin(conversationId, requesterId);
 
-    const current = await this.prisma.participant.findMany({
-      where: { conversationId },
-      select: { userId: true },
-    });
-    const currentIds = new Set(current.map((p) => p.userId));
+    await this.prisma.$transaction(async (tx) => {
+      // Verrou sur la conversation : deux ajouts concurrents ne peuvent pas
+      // lire le même effectif et dépasser MAX_GROUP_MEMBERS ensemble.
+      await tx.$executeRaw`SELECT 1 FROM "Conversation" WHERE id = ${conversationId} FOR UPDATE`;
 
-    const toAdd = [...new Set(userIds)].filter((id) => !currentIds.has(id));
-    if (toAdd.length === 0) {
-      throw new BadRequestException('Ces utilisateurs font déjà partie du groupe.');
-    }
+      const current = await tx.participant.findMany({
+        where: { conversationId },
+        select: { userId: true },
+      });
+      const currentIds = new Set(current.map((p) => p.userId));
 
-    if (currentIds.size + toAdd.length > MAX_GROUP_MEMBERS) {
-      throw new BadRequestException("Un groupe ne peut pas dépasser 50 membres.");
-    }
+      const toAdd = [...new Set(userIds)].filter((id) => !currentIds.has(id));
+      if (toAdd.length === 0) {
+        throw new BadRequestException('Ces utilisateurs font déjà partie du groupe.');
+      }
 
-    await this.requireFriends(requesterId, toAdd);
+      if (currentIds.size + toAdd.length > MAX_GROUP_MEMBERS) {
+        throw new BadRequestException("Un groupe ne peut pas dépasser 50 membres.");
+      }
 
-    await this.prisma.participant.createMany({
-      data: toAdd.map((userId) => ({
-        userId,
-        conversationId,
-        role: 'MEMBER' as const,
-      })),
-      skipDuplicates: true,
+      await this.requireFriends(requesterId, toAdd);
+
+      await tx.participant.createMany({
+        data: toAdd.map((userId) => ({
+          userId,
+          conversationId,
+          role: 'MEMBER' as const,
+        })),
+        skipDuplicates: true,
+      });
     });
 
     return this.getMembers(conversationId, requesterId);
