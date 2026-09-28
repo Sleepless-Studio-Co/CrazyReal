@@ -38,6 +38,10 @@ export class CreateChallengeDto {
   @IsOptional()
   durationHours?: number;
 
+  @IsDateString()
+  @IsOptional()
+  endsAt?: string;
+
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

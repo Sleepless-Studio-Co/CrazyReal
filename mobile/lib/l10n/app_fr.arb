@@ -690,6 +690,10 @@
   "@adminDurationHoursHint": { "description": "Limites de durée personnalisée" },
   "adminDurationFromType": "La durée dépend du type choisi.",
   "@adminDurationFromType": { "description": "Durée dérivée du type" },
+  "adminCustomEndDate": "Fin personnalisée",
+  "@adminCustomEndDate": { "description": "Date et heure de fin personnalisées" },
+  "adminEndDateRequired": "Choisissez une date et une heure de fin futures.",
+  "@adminEndDateRequired": { "description": "Validation de la fin personnalisée" },
 
   "adminChallengeActiveLabel": "Actif",
   "@adminChallengeActiveLabel": { "description": "Label de l'interrupteur actif" },

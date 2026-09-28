@@ -54,6 +54,7 @@ export class AppController {
       date: Date;
       type: ChallengeType;
       durationHours: number | null;
+      endsAt?: Date | null;
       isActive: boolean;
     },
     now: Date,
@@ -65,7 +66,9 @@ export class AppController {
     const startsAt = new Date(challenge.date);
     const durationHours =
       challenge.durationHours ?? (challenge.type === 'SPECIAL' ? 24 : 84);
-    const endsAt = new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
+    const endsAt =
+      challenge.endsAt ??
+      new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
 
     return now >= startsAt && now < endsAt;
   }
@@ -154,14 +157,16 @@ export class AppController {
     return [
       ...globalChallenges.map((global) => ({
             ...global,
-            endsAt: new Date(
-              global.date.getTime() +
-                (global.durationHours ??
-                  (global.type === 'SPECIAL' ? 24 : 84)) *
-                  60 *
-                  60 *
-                  1000,
-            ),
+            endsAt:
+              global.endsAt ??
+              new Date(
+                global.date.getTime() +
+                  (global.durationHours ??
+                    (global.type === 'SPECIAL' ? 24 : 84)) *
+                    60 *
+                    60 *
+                    1000,
+              ),
             group: null,
           })),
       ...groupChallenges.map(({ conversation, ...c }) => ({

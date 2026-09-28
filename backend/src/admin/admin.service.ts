@@ -76,7 +76,8 @@ export class AdminService {
           description: dto.description?.trim() ?? '',
           date: dto.date ? new Date(dto.date) : new Date(),
           type: dto.type ?? ChallengeType.WEEKLY_A,
-          durationHours: dto.durationHours ?? null,
+          durationHours: dto.endsAt ? null : dto.durationHours ?? null,
+          endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
           isActive: dto.isActive ?? true,
         },
       });
@@ -104,8 +105,13 @@ export class AdminService {
           }),
           ...(dto.date !== undefined && { date: new Date(dto.date) }),
           ...(dto.type !== undefined && { type: dto.type }),
-          ...(dto.durationHours !== undefined && {
+          ...(dto.endsAt !== undefined && {
+            endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
+            durationHours: null,
+          }),
+          ...(dto.durationHours !== undefined && dto.endsAt === undefined && {
             durationHours: dto.durationHours,
+            endsAt: null,
           }),
           ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         },

@@ -476,6 +476,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get adminDurationFromType => 'La durée dépend du type choisi.';
 
   @override
+  String get adminCustomEndDate => 'Fin personnalisée';
+
+  @override
+  String get adminEndDateRequired =>
+      'Choisissez une date et une heure de fin futures.';
+
+  @override
   String get adminChallengeActiveLabel => 'Actif';
 
   @override

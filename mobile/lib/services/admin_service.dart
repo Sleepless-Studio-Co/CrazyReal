@@ -37,6 +37,7 @@ class AdminChallenge {
     required this.date,
     required this.type,
     required this.durationHours,
+    required this.customEndsAt,
     required this.isActive,
     required this.postCount,
   });
@@ -47,6 +48,7 @@ class AdminChallenge {
   final DateTime date;
   final ChallengeType type;
   final int? durationHours;
+  final DateTime? customEndsAt;
   final bool isActive;
   final int postCount;
 
@@ -59,15 +61,20 @@ class AdminChallenge {
           DateTime.now(),
       type: ChallengeTypeApi.fromApi(json['type']?.toString()),
       durationHours: json['durationHours'] as int?,
+      customEndsAt:
+          DateTime.tryParse(json['endsAt']?.toString() ?? '')?.toLocal(),
       isActive: json['isActive'] == true,
       postCount: (json['_count']?['posts'] as int?) ?? 0,
     );
   }
 
-  Duration get duration =>
-      durationHours == null ? type.duration : Duration(hours: durationHours!);
+  Duration get duration => customEndsAt != null
+      ? customEndsAt!.difference(date)
+      : durationHours == null
+          ? type.duration
+          : Duration(hours: durationHours!);
 
-  DateTime get endsAt => date.add(duration);
+  DateTime get endsAt => customEndsAt ?? date.add(duration);
 
   bool get isRunning {
     final now = DateTime.now();
@@ -112,6 +119,7 @@ class AdminService {
     required DateTime date,
     required ChallengeType type,
     int? durationHours,
+    DateTime? customEndsAt,
     bool isActive = true,
   }) async {
     final response = await _send(
@@ -124,6 +132,8 @@ class AdminService {
           'date': date.toUtc().toIso8601String(),
           'type': type.apiValue,
           if (durationHours != null) 'durationHours': durationHours,
+          if (customEndsAt != null)
+            'endsAt': customEndsAt.toUtc().toIso8601String(),
           'isActive': isActive,
         }),
       ),
@@ -141,7 +151,9 @@ class AdminService {
     DateTime? date,
     ChallengeType? type,
     int? durationHours,
+    DateTime? customEndsAt,
     bool clearDuration = false,
+    bool clearCustomEndsAt = false,
     bool? isActive,
   }) async {
     final payload = <String, dynamic>{
@@ -151,6 +163,8 @@ class AdminService {
       if (type != null) 'type': type.apiValue,
       if (durationHours != null || clearDuration)
         'durationHours': durationHours,
+      if (customEndsAt != null || clearCustomEndsAt)
+        'endsAt': customEndsAt?.toUtc().toIso8601String(),
       if (isActive != null) 'isActive': isActive,
     };
 

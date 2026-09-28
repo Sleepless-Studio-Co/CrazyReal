@@ -962,6 +962,18 @@ abstract class AppLocalizations {
   /// **'Duration depends on the selected type.'**
   String get adminDurationFromType;
 
+  /// Custom challenge end date and time
+  ///
+  /// In en, this message translates to:
+  /// **'Custom end date'**
+  String get adminCustomEndDate;
+
+  /// Custom end date validation
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a future end date and time.'**
+  String get adminEndDateRequired;
+
   /// Challenge active switch label
   ///
   /// In en, this message translates to:

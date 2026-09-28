@@ -116,6 +116,7 @@ class _AdminPageState extends State<AdminPage> {
           date: result.date,
           type: result.type,
           durationHours: result.durationHours,
+          customEndsAt: result.customEndsAt,
           isActive: result.isActive,
         );
         _showInfo(l10n.adminChallengeCreated);
@@ -127,6 +128,8 @@ class _AdminPageState extends State<AdminPage> {
           date: result.date,
           type: result.type,
           durationHours: result.durationHours,
+          customEndsAt: result.customEndsAt,
+          clearCustomEndsAt: result.customEndsAt == null,
           clearDuration: result.durationHours == null,
           isActive: result.isActive,
         );
@@ -451,6 +454,7 @@ class _ChallengeDraft {
     required this.date,
     required this.type,
     required this.durationHours,
+    required this.customEndsAt,
     required this.isActive,
   });
 
@@ -459,6 +463,7 @@ class _ChallengeDraft {
   final DateTime date;
   final ChallengeType type;
   final int? durationHours;
+  final DateTime? customEndsAt;
   final bool isActive;
 }
 
@@ -477,7 +482,7 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
   late DateTime _date;
   late ChallengeType _type;
   late bool _customDuration;
-  late final TextEditingController _durationController;
+  late DateTime? _customEndsAt;
   late bool _isActive;
   String? _titleError;
   String? _durationError;
@@ -491,10 +496,9 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
         TextEditingController(text: challenge?.description ?? '');
     _date = challenge?.date ?? DateTime.now();
     _type = challenge?.type ?? ChallengeType.weeklyA;
-    _customDuration = challenge?.durationHours != null;
-    _durationController = TextEditingController(
-      text: challenge?.durationHours?.toString() ?? '',
-    );
+    _customDuration =
+        challenge?.durationHours != null || challenge?.customEndsAt != null;
+    _customEndsAt = challenge?.customEndsAt;
     _isActive = challenge?.isActive ?? true;
   }
 
@@ -502,7 +506,6 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _durationController.dispose();
     super.dispose();
   }
 
@@ -533,6 +536,34 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
     });
   }
 
+  Future<void> _pickCustomEndDate() async {
+    final initial = _customEndsAt ?? _date.add(const Duration(days: 3));
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: _date,
+      lastDate: _date.add(const Duration(days: 365 * 2)),
+    );
+    if (date == null || !mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _customEndsAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time?.hour ?? initial.hour,
+        time?.minute ?? initial.minute,
+      );
+      _durationError = null;
+    });
+  }
+
   void _submit() {
     final l10n = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
@@ -541,10 +572,9 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
       return;
     }
 
-    final durationHours = int.tryParse(_durationController.text.trim());
     if (_customDuration &&
-        (durationHours == null || durationHours < 1 || durationHours > 8760)) {
-      setState(() => _durationError = l10n.adminDurationHoursHint);
+        (_customEndsAt == null || !_customEndsAt!.isAfter(_date))) {
+      setState(() => _durationError = l10n.adminEndDateRequired);
       return;
     }
 
@@ -555,7 +585,8 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
         description: _descriptionController.text.trim(),
         date: _date,
         type: _type,
-        durationHours: _customDuration ? durationHours : null,
+        durationHours: null,
+        customEndsAt: _customDuration ? _customEndsAt : null,
         isActive: _isActive,
       ),
     );
@@ -643,20 +674,27 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
               onChanged: (value) => setState(() => _customDuration = value),
             ),
             if (_customDuration)
-              TextField(
-                controller: _durationController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: l10n.adminDurationHours,
-                  helperText: l10n.adminDurationHoursHint,
-                  errorText: _durationError,
-                  border: const OutlineInputBorder(),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.timer_outlined, color: _accentColor),
+                title: Text(
+                  l10n.adminCustomEndDate,
+                  style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
                 ),
-                onChanged: (_) {
-                  if (_durationError != null) {
-                    setState(() => _durationError = null);
-                  }
-                },
+                subtitle: Text(
+                  _customEndsAt == null
+                      ? l10n.adminEndDateRequired
+                      : dateFormat.format(_customEndsAt!),
+                  style: GoogleFonts.karla(
+                    color: _durationError == null ? _inkColor : Colors.red,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                trailing: TextButton(
+                  onPressed: _pickCustomEndDate,
+                  child: Text(l10n.edit),
+                ),
               ),
             const SizedBox(height: 8),
             ListTile(
@@ -683,13 +721,8 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
               l10n.adminEndsOn(
                 dateFormat.format(
                   _date.add(
-                    _customDuration
-                        ? Duration(
-                            hours: int.tryParse(
-                                  _durationController.text.trim(),
-                                ) ??
-                                0,
-                          )
+                    _customDuration && _customEndsAt != null
+                        ? _customEndsAt!.difference(_date)
                         : _type.duration,
                   ),
                 ),

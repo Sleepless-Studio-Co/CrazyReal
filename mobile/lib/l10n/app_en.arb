@@ -690,6 +690,10 @@
   "@adminDurationHoursHint": { "description": "Custom duration limits" },
   "adminDurationFromType": "Duration depends on the selected type.",
   "@adminDurationFromType": { "description": "Duration derived from type" },
+  "adminCustomEndDate": "Custom end date",
+  "@adminCustomEndDate": { "description": "Custom challenge end date and time" },
+  "adminEndDateRequired": "Choose a future end date and time.",
+  "@adminEndDateRequired": { "description": "Custom end date validation" },
 
   "adminChallengeActiveLabel": "Active",
   "@adminChallengeActiveLabel": { "description": "Challenge active switch label" },
