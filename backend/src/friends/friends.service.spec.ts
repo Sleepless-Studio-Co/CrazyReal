@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FriendsService } from './friends.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('FriendsService', () => {
   let service: FriendsService;
@@ -41,6 +42,12 @@ describe('FriendsService', () => {
           provide: PrismaService,
           useValue: prismaService,
         },
+        {
+          provide: NotificationGateway,
+          useValue: {
+            sendToUser: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -79,6 +86,7 @@ describe('FriendsService', () => {
         userId: 1,
         friendId: 2,
         status: 'PENDING',
+        requester: { username: 'alice' },
       });
 
       const result = await service.sendFriendRequest(1, 'bob');
@@ -89,12 +97,14 @@ describe('FriendsService', () => {
           friendId: 2,
           status: 'PENDING',
         },
+        include: { requester: true },
       });
       expect(result).toEqual({
         id: 10,
         userId: 1,
         friendId: 2,
         status: 'PENDING',
+        requester: { username: 'alice' },
       });
     });
 

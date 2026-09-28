@@ -758,6 +758,30 @@ abstract class AppLocalizations {
   /// **'New message from {username}'**
   String notificationNewMessageTitle(String username);
 
+  /// Notification title for a new challenge
+  ///
+  /// In en, this message translates to:
+  /// **'New challenge'**
+  String get notificationChallengeCreatedTitle;
+
+  /// Notification body for a new challenge
+  ///
+  /// In en, this message translates to:
+  /// **'The challenge \"{title}\" is now available.'**
+  String notificationChallengeCreatedBody(Object title);
+
+  /// Notification title for a challenge reminder
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge ending soon'**
+  String get notificationChallengeReminderTitle;
+
+  /// Notification body for a challenge reminder
+  ///
+  /// In en, this message translates to:
+  /// **'There are {hours} hours left for \"{title}\".'**
+  String notificationChallengeReminderBody(Object hours, Object title);
+
   /// Delete account button
   ///
   /// In en, this message translates to:

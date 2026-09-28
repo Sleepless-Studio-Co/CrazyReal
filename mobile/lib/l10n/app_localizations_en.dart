@@ -359,6 +359,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notificationChallengeCreatedTitle => 'New challenge';
+
+  @override
+  String notificationChallengeCreatedBody(Object title) {
+    return 'The challenge \"$title\" is now available.';
+  }
+
+  @override
+  String get notificationChallengeReminderTitle => 'Challenge ending soon';
+
+  @override
+  String notificationChallengeReminderBody(Object hours, Object title) {
+    return 'There are $hours hours left for \"$title\".';
+  }
+
+  @override
   String get deleteAccount => 'Delete account';
 
   @override

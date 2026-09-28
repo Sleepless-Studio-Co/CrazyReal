@@ -589,6 +589,22 @@
       }
     }
   },
+  "notificationChallengeCreatedTitle": "New challenge",
+  "@notificationChallengeCreatedTitle": {
+    "description": "Notification title for a new challenge"
+  },
+  "notificationChallengeCreatedBody": "The challenge \"{title}\" is now available.",
+  "@notificationChallengeCreatedBody": {
+    "description": "Notification body for a new challenge"
+  },
+  "notificationChallengeReminderTitle": "Challenge ending soon",
+  "@notificationChallengeReminderTitle": {
+    "description": "Notification title for a challenge reminder"
+  },
+  "notificationChallengeReminderBody": "There are {hours} hours left for \"{title}\".",
+  "@notificationChallengeReminderBody": {
+    "description": "Notification body for a challenge reminder"
+  },
 
   "deleteAccount": "Delete account",
   "@deleteAccount": { "description": "Delete account button" },

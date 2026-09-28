@@ -589,6 +589,22 @@
       }
     }
   },
+  "notificationChallengeCreatedTitle": "Nouveau défi",
+  "@notificationChallengeCreatedTitle": {
+    "description": "Titre de notification pour un nouveau défi"
+  },
+  "notificationChallengeCreatedBody": "Le défi « {title} » est disponible.",
+  "@notificationChallengeCreatedBody": {
+    "description": "Corps de notification pour un nouveau défi"
+  },
+  "notificationChallengeReminderTitle": "Défi bientôt terminé",
+  "@notificationChallengeReminderTitle": {
+    "description": "Titre de notification pour un rappel de défi"
+  },
+  "notificationChallengeReminderBody": "Il reste {hours} h pour le défi « {title} ».",
+  "@notificationChallengeReminderBody": {
+    "description": "Corps de notification pour un rappel de défi"
+  },
 
   "deleteAccount": "Supprimer le compte",
   "@deleteAccount": { "description": "Bouton supprimer le compte" },

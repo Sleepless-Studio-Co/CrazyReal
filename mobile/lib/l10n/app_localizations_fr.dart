@@ -364,6 +364,22 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get notificationChallengeCreatedTitle => 'Nouveau défi';
+
+  @override
+  String notificationChallengeCreatedBody(Object title) {
+    return 'Le défi « $title » est disponible.';
+  }
+
+  @override
+  String get notificationChallengeReminderTitle => 'Défi bientôt terminé';
+
+  @override
+  String notificationChallengeReminderBody(Object hours, Object title) {
+    return 'Il reste $hours h pour le défi « $title ».';
+  }
+
+  @override
   String get deleteAccount => 'Supprimer le compte';
 
   @override

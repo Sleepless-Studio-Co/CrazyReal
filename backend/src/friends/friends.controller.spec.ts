@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FriendsController } from './friends.controller';
 import { FriendsService } from './friends.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('FriendsController', () => {
   let controller: FriendsController;
@@ -41,6 +42,12 @@ describe('FriendsController', () => {
         {
           provide: PrismaService,
           useValue: prismaService,
+        },
+        {
+          provide: NotificationGateway,
+          useValue: {
+            sendToUser: jest.fn(),
+          },
         },
       ],
     }).compile();

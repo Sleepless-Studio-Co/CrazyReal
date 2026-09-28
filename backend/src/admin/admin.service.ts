@@ -10,10 +10,14 @@ import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationGateway: NotificationGateway,
+  ) {}
 
   async importChallengesFromFile(): Promise<{ imported: number }> {
     try {
@@ -66,7 +70,7 @@ export class AdminService {
 
   async createChallenge(dto: CreateChallengeDto) {
     try {
-      return await this.prisma.challenge.create({
+      const challenge = await this.prisma.challenge.create({
         data: {
           title: dto.title.trim(),
           description: dto.description?.trim() ?? '',
@@ -76,6 +80,12 @@ export class AdminService {
           isActive: dto.isActive ?? true,
         },
       });
+      this.notificationGateway.broadcast('challengeCreated', {
+        challengeId: challenge.id,
+        challengeTitle: challenge.title,
+        isGlobal: true,
+      });
+      return challenge;
     } catch (e) {
       throw this.mapPrismaError(e);
     }
