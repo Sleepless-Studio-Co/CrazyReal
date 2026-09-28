@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
+import 'services/api_exception.dart';
 
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
 const Color _cardColor = Color(0xFFFFF7E6);
 const Color _accentColor = Color(0xFFB85C38);
+const Color _dangerColor = Color(0xFFB54132);
 
 class SettingPage extends StatefulWidget {
   const SettingPage({
@@ -31,27 +32,11 @@ class _SettingPageState extends State<SettingPage> {
   bool _isPrivate = false;
   bool _isPrivacySaving = false;
   bool _isDeleting = false;
-  PermissionStatus? _micStatus;
-  PermissionStatus? _camStatus;
-  PermissionStatus? _locStatus;
 
   @override
   void initState() {
     super.initState();
     _loadPrivacy();
-    _loadPermissions();
-  }
-
-  Future<void> _loadPermissions() async {
-    final mic = await Permission.microphone.status;
-    final cam = await Permission.camera.status;
-    final loc = await Permission.location.status;
-    if (!mounted) return;
-    setState(() {
-      _micStatus = mic;
-      _camStatus = cam;
-      _locStatus = loc;
-    });
   }
 
   Future<void> _loadPrivacy() async {
@@ -72,65 +57,28 @@ class _SettingPageState extends State<SettingPage> {
           _isPrivate = u is Map ? (u['isPrivate'] == true) : value;
         });
       }
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
     } catch (e) {
-      _showError(e.toString().replaceFirst('Exception: ', ''));
+      _showError(e.toString());
     } finally {
       if (mounted) setState(() => _isPrivacySaving = false);
     }
   }
 
   Future<void> _deleteAccount() async {
-    final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.deleteAccountConfirmTitle),
-        content: Text(l10n.deleteAccountConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(l10n.deleteAccount),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
+    if (!await confirmAccountDeletion(context) || !mounted) return;
 
     setState(() => _isDeleting = true);
     try {
       await _authService.deleteAccount();
       if (mounted) widget.onLoggedOut();
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
     } catch (e) {
-      final msg = e.toString().replaceFirst('Exception: ', '');
-      if (msg.toLowerCase().contains('unauthorized')) {
-        if (mounted) widget.onUnauthorized();
-        return;
-      }
-      _showError(msg);
+      _showError(e.toString());
       if (mounted) setState(() => _isDeleting = false);
     }
-  }
-
-  void _showPermissionsInfo() {
-    final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.permissions),
-        content: Text(l10n.permissionsInfo),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _showLanguagePicker() async {
@@ -217,30 +165,6 @@ class _SettingPageState extends State<SettingPage> {
             ),
           ]),
           const SizedBox(height: 16),
-          _SectionHeader(l10n.permissions),
-          _SettingCard(children: [
-            _NavTile(
-              icon: Icons.mic_none,
-              title: 'Microphone',
-              onTap: _showPermissionsInfo,
-              permStatus: _micStatus,
-            ),
-            const Divider(height: 1, indent: 56),
-            _NavTile(
-              icon: Icons.videocam_outlined,
-              title: 'Caméra',
-              onTap: _showPermissionsInfo,
-              permStatus: _camStatus,
-            ),
-            const Divider(height: 1, indent: 56),
-            _NavTile(
-              icon: Icons.location_on_outlined,
-              title: 'Localisation',
-              onTap: _showPermissionsInfo,
-              permStatus: _locStatus,
-            ),
-          ]),
-          const SizedBox(height: 16),
           _SectionHeader(l10n.accessibility),
           _SettingCard(children: [
             _NavTile(
@@ -264,8 +188,8 @@ class _SettingPageState extends State<SettingPage> {
             _NavTile(
               icon: Icons.delete_forever_outlined,
               title: l10n.deleteAccount,
-              iconColor: Colors.red,
-              titleColor: Colors.red,
+              iconColor: _dangerColor,
+              titleColor: _dangerColor,
               loading: _isDeleting,
               onTap: _deleteAccount,
             ),
@@ -366,7 +290,6 @@ class _NavTile extends StatelessWidget {
     this.iconColor,
     this.titleColor,
     this.loading = false,
-    this.permStatus,
   });
 
   final IconData icon;
@@ -376,7 +299,6 @@ class _NavTile extends StatelessWidget {
   final Color? iconColor;
   final Color? titleColor;
   final bool loading;
-  final PermissionStatus? permStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -386,17 +308,6 @@ class _NavTile extends StatelessWidget {
         width: 20,
         height: 20,
         child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    } else if (permStatus != null) {
-      final granted = permStatus == PermissionStatus.granted ||
-          permStatus == PermissionStatus.limited;
-      trailing = Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: granted ? Colors.green : Colors.grey,
-        ),
       );
     } else {
       trailing = const Icon(Icons.chevron_right, color: _inkMuted, size: 20);
@@ -486,6 +397,122 @@ class _SwitchTile extends StatelessWidget {
               onChanged: onChanged,
             ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    );
+  }
+}
+
+/// Asks the user to type the confirmation word before deleting the account.
+/// Returns true only when the typed word matches — the destructive action
+/// stays disabled until then.
+Future<bool> confirmAccountDeletion(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (_) => const _DeleteAccountDialog(),
+  );
+  return confirmed == true;
+}
+
+/// Stateful so the text controller lives exactly as long as the dialog does.
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final word = l10n.deleteAccountConfirmWord;
+
+    return AlertDialog(
+      backgroundColor: _cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      title: Text(
+        l10n.deleteAccountConfirmTitle,
+        style: GoogleFonts.dmSerifDisplay(color: _inkColor, fontSize: 21),
+      ),
+      // Scrollable so the dialog survives large text scales and the keyboard.
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.deleteAccountConfirmBody,
+              style: GoogleFonts.karla(color: _inkMuted, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.deleteAccountConfirmPrompt(word),
+              style: GoogleFonts.karla(
+                color: _inkColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              autocorrect: false,
+              enableSuggestions: false,
+              textCapitalization: TextCapitalization.characters,
+              style: GoogleFonts.karla(
+                color: _inkColor,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+              decoration: InputDecoration(
+                labelText: l10n.deleteAccountConfirmHint,
+                hintText: word,
+                labelStyle: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+                filled: true,
+                fillColor: Colors.white,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: _dangerColor, width: 1.5),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          style: TextButton.styleFrom(foregroundColor: _inkColor),
+          child: Text(l10n.cancel),
+        ),
+        // Stays disabled — and announced as such — until the word matches.
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _controller,
+          builder: (_, value, __) {
+            final matches =
+                value.text.trim().toUpperCase() == word.toUpperCase();
+            return TextButton(
+              onPressed: matches ? () => Navigator.pop(context, true) : null,
+              style: TextButton.styleFrom(foregroundColor: _dangerColor),
+              child: Text(l10n.deleteAccount),
+            );
+          },
+        ),
+      ],
     );
   }
 }

@@ -8,6 +8,8 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { GetMessagesQueryDto } from './dto/get-messages-query.dto';
 import { GetConversationsQueryDto } from './dto/get-conversations-query.dto';
+import { CreateGroupChallengeDto } from './dto/create-group-challenge.dto';
+import { AddMembersDto } from './dto/add-members.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -40,6 +42,15 @@ export class ChatController {
     @CurrentUser() user: ValidatedUser,
   ) {
     return this.chatService.getMembers(conversationId, user.userId);
+  }
+
+  @Post(':id/members')
+  addMembers(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @CurrentUser() user: ValidatedUser,
+    @Body() body: AddMembersDto,
+  ) {
+    return this.chatService.addMembers(conversationId, user.userId, body.members);
   }
 
   @Delete(':id/leave')
@@ -75,6 +86,37 @@ export class ChatController {
     @CurrentUser() user: ValidatedUser,
   ) {
     return this.chatService.demoteMember(conversationId, user.userId, memberId);
+  }
+
+  @Post(':id/challenges')
+  createGroupChallenge(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @CurrentUser() user: ValidatedUser,
+    @Body() body: CreateGroupChallengeDto,
+  ) {
+    return this.chatService.createGroupChallenge(
+      conversationId,
+      user.userId,
+      body.title,
+      body.description ?? '',
+      new Date(body.endsAt),
+    );
+  }
+
+  @Get(':id/challenges')
+  getGroupChallenges(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
+    return this.chatService.getGroupChallenges(conversationId, user.userId);
+  }
+
+  @Get(':id/feed')
+  getGroupFeed(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
+    return this.chatService.getGroupFeed(conversationId, user.userId);
   }
 
   @Post(':id/messages')

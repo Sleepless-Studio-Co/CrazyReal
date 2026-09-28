@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  Body,
   Controller,
+  ForbiddenException,
   Get,
   NotFoundException,
   Post,
@@ -76,6 +78,9 @@ export class AppController {
     const candidateChallenges = await this.prisma.challenge.findMany({
       where: {
         isActive: true,
+        // Le "challenge global courant" ne considère que les challenges globaux ;
+        // les défis de groupe ont leur propre cycle de vie (fenêtre endsAt).
+        conversationId: null,
         date: {
           lte: now,
           gte: lookbackDate,
@@ -101,16 +106,85 @@ export class AppController {
   @Get('challenge/current')
   @ApiOperation({ summary: 'Récupérer le challenge actuel' })
   @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
-  async getCurrentChallenge(@I18n() i18n: I18nContext) {
+  async getCurrentChallenge() {
     const now = new Date();
 
     const currentChallenge = await this.getCurrentChallengeForDate(now);
 
     if (!currentChallenge) {
-      throw new NotFoundException(await i18n.t('challenge.not_found') || 'Aucun challenge global actif n\'a été trouvé pour la date et l\'heure actuelles.');
+      throw new NotFoundException('Aucun challenge global actif n\'a été trouvé pour la date et l\'heure actuelles.');
     }
 
     return currentChallenge;
+  }
+
+  @Get('challenges/available')
+  @ApiOperation({ summary: 'Défis réalisables : global courant + défis de mes groupes actifs' })
+  async getAvailableChallenges(@CurrentUser() user: ValidatedUser) {
+    const now = new Date();
+
+    const global = await this.getCurrentChallengeForDate(now);
+
+    const groupChallenges = await this.prisma.challenge.findMany({
+      where: {
+        conversation: { is: { participants: { some: { userId: user.userId } } } },
+        date: { lte: now },
+        endsAt: { gt: now },
+      },
+      include: { conversation: { select: { id: true, name: true } } },
+      orderBy: { endsAt: 'asc' },
+    });
+
+    return [
+      ...(global ? [{ ...global, group: null }] : []),
+      ...groupChallenges.map(({ conversation, ...c }) => ({
+        ...c,
+        group: conversation,
+      })),
+    ];
+  }
+
+  // Valide qu'un utilisateur peut poster sur un challenge, et le renvoie.
+  // challengeId absent => challenge global courant (rétrocompat caméra).
+  private async resolveChallengeForPost(userId: number, challengeId?: number) {
+    const now = new Date();
+
+    if (challengeId == null) {
+      const current = await this.getCurrentChallengeForDate(now);
+      if (!current) {
+        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
+      }
+      return current;
+    }
+
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id: challengeId },
+    });
+    if (!challenge) {
+      throw new NotFoundException('Challenge introuvable.');
+    }
+
+    if (challenge.conversationId == null) {
+      // Challenge global : doit être dans sa fenêtre active.
+      if (!this.isChallengeActiveNow(challenge, now)) {
+        throw new BadRequestException('Ce challenge global n\'est plus actif.');
+      }
+      return challenge;
+    }
+
+    // Défi de groupe : membre du groupe + fenêtre [date, endsAt] active.
+    const isMember = await this.prisma.participant.findUnique({
+      where: {
+        userId_conversationId: { userId, conversationId: challenge.conversationId },
+      },
+    });
+    if (!isMember) {
+      throw new ForbiddenException('Tu ne fais pas partie de ce groupe.');
+    }
+    if (!challenge.endsAt || challenge.date > now || challenge.endsAt <= now) {
+      throw new BadRequestException('Ce défi n\'est plus actif.');
+    }
+    return challenge;
   }
 
   private resolveMediaType(mimetype: string, originalname: string): MediaType {
@@ -169,6 +243,10 @@ export class AppController {
         file: {
           type: 'string',
           format: 'binary',
+        },
+        challengeId: {
+          type: 'string',
+          description: 'Challenge visé (global ou défi de groupe). Absent = global courant.',
         },
       },
     },
@@ -258,21 +336,18 @@ export class AppController {
       });
 
       const formattedPost = formatPostWithUpvotes(post);
+      // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
+    // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
+    if (challenge.conversationId == null) {
       this.feedGateway.broadcastNewPost(formattedPost);
-      console.log('[posts] created', post.id, file.filename, mediaType);
+      console.log('[posts] created', post.id, file.filename, mediaType);    }
+
       return formattedPost;
     } catch (error) {
       await fs.unlink(file.path).catch(() => undefined);
       console.error('[posts] upload failed', error);
       throw error;
     }
-  }
-
-  @Get('uploads')
-  async getUploads() {
-    const uploadsDir = join(process.cwd(), 'uploads');
-    const files = readdirSync(uploadsDir);
-    return { files: files.map(file => `/uploads/${file}`) };
   }
 
   @Get('posts')
@@ -285,6 +360,9 @@ export class AppController {
     const posts = await this.prisma.post.findMany({
       where: {
         userId: { in: feedUserIds },
+        // Feed global : uniquement les posts de challenges globaux.
+        // Les posts de défis de groupe restent privés au groupe.
+        challenge: { is: { conversationId: null } },
       },
       orderBy: {
         createdAt: 'desc',

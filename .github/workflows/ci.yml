@@ -119,7 +119,7 @@ jobs:
       - name: Create .env file
         working-directory: mobile
         run: |
-          echo "API_URL=${{ secrets.API_URL }}" > .env
+          echo "API_BASE_URL=${{ secrets.API_URL }}" > .env
 
       - name: Build APK
         working-directory: mobile

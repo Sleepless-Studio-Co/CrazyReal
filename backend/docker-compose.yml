@@ -2,6 +2,8 @@ services:
   # Ton backend (NOUVEAU)
   api:
     build: .
+    # Si `db push` refuse un changement destructif (ex. nouvelle contrainte unique),
+    # l'appliquer explicitement : docker compose run --rm api npx prisma db push --accept-data-loss
     command: sh -c "npx prisma db push && npm run start:dev"
     ports:
       - "3000:3000" # Ajuste si ton backend utilise un autre port

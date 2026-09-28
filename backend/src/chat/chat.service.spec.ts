@@ -16,6 +16,7 @@ describe('ChatService', () => {
     participant: {
       findUnique: jest.Mock;
       findMany: jest.Mock;
+      createMany: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
       count: jest.Mock;
@@ -27,6 +28,12 @@ describe('ChatService', () => {
       create: jest.Mock;
       findMany: jest.Mock;
     };
+    challenge: {
+      create: jest.Mock;
+      findMany: jest.Mock;
+    };
+    $executeRaw: jest.Mock;
+    $transaction: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -41,6 +48,7 @@ describe('ChatService', () => {
       participant: {
         findUnique: jest.fn(),
         findMany: jest.fn(),
+        createMany: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
         count: jest.fn(),
@@ -52,6 +60,13 @@ describe('ChatService', () => {
         create: jest.fn(),
         findMany: jest.fn(),
       },
+      challenge: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+      },
+      $executeRaw: jest.fn(),
+      // Le callback reçoit le mock lui-même comme client de transaction.
+      $transaction: jest.fn((fn) => fn(prismaService)),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -201,6 +216,71 @@ describe('ChatService', () => {
     });
   });
 
+  describe('addMembers', () => {
+    const asAdmin = () => {
+      prismaService.conversation.findUnique.mockResolvedValue({ id: 1, isGroup: true });
+      prismaService.participant.findUnique.mockResolvedValue({
+        id: 1,
+        userId: 1,
+        conversationId: 1,
+        role: 'ADMIN',
+      });
+    };
+
+    it('should throw ForbiddenException when requester is not an admin', async () => {
+      prismaService.conversation.findUnique.mockResolvedValue({ id: 1, isGroup: true });
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1, userId: 2, conversationId: 1, role: 'MEMBER' });
+
+      await expect(service.addMembers(1, 2, [3])).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('should reject users who are not accepted friends', async () => {
+      asAdmin();
+      prismaService.participant.findMany.mockResolvedValue([{ userId: 1 }]);
+      prismaService.friendship.findMany.mockResolvedValue([]);
+
+      await expect(service.addMembers(1, 1, [3])).rejects.toBeInstanceOf(BadRequestException);
+      expect(prismaService.participant.createMany).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when everyone is already in the group', async () => {
+      asAdmin();
+      prismaService.participant.findMany.mockResolvedValue([{ userId: 1 }, { userId: 3 }]);
+
+      await expect(service.addMembers(1, 1, [3, 3])).rejects.toBeInstanceOf(BadRequestException);
+      expect(prismaService.participant.createMany).not.toHaveBeenCalled();
+    });
+
+    it('should refuse to go over the 50 member cap', async () => {
+      asAdmin();
+      prismaService.participant.findMany.mockResolvedValue(
+        Array.from({ length: 50 }, (_, i) => ({ userId: i + 1 })),
+      );
+
+      await expect(service.addMembers(1, 1, [99])).rejects.toBeInstanceOf(BadRequestException);
+      expect(prismaService.participant.createMany).not.toHaveBeenCalled();
+    });
+
+    it('should add the new friends as MEMBER and skip existing ones', async () => {
+      asAdmin();
+      prismaService.participant.findMany
+        // état courant du groupe, puis la liste renvoyée par getMembers
+        .mockResolvedValueOnce([{ userId: 1 }, { userId: 3 }])
+        .mockResolvedValueOnce([{ user: { id: 1 } }, { user: { id: 3 } }, { user: { id: 4 } }]);
+      prismaService.friendship.findMany.mockResolvedValue([
+        { userId: 1, friendId: 4, status: 'ACCEPTED' },
+      ]);
+
+      const result = await service.addMembers(1, 1, [3, 4, 4]);
+
+      expect(prismaService.participant.createMany).toHaveBeenCalledWith({
+        data: [{ userId: 4, conversationId: 1, role: 'MEMBER' }],
+        skipDuplicates: true,
+      });
+      expect(result).toHaveLength(3);
+    });
+  });
+
   describe('promoteMember', () => {
     it('should throw ForbiddenException when requester is not an admin', async () => {
       prismaService.conversation.findUnique.mockResolvedValue({ id: 1, isGroup: true });
@@ -252,6 +332,46 @@ describe('ChatService', () => {
         data: { role: 'MEMBER' },
       });
       expect(result).toEqual({ id: 12, role: 'MEMBER' });
+    });
+  });
+
+  describe('createGroupChallenge', () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000);
+
+    it('should throw ForbiddenException when user is not a participant', async () => {
+      prismaService.participant.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.createGroupChallenge(1, 2, 'Défi', '', future),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prismaService.challenge.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when endsAt is in the past', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1 });
+      const past = new Date(Date.now() - 1000);
+
+      await expect(
+        service.createGroupChallenge(1, 1, 'Défi', '', past),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(prismaService.challenge.create).not.toHaveBeenCalled();
+    });
+
+    it('should create the challenge scoped to the conversation', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1 });
+      prismaService.challenge.create.mockResolvedValue({ id: 7 });
+
+      const result = await service.createGroupChallenge(1, 1, 'Défi', 'desc', future);
+
+      expect(prismaService.challenge.create).toHaveBeenCalledWith({
+        data: {
+          title: 'Défi',
+          description: 'desc',
+          conversationId: 1,
+          endsAt: future,
+        },
+      });
+      expect(result).toEqual({ id: 7 });
     });
   });
 
