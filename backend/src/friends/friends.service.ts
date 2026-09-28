@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 @Injectable()
 export class FriendsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationGateway: NotificationGateway,
+  ) {}
 
   // 1. Envoyer une demande d'ami via le pseudo
   async sendFriendRequest(currentUserId: number, targetUsername: string) {
@@ -41,13 +45,23 @@ export class FriendsService {
     }
 
     // Étape C : Créer la demande
-    return this.prisma.friendship.create({
+    const friendship = await this.prisma.friendship.create({
       data: {
         userId: currentUserId,
         friendId: friendId,
         status: 'PENDING',
       },
+      include: {
+        requester: true,
+      },
     });
+
+    // Notify target user
+    this.notificationGateway.sendToUser(friendId, 'friendRequestReceived', {
+      requesterUsername: friendship.requester.username,
+    });
+
+    return friendship;
   }
 
   async acceptFriendRequest(userId: number, requestId: number) {
