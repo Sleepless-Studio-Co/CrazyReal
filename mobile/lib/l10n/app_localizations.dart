@@ -872,6 +872,36 @@ abstract class AppLocalizations {
   /// **'Type'**
   String get adminChallengeTypeLabel;
 
+  /// Enable a custom duration
+  ///
+  /// In en, this message translates to:
+  /// **'Custom duration'**
+  String get adminCustomDuration;
+
+  /// Custom duration help text
+  ///
+  /// In en, this message translates to:
+  /// **'Otherwise, duration depends on the selected type.'**
+  String get adminCustomDurationHint;
+
+  /// Custom duration in hours
+  ///
+  /// In en, this message translates to:
+  /// **'Duration in hours'**
+  String get adminDurationHours;
+
+  /// Custom duration limits
+  ///
+  /// In en, this message translates to:
+  /// **'Between 1 and 8760 hours'**
+  String get adminDurationHoursHint;
+
+  /// Duration derived from type
+  ///
+  /// In en, this message translates to:
+  /// **'Duration depends on the selected type.'**
+  String get adminDurationFromType;
+
   /// Challenge active switch label
   ///
   /// In en, this message translates to:

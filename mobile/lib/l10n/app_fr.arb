@@ -624,6 +624,16 @@
 
   "adminChallengeTypeLabel": "Type",
   "@adminChallengeTypeLabel": { "description": "Label du champ type" },
+  "adminCustomDuration": "Durée personnalisée",
+  "@adminCustomDuration": { "description": "Activer une durée personnalisée" },
+  "adminCustomDurationHint": "Sinon, la durée dépend du type choisi.",
+  "@adminCustomDurationHint": { "description": "Aide pour la durée personnalisée" },
+  "adminDurationHours": "Durée en heures",
+  "@adminDurationHours": { "description": "Durée personnalisée en heures" },
+  "adminDurationHoursHint": "Entre 1 et 8760 heures",
+  "@adminDurationHoursHint": { "description": "Limites de durée personnalisée" },
+  "adminDurationFromType": "La durée dépend du type choisi.",
+  "@adminDurationFromType": { "description": "Durée dérivée du type" },
 
   "adminChallengeActiveLabel": "Actif",
   "@adminChallengeActiveLabel": { "description": "Label de l'interrupteur actif" },

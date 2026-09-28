@@ -624,6 +624,16 @@
 
   "adminChallengeTypeLabel": "Type",
   "@adminChallengeTypeLabel": { "description": "Challenge type field label" },
+  "adminCustomDuration": "Custom duration",
+  "@adminCustomDuration": { "description": "Enable a custom duration" },
+  "adminCustomDurationHint": "Otherwise, duration depends on the selected type.",
+  "@adminCustomDurationHint": { "description": "Custom duration help text" },
+  "adminDurationHours": "Duration in hours",
+  "@adminDurationHours": { "description": "Custom duration in hours" },
+  "adminDurationHoursHint": "Between 1 and 8760 hours",
+  "@adminDurationHoursHint": { "description": "Custom duration limits" },
+  "adminDurationFromType": "Duration depends on the selected type.",
+  "@adminDurationFromType": { "description": "Duration derived from type" },
 
   "adminChallengeActiveLabel": "Active",
   "@adminChallengeActiveLabel": { "description": "Challenge active switch label" },

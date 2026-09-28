@@ -36,6 +36,7 @@ class AdminChallenge {
     required this.description,
     required this.date,
     required this.type,
+    required this.durationHours,
     required this.isActive,
     required this.postCount,
   });
@@ -45,6 +46,7 @@ class AdminChallenge {
   final String description;
   final DateTime date;
   final ChallengeType type;
+  final int? durationHours;
   final bool isActive;
   final int postCount;
 
@@ -56,12 +58,16 @@ class AdminChallenge {
       date: DateTime.tryParse(json['date']?.toString() ?? '')?.toLocal() ??
           DateTime.now(),
       type: ChallengeTypeApi.fromApi(json['type']?.toString()),
+      durationHours: json['durationHours'] as int?,
       isActive: json['isActive'] == true,
       postCount: (json['_count']?['posts'] as int?) ?? 0,
     );
   }
 
-  DateTime get endsAt => date.add(type.duration);
+  Duration get duration =>
+      durationHours == null ? type.duration : Duration(hours: durationHours!);
+
+  DateTime get endsAt => date.add(duration);
 
   bool get isRunning {
     final now = DateTime.now();
@@ -105,6 +111,7 @@ class AdminService {
     required String description,
     required DateTime date,
     required ChallengeType type,
+    int? durationHours,
     bool isActive = true,
   }) async {
     final response = await _send(
@@ -116,6 +123,7 @@ class AdminService {
           'description': description,
           'date': date.toUtc().toIso8601String(),
           'type': type.apiValue,
+          if (durationHours != null) 'durationHours': durationHours,
           'isActive': isActive,
         }),
       ),
@@ -132,6 +140,8 @@ class AdminService {
     String? description,
     DateTime? date,
     ChallengeType? type,
+    int? durationHours,
+    bool clearDuration = false,
     bool? isActive,
   }) async {
     final payload = <String, dynamic>{
@@ -139,6 +149,8 @@ class AdminService {
       if (description != null) 'description': description,
       if (date != null) 'date': date.toUtc().toIso8601String(),
       if (type != null) 'type': type.apiValue,
+      if (durationHours != null || clearDuration)
+        'durationHours': durationHours,
       if (isActive != null) 'isActive': isActive,
     };
 

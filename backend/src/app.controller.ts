@@ -49,7 +49,12 @@ export class AppController {
   }
 
   private isChallengeActiveNow(
-    challenge: { date: Date; type: ChallengeType; isActive: boolean },
+    challenge: {
+      date: Date;
+      type: ChallengeType;
+      durationHours: number | null;
+      isActive: boolean;
+    },
     now: Date,
   ): boolean {
     if (!challenge.isActive) {
@@ -57,15 +62,16 @@ export class AppController {
     }
 
     const startsAt = new Date(challenge.date);
-    const durationHours = challenge.type === 'SPECIAL' ? 24 : 84;
+    const durationHours =
+      challenge.durationHours ?? (challenge.type === 'SPECIAL' ? 24 : 84);
     const endsAt = new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
 
     return now >= startsAt && now < endsAt;
   }
 
   private async getCurrentChallengeForDate(now: Date) {
-    // Maximum challenge duration is 84 hours (WEEKLY), so look back that far
-    const maxDurationMs = 84 * 60 * 60 * 1000;
+    // Custom durations are limited to one year by the admin DTO.
+    const maxDurationMs = 8760 * 60 * 60 * 1000;
     const lookbackDate = new Date(now.getTime() - maxDurationMs);
 
     const candidateChallenges = await this.prisma.challenge.findMany({
@@ -129,7 +135,20 @@ export class AppController {
     });
 
     return [
-      ...(global ? [{ ...global, group: null }] : []),
+      ...(global
+        ? [{
+            ...global,
+            endsAt: new Date(
+              global.date.getTime() +
+                (global.durationHours ??
+                  (global.type === 'SPECIAL' ? 24 : 84)) *
+                  60 *
+                  60 *
+                  1000,
+            ),
+            group: null,
+          }]
+        : []),
       ...groupChallenges.map(({ conversation, ...c }) => ({
         ...c,
         group: conversation,

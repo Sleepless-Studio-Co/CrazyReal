@@ -422,6 +422,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get adminChallengeTypeLabel => 'Type';
 
   @override
+  String get adminCustomDuration => 'Durée personnalisée';
+
+  @override
+  String get adminCustomDurationHint =>
+      'Sinon, la durée dépend du type choisi.';
+
+  @override
+  String get adminDurationHours => 'Durée en heures';
+
+  @override
+  String get adminDurationHoursHint => 'Entre 1 et 8760 heures';
+
+  @override
+  String get adminDurationFromType => 'La durée dépend du type choisi.';
+
+  @override
   String get adminChallengeActiveLabel => 'Actif';
 
   @override

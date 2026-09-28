@@ -72,7 +72,8 @@ class _AdminPageState extends State<AdminPage> {
 
   void _showInfo(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// Exécute une action admin en gérant les états de chargement et les erreurs.
@@ -114,6 +115,7 @@ class _AdminPageState extends State<AdminPage> {
           description: result.description,
           date: result.date,
           type: result.type,
+          durationHours: result.durationHours,
           isActive: result.isActive,
         );
         _showInfo(l10n.adminChallengeCreated);
@@ -124,6 +126,8 @@ class _AdminPageState extends State<AdminPage> {
           description: result.description,
           date: result.date,
           type: result.type,
+          durationHours: result.durationHours,
+          clearDuration: result.durationHours == null,
           isActive: result.isActive,
         );
         _showInfo(l10n.adminChallengeUpdated);
@@ -446,6 +450,7 @@ class _ChallengeDraft {
     required this.description,
     required this.date,
     required this.type,
+    required this.durationHours,
     required this.isActive,
   });
 
@@ -453,6 +458,7 @@ class _ChallengeDraft {
   final String description;
   final DateTime date;
   final ChallengeType type;
+  final int? durationHours;
   final bool isActive;
 }
 
@@ -470,8 +476,11 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
   late final TextEditingController _descriptionController;
   late DateTime _date;
   late ChallengeType _type;
+  late bool _customDuration;
+  late final TextEditingController _durationController;
   late bool _isActive;
   String? _titleError;
+  String? _durationError;
 
   @override
   void initState() {
@@ -482,6 +491,10 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
         TextEditingController(text: challenge?.description ?? '');
     _date = challenge?.date ?? DateTime.now();
     _type = challenge?.type ?? ChallengeType.weeklyA;
+    _customDuration = challenge?.durationHours != null;
+    _durationController = TextEditingController(
+      text: challenge?.durationHours?.toString() ?? '',
+    );
     _isActive = challenge?.isActive ?? true;
   }
 
@@ -489,6 +502,7 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 
@@ -527,6 +541,13 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
       return;
     }
 
+    final durationHours = int.tryParse(_durationController.text.trim());
+    if (_customDuration &&
+        (durationHours == null || durationHours < 1 || durationHours > 8760)) {
+      setState(() => _durationError = l10n.adminDurationHoursHint);
+      return;
+    }
+
     Navigator.pop(
       context,
       _ChallengeDraft(
@@ -534,6 +555,7 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
         description: _descriptionController.text.trim(),
         date: _date,
         type: _type,
+        durationHours: _customDuration ? durationHours : null,
         isActive: _isActive,
       ),
     );
@@ -604,6 +626,39 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
               },
             ),
             const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _customDuration,
+              activeThumbColor: _accentColor,
+              title: Text(
+                l10n.adminCustomDuration,
+                style: GoogleFonts.karla(color: _inkColor, fontSize: 15),
+              ),
+              subtitle: Text(
+                _customDuration
+                    ? l10n.adminCustomDurationHint
+                    : l10n.adminDurationFromType,
+                style: GoogleFonts.karla(color: _inkMuted, fontSize: 12),
+              ),
+              onChanged: (value) => setState(() => _customDuration = value),
+            ),
+            if (_customDuration)
+              TextField(
+                controller: _durationController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: l10n.adminDurationHours,
+                  helperText: l10n.adminDurationHoursHint,
+                  errorText: _durationError,
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: (_) {
+                  if (_durationError != null) {
+                    setState(() => _durationError = null);
+                  }
+                },
+              ),
+            const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event, color: _accentColor),
@@ -625,7 +680,20 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
               ),
             ),
             Text(
-              l10n.adminEndsOn(dateFormat.format(_date.add(_type.duration))),
+              l10n.adminEndsOn(
+                dateFormat.format(
+                  _date.add(
+                    _customDuration
+                        ? Duration(
+                            hours: int.tryParse(
+                                  _durationController.text.trim(),
+                                ) ??
+                                0,
+                          )
+                        : _type.duration,
+                  ),
+                ),
+              ),
               style: GoogleFonts.karla(color: _inkMuted, fontSize: 12),
             ),
             const SizedBox(height: 8),

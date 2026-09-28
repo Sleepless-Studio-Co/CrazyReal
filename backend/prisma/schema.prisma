@@ -32,6 +32,7 @@ model Challenge {
   description String        @default("")
   date        DateTime      @default(now())
   type        ChallengeType @default(WEEKLY_A)
+  durationHours Int?
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @default(now()) @updatedAt

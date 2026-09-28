@@ -3,6 +3,9 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsInt,
+  Max,
+  Min,
   IsOptional,
   IsString,
   MaxLength,
@@ -20,7 +23,7 @@ export class CreateChallengeDto {
   @IsOptional()
   description?: string;
 
-  // Début du défi (ISO). La fin est dérivée du `type` : 24h pour SPECIAL, 84h sinon.
+  // Début du défi (ISO).
   @IsDateString()
   @IsOptional()
   date?: string;
@@ -28,6 +31,12 @@ export class CreateChallengeDto {
   @IsEnum(ChallengeType)
   @IsOptional()
   type?: ChallengeType;
+
+  @IsInt()
+  @Min(1)
+  @Max(8760)
+  @IsOptional()
+  durationHours?: number;
 
   @IsBoolean()
   @IsOptional()
