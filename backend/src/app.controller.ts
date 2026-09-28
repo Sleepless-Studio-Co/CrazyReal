@@ -19,7 +19,6 @@ import { readdirSync, promises as fs } from 'fs';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { join } from 'path';
-import { I18n, I18nContext } from 'nestjs-i18n';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CurrentUser } from './auth/current-user.decorator';
 import { ChallengeType, MediaType } from '@prisma/client';
@@ -306,7 +305,7 @@ export class AppController {
       },
     }),
   }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any, @I18n() i18n: I18nContext) {
+  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -319,10 +318,7 @@ export class AppController {
 
       const currentChallenge = await this.getCurrentChallengeForDate(new Date());
       if (!currentChallenge) {
-        throw new BadRequestException(
-          await i18n.t('challenge.not_active') ||
-            'Aucun challenge actif n\'est disponible pour poster en ce moment.',
-        );
+        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
       }
 
       const post = await this.prisma.post.create({
@@ -338,9 +334,10 @@ export class AppController {
       const formattedPost = formatPostWithUpvotes(post);
       // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
     // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
-    if (challenge.conversationId == null) {
+      if (currentChallenge.conversationId == null) {
       this.feedGateway.broadcastNewPost(formattedPost);
-      console.log('[posts] created', post.id, file.filename, mediaType);    }
+      console.log('[posts] created', post.id, file.filename, mediaType);
+      }
 
       return formattedPost;
     } catch (error) {
