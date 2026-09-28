@@ -686,6 +686,24 @@ abstract class AppLocalizations {
   /// **'Refresh'**
   String get feedRefresh;
 
+  /// Feed filter for recent challenges
+  ///
+  /// In en, this message translates to:
+  /// **'All recent challenges'**
+  String get feedAllChallenges;
+
+  /// Global challenge category
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get feedGlobalChallenge;
+
+  /// Friend challenge category
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get feedFriendChallenge;
+
   /// CTA button when feed is empty
   ///
   /// In en, this message translates to:

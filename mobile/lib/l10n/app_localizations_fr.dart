@@ -317,6 +317,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get feedRefresh => 'Actualiser';
 
   @override
+  String get feedAllChallenges => 'Tous les défis récents';
+
+  @override
+  String get feedGlobalChallenge => 'Global';
+
+  @override
+  String get feedFriendChallenge => 'Amis';
+
+  @override
   String get publishFirstPost => 'Publier une photo';
 
   @override

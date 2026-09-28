@@ -505,6 +505,21 @@
     "description": "Feed refresh button tooltip"
   },
 
+  "feedAllChallenges": "All recent challenges",
+  "@feedAllChallenges": {
+    "description": "Feed filter for recent challenges"
+  },
+
+  "feedGlobalChallenge": "Global",
+  "@feedGlobalChallenge": {
+    "description": "Global challenge category"
+  },
+
+  "feedFriendChallenge": "Friends",
+  "@feedFriendChallenge": {
+    "description": "Friend challenge category"
+  },
+
   "publishFirstPost": "Publish a photo",
   "@publishFirstPost": {
     "description": "CTA button when feed is empty"

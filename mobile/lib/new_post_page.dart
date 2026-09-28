@@ -166,13 +166,13 @@ class _NewPageState extends State<NewPage> {
     }
   }
 
-  String _challengeLabel(Map<String, dynamic> c) {
+  String _challengeLabel(Map<String, dynamic> c, AppLocalizations l10n) {
     final title = c['title']?.toString() ?? '';
     final group = c['group'];
     if (group is Map && group['name'] != null) {
-      return '${group['name']} · $title';
+      return '${l10n.feedFriendChallenge} · ${group['name']} · $title';
     }
-    return title;
+    return '${l10n.feedGlobalChallenge} · $title';
   }
 
   void _updateChallengeTimer() {
@@ -309,7 +309,7 @@ class _NewPageState extends State<NewPage> {
               .map((c) => DropdownMenuItem<int>(
                     value: c['id'] as int,
                     child: Text(
-                      _challengeLabel(c),
+                      _challengeLabel(c, l10n),
                       style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
