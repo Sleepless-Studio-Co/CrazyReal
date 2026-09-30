@@ -235,22 +235,23 @@ export class AppController {
     // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
     // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
     if (challenge.conversationId == null) {
-      this.feedGateway.broadcastNewPost(formattedPost);
+      this.feedGateway.broadcastNewPost();
     }
 
     return formattedPost;
   }
 
   @Get('posts')
-  @ApiOperation({ summary: 'Récupérer les posts du feed (amis + soi)' })
+  @ApiOperation({ summary: 'Récupérer les posts publics, des amis et les siens' })
   @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
   async getPosts(@CurrentUser() user: ValidatedUser) {
     const friendIds = await this.getAcceptedFriendIds(user.userId);
-    const feedUserIds = [...new Set([...friendIds, user.userId])];
-
     const posts = await this.prisma.post.findMany({
       where: {
-        userId: { in: feedUserIds },
+        OR: [
+          { userId: { in: [...new Set([...friendIds, user.userId])] } },
+          { user: { isPrivate: false } },
+        ],
         // Feed global : uniquement les posts de challenges globaux.
         // Les posts de défis de groupe restent privés au groupe.
         challenge: { is: { conversationId: null } },
