@@ -675,8 +675,6 @@
   "deleteAccountConfirmHint": "Mot de confirmation",
   "@deleteAccountConfirmHint": { "description": "Label du champ de confirmation de suppression" }
 
-  "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" },
-
   "administration": "Administration",
   "@administration": { "description": "En-tête et tuile admin dans les réglages" },
 
