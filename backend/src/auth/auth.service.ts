@@ -83,6 +83,7 @@ export class AuthService {
         username: newUser.username,
         avatarUrl: newUser.avatarUrl,
         avatarKey: newUser.avatarKey,
+        isPrivate: newUser.isPrivate,
         emailVerified: newUser.emailVerified,
       },
     };
@@ -107,6 +108,7 @@ export class AuthService {
         username: user.username,
         avatarUrl: user.avatarUrl,
         avatarKey: user.avatarKey,
+        isPrivate: user.isPrivate,
         emailVerified: user.emailVerified,
       },
     };
@@ -123,6 +125,7 @@ export class AuthService {
       username: user.username,
       avatarUrl: user.avatarUrl,
       avatarKey: user.avatarKey,
+      isPrivate: user.isPrivate,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
     };
