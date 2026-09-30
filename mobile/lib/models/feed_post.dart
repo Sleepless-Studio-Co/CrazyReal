@@ -41,6 +41,36 @@ class FeedChallenge {
   }
 }
 
+class AvailableChallenge {
+  const AvailableChallenge({
+    required this.id,
+    required this.title,
+    required this.isGlobal,
+    this.groupName,
+  });
+
+  final int id;
+  final String title;
+  final bool isGlobal;
+  final String? groupName;
+
+  factory AvailableChallenge.fromJson(Map<String, dynamic> json) {
+    final group = json['group'];
+    return AvailableChallenge(
+      id: json['id'] as int,
+      title: json['title']?.toString() ?? '',
+      isGlobal: group == null,
+      groupName: group is Map ? group['name']?.toString() : null,
+    );
+  }
+
+  String label(String globalLabel, String friendLabel) {
+    final scope = isGlobal ? globalLabel : friendLabel;
+    final prefix = groupName == null ? scope : '$scope · $groupName';
+    return '$prefix · $title';
+  }
+}
+
 class FeedPost {
   const FeedPost({
     required this.id,

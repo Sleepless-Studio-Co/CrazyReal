@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -33,19 +34,26 @@ class _NewPageState extends State<NewPage> {
   List<CameraDescription> _cameras = [];
   int _currentCameraIndex = 0;
   FlashMode _currentFlashMode = FlashMode.off;
+  Timer? _challengeTimer;
+  Duration? _remainingChallengeTime;
 
   @override
   void initState() {
     super.initState();
     _initializeCamera();
     fetchChallenges();
+    _challengeTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _updateChallengeTimer(),
+    );
   }
 
   Future<void> _initializeCamera() async {
     try {
       _cameras = await availableCameras();
       if (_cameras.isNotEmpty) {
-        _controller = CameraController(_cameras[_currentCameraIndex], ResolutionPreset.veryHigh);
+        _controller = CameraController(
+            _cameras[_currentCameraIndex], ResolutionPreset.veryHigh);
         _initializeControllerFuture = _controller!.initialize();
         setState(() {});
       }
@@ -65,8 +73,9 @@ class _NewPageState extends State<NewPage> {
 
     _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
     await _controller?.dispose();
-    
-    _controller = CameraController(_cameras[_currentCameraIndex], ResolutionPreset.veryHigh);
+
+    _controller = CameraController(
+        _cameras[_currentCameraIndex], ResolutionPreset.veryHigh);
     _initializeControllerFuture = _controller!.initialize();
     setState(() {});
   }
@@ -136,6 +145,7 @@ class _NewPageState extends State<NewPage> {
               _challenges.isNotEmpty ? _challenges.first['id'] as int : null;
           challengeError = null;
         });
+        _updateChallengeTimer();
       } else if (response.statusCode == 401) {
         if (mounted) {
           widget.onUnauthorized();
@@ -156,18 +166,41 @@ class _NewPageState extends State<NewPage> {
     }
   }
 
-  String _challengeLabel(Map<String, dynamic> c) {
+  String _challengeLabel(Map<String, dynamic> c, AppLocalizations l10n) {
     final title = c['title']?.toString() ?? '';
     final group = c['group'];
     if (group is Map && group['name'] != null) {
-      return '${group['name']} · $title';
+      return '${l10n.feedFriendChallenge} · ${group['name']} · $title';
     }
-    return title;
+    return '${l10n.feedGlobalChallenge} · $title';
+  }
+
+  void _updateChallengeTimer() {
+    final selected = _challenges.where(
+      (challenge) => challenge['id'] == _selectedChallengeId,
+    );
+    final endsAt = selected.isEmpty
+        ? null
+        : DateTime.tryParse(selected.first['endsAt']?.toString() ?? '')
+            ?.toLocal();
+    final remaining = endsAt?.difference(DateTime.now());
+    if (!mounted) return;
+    setState(() {
+      _remainingChallengeTime =
+          remaining != null && !remaining.isNegative ? remaining : null;
+    });
+  }
+
+  String _formatRemaining(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '${hours}h ${minutes}m ${seconds}s';
   }
 
   Future<void> takeAndUploadPicture() async {
     final l10n = AppLocalizations.of(context)!;
-    
+
     if (_controller == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.cameraNotAvailable)),
@@ -181,7 +214,7 @@ class _NewPageState extends State<NewPage> {
 
       final authService = AuthService();
       final token = await authService.getAccessToken();
-      
+
       if (token == null) {
         if (!mounted) return;
         widget.onUnauthorized();
@@ -237,6 +270,7 @@ class _NewPageState extends State<NewPage> {
 
   @override
   void dispose() {
+    _challengeTimer?.cancel();
     _controller?.dispose();
     super.dispose();
   }
@@ -275,7 +309,7 @@ class _NewPageState extends State<NewPage> {
               .map((c) => DropdownMenuItem<int>(
                     value: c['id'] as int,
                     child: Text(
-                      _challengeLabel(c),
+                      _challengeLabel(c, l10n),
                       style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -284,7 +318,10 @@ class _NewPageState extends State<NewPage> {
                     ),
                   ))
               .toList(),
-          onChanged: (id) => setState(() => _selectedChallengeId = id),
+          onChanged: (id) {
+            setState(() => _selectedChallengeId = id);
+            _updateChallengeTimer();
+          },
         ),
         if (description.isNotEmpty)
           Text(
@@ -292,6 +329,17 @@ class _NewPageState extends State<NewPage> {
             style: const TextStyle(fontSize: 14, color: Colors.black87),
             textAlign: TextAlign.center,
           ),
+        if (_remainingChallengeTime != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Temps restant : ${_formatRemaining(_remainingChallengeTime!)}',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFB85C38),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -299,99 +347,105 @@ class _NewPageState extends State<NewPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            color: const Color(0xFFF7EBD1),
-            width: double.infinity,
-            child: _buildChallengePicker(l10n),
-          ),
-
-          // LA CAMÉRA
-          Container(
-            height: 600,
-            width: double.infinity,
-            margin: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
-              color: Colors.black,
-            ),
-            clipBehavior: Clip.hardEdge,
-            child: _controller == null
-              ? Center(
-                  child: Text(
-                    l10n.cameraOnlyMobile,
-                    style: const TextStyle(fontSize: 16, color: Colors.white),
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              : FutureBuilder<void>(
-                  future: _initializeControllerFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      return CameraPreview(_controller!);
-                    } else {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                  },
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: constraints.maxHeight * 0.42,
                 ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                  child: _buildChallengePicker(l10n),
+                ),
+              );
+            },
           ),
-        ],
-      ),
-
-      // BOUTONS FLOTTANTS
-      floatingActionButton: Stack(
-        children: [
-          // BOUTON PHOTO CENTRÉ
-          Positioned(
-            bottom: 12,
-            left: MediaQuery.of(context).size.width / 2 - 25,
-            child: SizedBox(
-              width: 80,
-              height: 80,
-              child: FloatingActionButton(
-                heroTag: 'photo',
-                onPressed: isUploading ? null : takeAndUploadPicture,
-                backgroundColor: Colors.transparent,
-                foregroundColor: Colors.white,
-                splashColor: Colors.grey.withOpacity(0.3),
-                focusColor: Colors.grey.withOpacity(0.2),
-                elevation: 0,
-                child: isUploading
-                  ? const CircularProgressIndicator(color: Color(0xFFFFE500), strokeWidth: 3)
-                  : const Icon(Icons.circle_outlined, size: 80),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25),
+                color: Colors.black,
               ),
-            ),
-          ),
-          // BOUTON FLIP À DROITE
-          Positioned(
-            bottom: 12,
-            right: 12,
-            child: FloatingActionButton(
-              heroTag: 'flip',
-              onPressed: _cameras.length > 1 ? _switchCamera : null,
-              backgroundColor: const Color(0xFF195A3B),
-              foregroundColor: Colors.white,
-              splashColor: const Color(0xFFE54128),
-              focusColor: const Color(0xFFE54128),
-              child: const Icon(Icons.flip_camera_ios),
-            ),
-          ),
-          // BOUTON FLASH
-          Positioned(
-            bottom: 12,
-            left: 42,
-            child: FloatingActionButton(
-              heroTag: 'flash',
-              onPressed: _toggleFlash,
-              backgroundColor: const Color(0xFF195A3B),
-              foregroundColor: Colors.white,
-              splashColor: const Color(0xFFE54128),
-              focusColor: const Color(0xFFE54128),
-              child: Icon(_getFlashIcon()),
+              clipBehavior: Clip.hardEdge,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _controller == null
+                      ? Center(
+                          child: Text(
+                            l10n.cameraOnlyMobile,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      : FutureBuilder<void>(
+                          future: _initializeControllerFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return CameraPreview(_controller!);
+                            }
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
+                        ),
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        FloatingActionButton(
+                          heroTag: 'flash',
+                          onPressed: _toggleFlash,
+                          backgroundColor: const Color(0xFF195A3B),
+                          foregroundColor: Colors.white,
+                          child: Icon(_getFlashIcon()),
+                        ),
+                        SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: FloatingActionButton(
+                            heroTag: 'photo',
+                            onPressed:
+                                isUploading ? null : takeAndUploadPicture,
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            splashColor: Colors.grey.withOpacity(0.3),
+                            focusColor: Colors.grey.withOpacity(0.2),
+                            elevation: 0,
+                            child: isUploading
+                                ? const CircularProgressIndicator(
+                                    color: Color(0xFFFFE500),
+                                    strokeWidth: 3,
+                                  )
+                                : const Icon(Icons.circle_outlined, size: 80),
+                          ),
+                        ),
+                        FloatingActionButton(
+                          heroTag: 'flip',
+                          onPressed: _cameras.length > 1 ? _switchCamera : null,
+                          backgroundColor: const Color(0xFF195A3B),
+                          foregroundColor: Colors.white,
+                          child: const Icon(Icons.flip_camera_ios),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

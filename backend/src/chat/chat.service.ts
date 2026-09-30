@@ -1,12 +1,16 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { formatPostWithUpvotes, postIncludeWithUpvotes } from '../posts/post.utils';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 const MAX_GROUP_MEMBERS = 50;
 
 @Injectable()
 export class ChatService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationGateway: NotificationGateway,
+  ) {}
 
   async getConversationIdsForUser(userId: number): Promise<number[]> {
     const participations = await this.prisma.participant.findMany({
@@ -340,7 +344,7 @@ export class ChatService {
       throw new BadRequestException("La date de fin doit être dans le futur.");
     }
 
-    return this.prisma.challenge.create({
+    const challenge = await this.prisma.challenge.create({
       data: {
         title,
         description,
@@ -349,6 +353,21 @@ export class ChatService {
         // date = now : le défi démarre à sa création (fenêtre [date, endsAt]).
       },
     });
+
+    const participants = (await this.prisma.participant.findMany({
+      where: { conversationId },
+      select: { userId: true },
+    })) ?? [];
+    await this.notificationGateway.sendToUsers(
+      participants.map((participant) => participant.userId),
+      'challengeCreated',
+      {
+        challengeId: challenge.id,
+        challengeTitle: challenge.title,
+        isGlobal: false,
+      },
+    );
+    return challenge;
   }
 
   async getGroupChallenges(conversationId: number, userId: number) {
