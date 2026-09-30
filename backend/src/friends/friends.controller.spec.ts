@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FriendsController } from './friends.controller';
 import { FriendsService } from './friends.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('FriendsController', () => {
+  let notificationGateway: { sendToUser: jest.Mock };
   let controller: FriendsController;
   let prismaService: {
     user: {
@@ -20,6 +22,7 @@ describe('FriendsController', () => {
   };
 
   beforeEach(async () => {
+    notificationGateway = { sendToUser: jest.fn() };
     prismaService = {
       user: {
         findUnique: jest.fn(),
@@ -41,6 +44,10 @@ describe('FriendsController', () => {
         {
           provide: PrismaService,
           useValue: prismaService,
+        },
+        {
+          provide: NotificationGateway,
+          useValue: notificationGateway,
         },
       ],
     }).compile();
