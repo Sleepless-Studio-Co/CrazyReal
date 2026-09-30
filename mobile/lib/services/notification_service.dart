@@ -87,8 +87,11 @@ class NotificationService {
     }
   }
 
+  // ponytail: compteur en mémoire, suffit pour que les notifs ne s'écrasent pas.
+  int _nextId = 0;
+
   Future<void> showNotification({
-    int id = 0,
+    int? id,
     required String title,
     required String body,
     String? channelId,
@@ -110,7 +113,7 @@ class NotificationService {
     );
 
     await _notificationsPlugin.show(
-      id: id,
+      id: id ?? _nextId++,
       title: title,
       body: body,
       notificationDetails: notificationDetails,

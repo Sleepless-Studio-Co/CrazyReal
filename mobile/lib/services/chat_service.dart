@@ -67,6 +67,18 @@ class ChatService {
     }
   }
 
+  Future<void> addMembers(int conversationId, List<int> memberIds) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/$conversationId/members'),
+      headers: await _headers(),
+      body: jsonEncode({'members': memberIds}),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
+    }
+  }
+
   Future<List<dynamic>> getMembers(int conversationId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/$conversationId/members'),

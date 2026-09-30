@@ -623,6 +623,27 @@
   "comingSoon": "Bientôt disponible",
   "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" },
 
+  "deleteAccountConfirmWord": "SUPPRIMER",
+  "@deleteAccountConfirmWord": { "description": "Mot à saisir pour confirmer la suppression du compte" },
+
+  "deleteAccountConfirmPrompt": "Pour confirmer, écris {word} ci-dessous.",
+  "@deleteAccountConfirmPrompt": {
+    "description": "Invite demandant de saisir le mot de confirmation",
+    "placeholders": { "word": { "type": "String" } }
+  },
+
+  "newGroup": "Nouveau groupe",
+  "@newGroup": { "description": "Bouton de création d'un groupe de discussion" },
+
+  "acceptRequest": "Accepter",
+  "@acceptRequest": { "description": "Bouton accepter une demande d'ami" },
+
+  "messages": "Messages",
+  "@messages": { "description": "Titre de l'écran des discussions" },
+
+  "deleteAccountConfirmHint": "Mot de confirmation",
+  "@deleteAccountConfirmHint": { "description": "Label du champ de confirmation de suppression" },
+
   "signInWithGoogle": "Se connecter avec Google",
   "@signInWithGoogle": { "description": "Bouton de connexion via Google" },
 

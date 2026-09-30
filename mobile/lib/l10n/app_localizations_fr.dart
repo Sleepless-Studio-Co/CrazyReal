@@ -394,6 +394,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get comingSoon => 'Bientôt disponible';
 
   @override
+  String get deleteAccountConfirmWord => 'SUPPRIMER';
+
+  @override
+  String deleteAccountConfirmPrompt(String word) {
+    return 'Pour confirmer, écris $word ci-dessous.';
+  }
+
+  @override
+  String get newGroup => 'Nouveau groupe';
+
+  @override
+  String get acceptRequest => 'Accepter';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get deleteAccountConfirmHint => 'Mot de confirmation';
+
+  @override
   String get signInWithGoogle => 'Se connecter avec Google';
 
   @override
