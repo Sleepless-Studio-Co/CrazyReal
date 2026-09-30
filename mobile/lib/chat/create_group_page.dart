@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/friend_service.dart';
 import '../services/chat_service.dart';
 import '../services/api_exception.dart';
+import '../widgets/feed_avatar.dart';
+import '../widgets/paper.dart';
 
 class CreateGroupPage extends StatefulWidget {
   const CreateGroupPage({super.key});
@@ -49,30 +51,21 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         setState(() => _isLoading = false);
         final message = e is ApiException ? e.message : 'Erreur lors du chargement des amis';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
       }
     }
   }
 
   void _showNoFriendsDialog() {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Aucun ami'),
-        content: const Text(
+    paperInfo(
+      context,
+      title: 'Aucun ami',
+      message:
           "Tu n'as pas encore d'amis. Ajoute des amis avant de pouvoir créer un groupe.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              Navigator.pop(context);
-            },
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+      onDismissed: () {
+        if (mounted) Navigator.pop(context);
+      },
     );
   }
 
@@ -94,7 +87,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
 
   Future<void> _submit() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty || _selectedUserIds.length < 1) {
+    if (name.isEmpty || _selectedUserIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nom requis et au moins 1 ami sélectionné')),
       );
@@ -106,14 +99,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Groupe créé !'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Groupe créé !'), backgroundColor: paperSuccess),
         );
       }
     } catch (e) {
       if (mounted) {
         final message = e is ApiException ? e.message : 'Erreur lors de la création du groupe';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
       }
     }
@@ -122,39 +115,106 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nouveau Groupe'),
-        actions: [IconButton(icon: const Icon(Icons.check), onPressed: _submit)],
-      ),
+      backgroundColor: paperBg,
+      appBar: paperAppBar(title: 'Nouveau groupe'),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nom du groupe',
-                border: OutlineInputBorder(),
+              style: paperValue(),
+              textInputAction: TextInputAction.done,
+              decoration: paperInputDecoration(
+                label: 'Nom du groupe',
+                prefixIcon: const Icon(Icons.badge_outlined),
               ),
             ),
           ),
-          const Divider(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  'MEMBRES — ${_selectedUserIds.length} SÉLECTIONNÉ(S)',
+                  style: paperLabel(),
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
+                ? const Center(
+                    child: CircularProgressIndicator(color: paperAccent),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                     itemCount: _friends.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      final friend = _friends[index];
-                      final isSelected = _selectedUserIds.contains(friend['id']);
-                      return CheckboxListTile(
-                        title: Text(friend['username']),
-                        value: isSelected,
-                        onChanged: (_) => _toggleSelection(friend['id']),
-                        secondary: const CircleAvatar(child: Icon(Icons.person)),
+                      final friend = _friends[index] as Map<String, dynamic>;
+                      final username = friend['username']?.toString() ?? '';
+                      final isSelected =
+                          _selectedUserIds.contains(friend['id']);
+
+                      return Container(
+                        decoration: paperCardDecoration(
+                          border: isSelected ? paperAccent : null,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: CheckboxListTile(
+                          value: isSelected,
+                          onChanged: (_) => _toggleSelection(friend['id']),
+                          activeColor: paperAccentStrong,
+                          controlAffinity: ListTileControlAffinity.trailing,
+                          title: Text(username, style: paperValue()),
+                          secondary: ExcludeSemantics(
+                            child: FeedAvatar(
+                              username: username,
+                              avatarUrl: friend['avatarUrl']?.toString(),
+                              avatarKey: friend['avatarKey']?.toString(),
+                              size: 42,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                        ),
                       );
                     },
                   ),
+          ),
+          // Action principale : un vrai bouton libellé plutôt qu'une icône
+          // isolée dans l'AppBar.
+          Container(
+            decoration: const BoxDecoration(
+              color: paperCard,
+              border: Border(top: BorderSide(color: paperBorder)),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: SafeArea(
+              top: false,
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _submit,
+                  icon: const Icon(Icons.group_add_outlined),
+                  label: Text('Créer le groupe (${_selectedUserIds.length})'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: paperAccentStrong,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 52),
+                    textStyle: paperValue(color: Colors.white),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

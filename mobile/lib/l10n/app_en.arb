@@ -654,6 +654,28 @@
   "comingSoon": "Coming soon",
   "@comingSoon": { "description": "Coming soon message for unimplemented features" },
 
+  "deleteAccountConfirmWord": "DELETE",
+  "@deleteAccountConfirmWord": { "description": "Word the user must type to confirm account deletion" },
+
+  "deleteAccountConfirmPrompt": "To confirm, type {word} below.",
+  "@deleteAccountConfirmPrompt": {
+    "description": "Prompt asking the user to type the confirmation word",
+    "placeholders": { "word": { "type": "String" } }
+  },
+
+  "newGroup": "New group",
+  "@newGroup": { "description": "Create a new group chat button" },
+
+  "acceptRequest": "Accept",
+  "@acceptRequest": { "description": "Accept friend request button" },
+
+  "messages": "Messages",
+  "@messages": { "description": "Messages / conversations screen title" },
+
+  "deleteAccountConfirmHint": "Confirmation word",
+  "@deleteAccountConfirmHint": { "description": "Label of the deletion confirmation text field" }
+  "@comingSoon": { "description": "Coming soon message for unimplemented features" },
+
   "administration": "Administration",
   "@administration": { "description": "Admin section header and tile in settings" },
 

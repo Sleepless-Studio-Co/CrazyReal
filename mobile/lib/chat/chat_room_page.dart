@@ -5,6 +5,8 @@ import '../auth/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/chat_socket_service.dart';
 import '../services/api_exception.dart';
+import '../widgets/feed_avatar.dart';
+import '../widgets/paper.dart';
 import 'group_members_page.dart';
 import 'group_challenges_tab.dart';
 import 'group_feed_tab.dart';
@@ -367,7 +369,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: paperDanger),
     );
   }
 
@@ -391,7 +393,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     final appBarActions = [
       if (widget.isGroup)
         IconButton(
-          icon: const Icon(Icons.group),
+          icon: const Icon(Icons.groups_outlined),
           tooltip: 'Membres du groupe',
           onPressed: () => Navigator.push(
             context,
@@ -406,8 +408,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     // Conversation 1-à-1 : pas d'onglets, juste le chat.
     if (!widget.isGroup) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.conversationName),
+        backgroundColor: paperBg,
+        appBar: paperAppBar(
+          title: widget.conversationName,
           actions: appBarActions,
         ),
         body: _buildChatBody(),
@@ -418,16 +421,15 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(widget.conversationName),
+        backgroundColor: paperBg,
+        appBar: paperAppBar(
+          title: widget.conversationName,
           actions: appBarActions,
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.chat_bubble_outline), text: 'Chat'),
-              Tab(icon: Icon(Icons.emoji_events_outlined), text: 'Défis'),
-              Tab(icon: Icon(Icons.photo_library_outlined), text: 'Feed'),
-            ],
-          ),
+          bottom: paperTabBar(const [
+            Tab(icon: Icon(Icons.chat_bubble_outline), text: 'Chat'),
+            Tab(icon: Icon(Icons.emoji_events_outlined), text: 'Défis'),
+            Tab(icon: Icon(Icons.photo_library_outlined), text: 'Feed'),
+          ]),
         ),
         body: TabBarView(
           children: [
@@ -443,151 +445,176 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Widget _buildChatBody() {
     return Column(
       children: [
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _messages.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Aucun message. Lancez la conversation !',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 10),
-                        itemCount: _messages.length,
-                        itemBuilder: (_, i) => _buildBubble(_messages[i]),
-                      ),
-          ),
-          if (_typingUsers.isNotEmpty)
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-              child: Align(
-                alignment: Alignment.centerLeft,
+        Expanded(
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: paperAccent),
+                )
+              : _messages.isEmpty
+                  ? const PaperEmptyState(
+                      icon: Icons.chat_bubble_outline,
+                      title: 'Aucun message',
+                      message: 'Lance la conversation !',
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                      itemCount: _messages.length,
+                      itemBuilder: (_, i) => _buildBubble(_messages[i]),
+                    ),
+        ),
+        if (_typingUsers.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 2, 20, 6),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              // liveRegion : le lecteur d'écran annonce la frappe sans
+              // que l'utilisateur ait à explorer la page.
+              child: Semantics(
+                liveRegion: true,
                 child: Text(
                   _typingText(),
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontStyle: FontStyle.italic),
+                  style: paperMuted(fontSize: 12).copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
             ),
-          _buildInput(),
-        ],
-      );
+          ),
+        _buildInput(),
+      ],
+    );
   }
 
   Widget _buildBubble(Map<String, dynamic> msg) {
-    final senderId = (msg['sender'] as Map?)?['id'] as int?;
+    final sender = msg['sender'] as Map?;
+    final senderId = sender?['id'] as int?;
     final isMe = senderId != null && senderId == _currentUserId;
-    final senderName =
-        (msg['sender'] as Map?)?['username'] as String? ?? '';
+    final senderName = sender?['username'] as String? ?? '';
     final content = msg['content'] as String? ?? '';
     final time = _formatTime(msg['createdAt'] as String?);
     final isPending = msg['pending'] as bool? ?? false;
     final isFailed = msg['failed'] as bool? ?? false;
     final tempId = msg['tempId'] as String?;
 
-    final bubbleColor = isFailed
-        ? Colors.red[100]!
-        : isPending
-            ? Colors.blue[200]!
-            : isMe
-                ? Colors.blue[400]!
-                : Colors.grey[200]!;
+    final Color bubbleColor;
+    final Color textColor;
+    if (isFailed) {
+      bubbleColor = const Color(0xFFF7DAD4);
+      textColor = paperInk;
+    } else if (isMe) {
+      // Accent foncé : contraste ≥ 5.5:1 avec le texte blanc.
+      bubbleColor = isPending
+          ? paperAccentStrong.withValues(alpha: 0.72)
+          : paperAccentStrong;
+      textColor = Colors.white;
+    } else {
+      bubbleColor = paperCard;
+      textColor = paperInk;
+    }
 
-    final textColor = isMe && !isFailed ? Colors.white : Colors.black87;
+    final who = isMe ? 'Toi' : (senderName.isEmpty ? 'Inconnu' : senderName);
+    final status = isFailed
+        ? ", envoi échoué, appuie pour réessayer"
+        : isPending
+            ? ", en cours d'envoi"
+            : '';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment:
             isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (!isMe)
-            CircleAvatar(
-              radius: 14,
-              backgroundColor: Colors.blueGrey[200],
-              child: Text(
-                senderName.isNotEmpty ? senderName[0].toUpperCase() : '?',
-                style:
-                    const TextStyle(fontSize: 12, color: Colors.white),
+          if (!isMe) ...[
+            ExcludeSemantics(
+              child: FeedAvatar(
+                username: senderName,
+                avatarUrl: sender?['avatarUrl']?.toString(),
+                avatarKey: sender?['avatarKey']?.toString(),
+                size: 30,
               ),
             ),
-          if (!isMe) const SizedBox(width: 6),
+            const SizedBox(width: 8),
+          ],
           Flexible(
-            child: GestureDetector(
-              onTap: isFailed && tempId != null
-                  ? () => _retryMessage(tempId, content)
-                  : null,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: bubbleColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(16),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: Radius.circular(isMe ? 16 : 4),
-                    bottomRight: Radius.circular(isMe ? 4 : 16),
+            // Une bulle = une seule annonce, qui porte l'auteur, l'heure et
+            // l'état d'envoi.
+            child: Semantics(
+              container: true,
+              button: isFailed,
+              label: '$who, $time : $content$status',
+              excludeSemantics: true,
+              child: GestureDetector(
+                onTap: isFailed && tempId != null
+                    ? () => _retryMessage(tempId, content)
+                    : null,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: bubbleColor,
+                    border: isMe
+                        ? null
+                        : Border.all(color: paperBorder),
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(18),
+                      topRight: const Radius.circular(18),
+                      bottomLeft: Radius.circular(isMe ? 18 : 4),
+                      bottomRight: Radius.circular(isMe ? 4 : 18),
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: isMe
-                      ? CrossAxisAlignment.end
-                      : CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!isMe && widget.isGroup)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 2),
-                        child: Text(
-                          senderName,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueGrey[600],
+                  child: Column(
+                    crossAxisAlignment: isMe
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!isMe && widget.isGroup)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Text(
+                            senderName,
+                            style: paperLabel(
+                              fontSize: 12,
+                              color: paperAccentStrong,
+                            ),
                           ),
                         ),
+                      Text(
+                        content,
+                        style: paperMuted(fontSize: 15, color: textColor),
                       ),
-                    Text(
-                      content,
-                      style:
-                          TextStyle(fontSize: 15, color: textColor),
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          time,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: textColor.withValues(alpha: 0.65),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            time,
+                            style: paperMuted(
+                              fontSize: 11,
+                              color: textColor.withValues(alpha: 0.75),
+                            ),
                           ),
-                        ),
-                        if (isMe) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            isFailed
-                                ? Icons.error_outline
-                                : isPending
-                                    ? Icons.access_time
-                                    : Icons.done,
-                            size: 12,
-                            color: isFailed
-                                ? Colors.red
-                                : textColor.withValues(alpha: 0.65),
-                          ),
+                          if (isMe) ...[
+                            const SizedBox(width: 4),
+                            Icon(
+                              isFailed
+                                  ? Icons.error_outline
+                                  : isPending
+                                      ? Icons.access_time
+                                      : Icons.done,
+                              size: 13,
+                              color: isFailed
+                                  ? paperDanger
+                                  : textColor.withValues(alpha: 0.75),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -600,50 +627,59 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   Widget _buildInput() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 4,
-              offset: const Offset(0, -1))
-        ],
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: const BoxDecoration(
+        color: paperCard,
+        border: Border(top: BorderSide(color: paperBorder)),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              maxLines: null,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                hintText: 'Message…',
-                filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+      child: SafeArea(
+        top: false,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                maxLines: 5,
+                minLines: 1,
+                style: paperMuted(fontSize: 15, color: paperInk),
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendMessage(),
+                decoration: InputDecoration(
+                  hintText: 'Message…',
+                  hintStyle: paperMuted(fontSize: 15),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(color: paperAccent, width: 1.5),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Material(
-            color: Colors.blue[600],
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: _sendMessage,
-              child: const Padding(
-                padding: EdgeInsets.all(10),
-                child: Icon(Icons.send, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            // 48x48 : cible tactile minimale recommandée.
+            IconButton.filled(
+              onPressed: _sendMessage,
+              tooltip: 'Envoyer',
+              icon: const Icon(Icons.send, size: 20),
+              style: IconButton.styleFrom(
+                backgroundColor: paperAccentStrong,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(48, 48),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

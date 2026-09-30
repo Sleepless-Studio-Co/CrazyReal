@@ -428,6 +428,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get comingSoon => 'Coming soon';
 
   @override
+  String get deleteAccountConfirmWord => 'DELETE';
+
+  @override
+  String deleteAccountConfirmPrompt(String word) {
+    return 'To confirm, type $word below.';
+  }
+
+  @override
+  String get newGroup => 'New group';
+
+  @override
+  String get acceptRequest => 'Accept';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get deleteAccountConfirmHint => 'Confirmation word';
+
+  @override
   String get administration => 'Administration';
 
   @override

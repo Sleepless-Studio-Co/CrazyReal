@@ -52,7 +52,7 @@ export class FriendsService {
         status: 'PENDING',
       },
       include: {
-        requester: true,
+        requester: { select: { username: true } },
       },
     });
 
