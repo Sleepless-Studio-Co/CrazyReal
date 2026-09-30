@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
@@ -144,6 +145,21 @@ class PostCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
+                InkWell(
+                  onTap: photoUrl.isEmpty
+                      ? null
+                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Icon(
+                      Icons.share_outlined,
+                      color: _inkMuted,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
                 InkWell(
                   onTap: onUpvote,
                   borderRadius: BorderRadius.circular(20),

@@ -133,17 +133,7 @@ class HomePageState extends State<HomePage> {
   void _handleNewPost(dynamic data) {
     if (!_isActive || !mounted) return;
 
-    try {
-      final post = FeedPost.fromJson(Map<String, dynamic>.from(data as Map));
-      if (_posts.any((existing) => existing.id == post.id)) return;
-
-      setState(() {
-        _posts = [post, ..._posts];
-        _errorMessage = null;
-      });
-    } catch (_) {
-      refreshFeed(showLoading: false);
-    }
+    refreshFeed(showLoading: false);
   }
 
   void _startPolling() {

@@ -416,6 +416,12 @@ abstract class AppLocalizations {
   /// **'Photo sent to your Feed!'**
   String get photoSentToFeed;
 
+  /// Confirmation message when the photo link is copied to the clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Photo link copied!'**
+  String get photoLinkCopied;
+
   /// Error message when photo send fails
   ///
   /// In en, this message translates to:
@@ -787,6 +793,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Accessibility'**
   String get accessibility;
+
+  /// Theme selection tile
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get theme;
+
+  /// Theme follows the phone setting
+  ///
+  /// In en, this message translates to:
+  /// **'Use phone settings'**
+  String get themeSystem;
+
+  /// Light theme
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// Dark theme
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
 
   /// Language setting tile
   ///

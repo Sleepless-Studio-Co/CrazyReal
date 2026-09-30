@@ -170,6 +170,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoSentToFeed => 'Photo sent to your Feed!';
 
   @override
+  String get photoLinkCopied => 'Photo link copied!';
+
+  @override
   String get errorSendingPhoto => '❌ Error sending photo';
 
   @override
@@ -374,6 +377,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accessibility => 'Accessibility';
+
+  @override
+  String get theme => 'Appearance';
+
+  @override
+  String get themeSystem => 'Use phone settings';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
 
   @override
   String get language => 'Language';
