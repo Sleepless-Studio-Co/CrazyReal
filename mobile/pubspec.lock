@@ -533,14 +533,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
-  petitparser:
-    dependency: transitive
-    description:
-      name: petitparser
-      sha256: "91bd59303e9f769f108f8df05e371341b15d59e995e6806aefab827b58336675"
-      url: "https://pub.dev"
-    source: hosted
-    version: "7.0.2"
   permission_handler:
     dependency: "direct main"
     description:
@@ -770,14 +762,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.10"
-  timezone:
-    dependency: transitive
-    description:
-      name: timezone
-      sha256: "981d1020d6ef8fe1e7b3de5054e5b25579ae7c403d7734adc508ffc47668e9cb"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.11.1"
   timezone:
     dependency: transitive
     description:
