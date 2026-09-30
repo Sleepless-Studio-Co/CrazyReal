@@ -604,6 +604,18 @@
   "accessibility": "Accessibilité",
   "@accessibility": { "description": "En-tête de section accessibilité" },
 
+  "theme": "Apparence",
+  "@theme": { "description": "Tuile de choix du thème" },
+
+  "themeSystem": "Selon le téléphone",
+  "@themeSystem": { "description": "Thème automatique selon le réglage du téléphone" },
+
+  "themeLight": "Clair",
+  "@themeLight": { "description": "Thème clair" },
+
+  "themeDark": "Sombre",
+  "@themeDark": { "description": "Thème sombre" },
+
   "language": "Langue",
   "@language": { "description": "Tuile langue" },
 

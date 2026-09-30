@@ -794,6 +794,30 @@ abstract class AppLocalizations {
   /// **'Accessibility'**
   String get accessibility;
 
+  /// Theme selection tile
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get theme;
+
+  /// Theme follows the phone setting
+  ///
+  /// In en, this message translates to:
+  /// **'Use phone settings'**
+  String get themeSystem;
+
+  /// Light theme
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// Dark theme
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
   /// Language setting tile
   ///
   /// In en, this message translates to:

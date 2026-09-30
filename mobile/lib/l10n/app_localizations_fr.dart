@@ -384,6 +384,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get accessibility => 'Accessibilité';
 
   @override
+  String get theme => 'Apparence';
+
+  @override
+  String get themeSystem => 'Selon le téléphone';
+
+  @override
+  String get themeLight => 'Clair';
+
+  @override
+  String get themeDark => 'Sombre';
+
+  @override
   String get language => 'Langue';
 
   @override
