@@ -340,6 +340,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notificationFriendRequestTitle => 'Friend Request';
+
+  @override
+  String notificationFriendRequestBody(String username) {
+    return '$username sent you a friend request';
+  }
+
+  @override
+  String notificationNewMessageTitle(String username) {
+    return 'New message from $username';
+  }
+
+  @override
   String get deleteAccount => 'Delete account';
 
   @override
@@ -391,4 +404,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get comingSoon => 'Coming soon';
+
+  @override
+  String get deleteAccountConfirmWord => 'DELETE';
+
+  @override
+  String deleteAccountConfirmPrompt(String word) {
+    return 'To confirm, type $word below.';
+  }
+
+  @override
+  String get newGroup => 'New group';
+
+  @override
+  String get acceptRequest => 'Accept';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get deleteAccountConfirmHint => 'Confirmation word';
 }
