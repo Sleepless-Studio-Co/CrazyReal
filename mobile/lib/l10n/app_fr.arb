@@ -673,7 +673,7 @@
   "@messages": { "description": "Titre de l'écran des discussions" },
 
   "deleteAccountConfirmHint": "Mot de confirmation",
-  "@deleteAccountConfirmHint": { "description": "Label du champ de confirmation de suppression" }
+  "@deleteAccountConfirmHint": { "description": "Label du champ de confirmation de suppression" },
 
   "administration": "Administration",
   "@administration": { "description": "En-tête et tuile admin dans les réglages" },
