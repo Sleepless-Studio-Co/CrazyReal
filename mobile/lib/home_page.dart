@@ -346,12 +346,6 @@ class HomePageState extends State<HomePage> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             )
-          else
-            IconButton(
-              icon: const Icon(Icons.refresh, color: _inkColor),
-              onPressed: () => refreshFeed(showLoading: false),
-              tooltip: l10n.feedRefresh,
-            ),
         ],
       ),
       body: Column(
