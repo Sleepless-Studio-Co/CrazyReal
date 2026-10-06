@@ -29,6 +29,7 @@ class _NewPageState extends State<NewPage> {
   // Défis réalisables : global courant + défis de mes groupes actifs.
   List<Map<String, dynamic>> _challenges = [];
   int? _selectedChallengeId;
+  bool _showingGlobalChallenges = true;
   String? challengeError;
   bool isUploading = false;
   List<CameraDescription> _cameras = [];
@@ -141,8 +142,14 @@ class _NewPageState extends State<NewPage> {
         setState(() {
           _challenges =
               data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-          _selectedChallengeId =
-              _challenges.isNotEmpty ? _challenges.first['id'] as int : null;
+          final scopedChallenges = _challenges
+              .where((challenge) => _isGlobalChallenge(challenge))
+              .toList();
+          _selectedChallengeId = scopedChallenges.isNotEmpty
+              ? scopedChallenges.first['id'] as int
+              : (_challenges.isNotEmpty
+                  ? _challenges.first['id'] as int
+                  : null);
           challengeError = null;
         });
         _updateChallengeTimer();
@@ -173,6 +180,78 @@ class _NewPageState extends State<NewPage> {
       return '${l10n.feedFriendChallenge} · ${group['name']} · $title';
     }
     return '${l10n.feedGlobalChallenge} · $title';
+  }
+
+  bool _isGlobalChallenge(Map<String, dynamic> challenge) {
+    return challenge['group'] == null;
+  }
+
+  List<Map<String, dynamic>> _challengesForCurrentScope() {
+    return _challenges
+        .where((challenge) =>
+            _isGlobalChallenge(challenge) == _showingGlobalChallenges)
+        .toList();
+  }
+
+  Future<void> _selectChallengeScope(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool showGlobal,
+  ) async {
+    if (_showingGlobalChallenges == showGlobal) {
+      await _openChallengeMenu(context, l10n);
+      return;
+    }
+
+    final scopedChallenges = _challenges
+        .where((challenge) => _isGlobalChallenge(challenge) == showGlobal)
+        .toList();
+    setState(() {
+      _showingGlobalChallenges = showGlobal;
+      _selectedChallengeId = scopedChallenges.isNotEmpty
+          ? scopedChallenges.first['id'] as int
+          : null;
+    });
+    _updateChallengeTimer();
+  }
+
+  Future<void> _openChallengeMenu(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final selectedId = await showMenu<int>(
+      context: context,
+      color: const Color(0xFFF3D7B2),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy + renderBox.size.height,
+        offset.dx + renderBox.size.width,
+        0,
+      ),
+      items: _challengesForCurrentScope()
+          .map(
+            (challenge) => PopupMenuItem<int>(
+              value: challenge['id'] as int,
+              child: Text(
+                _challengeLabel(challenge, l10n),
+                style: const TextStyle(color: Color(0xFF3B2A21)),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
+          .toList(),
+    );
+
+    if (selectedId != null) {
+      setState(() => _selectedChallengeId = selectedId);
+      _updateChallengeTimer();
+    }
   }
 
   void _updateChallengeTimer() {
@@ -296,33 +375,55 @@ class _NewPageState extends State<NewPage> {
       (c) => c['id'] == _selectedChallengeId,
       orElse: () => _challenges.first,
     );
+    final title = selected['title']?.toString() ?? '';
     final description = selected['description']?.toString() ?? '';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        DropdownButton<int>(
-          value: selected['id'] as int,
-          isExpanded: true,
-          underline: const SizedBox.shrink(),
-          items: _challenges
-              .map((c) => DropdownMenuItem<int>(
-                    value: c['id'] as int,
-                    child: Text(
-                      _challengeLabel(c, l10n),
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ))
-              .toList(),
-          onChanged: (id) {
-            setState(() => _selectedChallengeId = id);
-            _updateChallengeTimer();
-          },
+        Builder(
+          builder: (filterContext) => ToggleButtons(
+            isSelected: [_showingGlobalChallenges, !_showingGlobalChallenges],
+            onPressed: (index) => _selectChallengeScope(
+              filterContext,
+              l10n,
+              index == 0,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            constraints: const BoxConstraints(minHeight: 34),
+            selectedColor: Colors.white,
+            fillColor: const Color(0xFF3B2A21),
+            color: const Color(0xFF3B2A21),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  l10n.feedGlobalChallenge,
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  l10n.feedFriendChallenge,
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ),
+            ],
+          ),
         ),
+        if (title.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF3B2A21),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
         if (description.isNotEmpty)
           Text(
             description,

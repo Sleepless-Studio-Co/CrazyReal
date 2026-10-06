@@ -19,9 +19,16 @@ class FeedService {
     return FeedPost.listFromJson(data);
   }
 
-  Future<List<FeedPost>> fetchPostsForChallenge(int? challengeId) async {
-    final path =
-        challengeId == null ? '/posts' : '/posts?challengeId=$challengeId';
+  Future<List<FeedPost>> fetchPostsForChallenge(
+    int? challengeId, {
+    bool? global,
+  }) async {
+    final query = <String, String>{};
+    if (challengeId != null) query['challengeId'] = '$challengeId';
+    if (global != null) query['scope'] = global ? 'global' : 'friends';
+    final path = query.isEmpty
+        ? '/posts'
+        : '/posts?${query.entries.map((entry) => '${entry.key}=${entry.value}').join('&')}';
     final data = await _authedRequest('GET', path);
     return FeedPost.listFromJson(data);
   }
