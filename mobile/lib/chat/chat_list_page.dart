@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../auth/auth_service.dart';
+import '../l10n/app_localizations.dart';
 import '../services/chat_service.dart';
 import '../services/chat_socket_service.dart';
 import '../services/api_exception.dart';
+import '../widgets/feed_avatar.dart';
+import '../widgets/paper.dart';
 import 'chat_room_page.dart';
+import 'create_group_page.dart';
 
 class ChatListPage extends StatefulWidget {
   const ChatListPage({super.key});
@@ -96,7 +100,7 @@ class _ChatListPageState extends State<ChatListPage> {
         setState(() => _isLoading = false);
         final message = e is ApiException ? e.message : 'Erreur lors du chargement des discussions';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
       }
     }
@@ -121,20 +125,27 @@ class _ChatListPageState extends State<ChatListPage> {
     _openConversationId = null;
   }
 
+  Future<void> _openCreateGroup() async {
+    // CreateGroupPage gère elle-même le cas « aucun ami » (elle charge la
+    // liste et se referme), inutile de la dupliquer ici.
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateGroupPage()),
+    );
+    if (mounted) _loadConversations();
+  }
+
   Future<void> _leaveGroup(int conversationId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Quitter le groupe'),
-        content: const Text('Veux-tu vraiment quitter ce groupe ?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Quitter')),
-        ],
-      ),
+    final confirmed = await paperConfirm(
+      context,
+      title: 'Quitter le groupe',
+      message: 'Veux-tu vraiment quitter ce groupe ?',
+      confirmLabel: 'Quitter',
+      cancelLabel: 'Annuler',
+      danger: true,
     );
 
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     try {
       await _chatService.leaveGroup(conversationId);
@@ -143,98 +154,200 @@ class _ChatListPageState extends State<ChatListPage> {
       if (mounted) {
         final message = e is ApiException ? e.message : 'Erreur lors de la sortie du groupe';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
       }
     }
   }
 
+  /// Nom affiché : celui du groupe, sinon le pseudo de l'autre participant.
+  Map<String, dynamic>? _otherParticipant(dynamic conv) {
+    final participants = conv['participants'] as List? ?? const [];
+    for (final p in participants) {
+      final user = (p as Map)['user'] as Map<String, dynamic>?;
+      if (user != null && user['id'] != _currentUserId) return user;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mes Messages'),
-      ),
+      backgroundColor: paperBg,
+      appBar: paperAppBar(title: l10n.messages),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: paperAccent))
           : RefreshIndicator(
               onRefresh: _loadConversations,
+              color: paperAccent,
               child: _conversations.isEmpty
-                  ? ListView(
-                      children: const [
-                        Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20.0),
-                            child: Text("Aucune discussion pour le moment."),
-                          ),
-                        )
-                      ],
+                  ? const PaperEmptyState(
+                      icon: Icons.forum_outlined,
+                      title: 'Aucune discussion pour le moment.',
+                      message:
+                          'Crée un groupe avec le bouton ci-dessous pour lancer une conversation.',
                     )
-                  : ListView.builder(
+                  : ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                       itemCount: _conversations.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final conv = _conversations[index];
                         final convId = conv['id'] as int;
                         final isGroup = conv['isGroup'] == true;
-                        final name = conv['name'] ?? 'Discussion privée';
+                        final other = isGroup ? null : _otherParticipant(conv);
+                        final name = (conv['name'] as String?) ??
+                            other?['username']?.toString() ??
+                            'Discussion privée';
 
                         final participants = conv['participants'] as List;
-                        final participantCount = participants.length;
-
                         final preview = _lastPreview[convId];
                         final unread = _unread[convId] ?? 0;
-                        final hasUnread = unread > 0;
 
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: isGroup ? Colors.blue : Colors.grey,
-                            child: Icon(isGroup ? Icons.group : Icons.person, color: Colors.white),
-                          ),
-                          title: Text(
-                            name,
-                            style: TextStyle(
-                              fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                          subtitle: Text(
-                            preview ?? '$participantCount membre(s)',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontWeight: hasUnread ? FontWeight.w600 : FontWeight.normal,
-                              color: hasUnread ? Colors.black87 : Colors.grey[600],
-                            ),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (hasUnread)
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.blue,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-                                  child: Text(
-                                    '$unread',
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                                  ),
-                                ),
-                              if (isGroup)
-                                IconButton(
-                                  icon: const Icon(Icons.exit_to_app, color: Colors.red),
-                                  tooltip: 'Quitter le groupe',
-                                  onPressed: () => _leaveGroup(convId),
-                                ),
-                            ],
-                          ),
+                        return _ConversationCard(
+                          name: name,
+                          isGroup: isGroup,
+                          other: other,
+                          subtitle:
+                              preview ?? '${participants.length} membre(s)',
+                          unread: unread,
                           onTap: () => _openConversation(conv, name, isGroup),
+                          onLeave:
+                              isGroup ? () => _leaveGroup(convId) : null,
                         );
                       },
                     ),
             ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openCreateGroup,
+        backgroundColor: paperAccentStrong,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.group_add_outlined),
+        label: Text(l10n.newGroup, style: paperValue(color: Colors.white)),
+      ),
+    );
+  }
+}
+
+class _ConversationCard extends StatelessWidget {
+  const _ConversationCard({
+    required this.name,
+    required this.isGroup,
+    required this.other,
+    required this.subtitle,
+    required this.unread,
+    required this.onTap,
+    this.onLeave,
+  });
+
+  final String name;
+  final bool isGroup;
+  final Map<String, dynamic>? other;
+  final String subtitle;
+  final int unread;
+  final VoidCallback onTap;
+  final VoidCallback? onLeave;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasUnread = unread > 0;
+
+    return Container(
+      decoration: paperCardDecoration(),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                ExcludeSemantics(
+                  child: isGroup
+                      ? Container(
+                          width: 48,
+                          height: 48,
+                          decoration: const BoxDecoration(
+                            color: paperChip,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.groups_outlined,
+                              color: paperAccentStrong),
+                        )
+                      : FeedAvatar(
+                          username: other?['username']?.toString() ?? name,
+                          avatarUrl: other?['avatarUrl']?.toString(),
+                          avatarKey: other?['avatarKey']?.toString(),
+                          size: 48,
+                        ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: MergeSemantics(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: paperValue(fontSize: 16),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          // Unread threads are bolder *and* badged — colour is
+                          // never the only signal.
+                          style: hasUnread
+                              ? paperValue(fontSize: 13, color: paperInk)
+                              : paperMuted(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (hasUnread) ...[
+                  const SizedBox(width: 8),
+                  Semantics(
+                    label: '$unread message(s) non lu(s)',
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 24),
+                      decoration: BoxDecoration(
+                        color: paperAccentStrong,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ExcludeSemantics(
+                        child: Text(
+                          '$unread',
+                          textAlign: TextAlign.center,
+                          style: paperValue(fontSize: 12, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                if (onLeave != null)
+                  IconButton(
+                    icon: const Icon(Icons.logout),
+                    color: paperDanger,
+                    tooltip: 'Quitter le groupe $name',
+                    onPressed: onLeave,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

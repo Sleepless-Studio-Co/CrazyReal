@@ -269,7 +269,32 @@
   "@errorSendingPhoto": {
     "description": "Error message when photo send fails"
   },
-  
+
+  "captureModePhoto": "Photo",
+  "@captureModePhoto": {
+    "description": "Photo capture mode"
+  },
+
+  "captureModeVideo": "Video",
+  "@captureModeVideo": {
+    "description": "Video capture mode"
+  },
+
+  "videoSentToFeed": "Video sent to your Feed!",
+  "@videoSentToFeed": {
+    "description": "Success message when video is sent"
+  },
+
+  "errorSendingVideo": "❌ Error sending video",
+  "@errorSendingVideo": {
+    "description": "Error message when sending video fails"
+  },
+
+  "recordingVideo": "Recording...",
+  "@recordingVideo": {
+    "description": "Video recording in progress indicator"
+  },
+
   "pleaseLoginFirst": "🔒 Please login first",
   "@pleaseLoginFirst": {
     "description": "Message asking to login"
@@ -550,6 +575,31 @@
     }
   },
 
+  "notificationFriendRequestTitle": "Friend Request",
+  "@notificationFriendRequestTitle": {
+    "description": "Title for friend request notification"
+  },
+
+  "notificationFriendRequestBody": "{username} sent you a friend request",
+  "@notificationFriendRequestBody": {
+    "description": "Body for friend request notification",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
+  "notificationNewMessageTitle": "New message from {username}",
+  "@notificationNewMessageTitle": {
+    "description": "Title for new message notification",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
   "deleteAccount": "Delete account",
   "@deleteAccount": { "description": "Delete account button" },
 
@@ -695,5 +745,26 @@
   },
 
   "adminLoadError": "Could not load challenges",
-  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" }
+  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" },
+
+  "deleteAccountConfirmWord": "DELETE",
+  "@deleteAccountConfirmWord": { "description": "Word the user must type to confirm account deletion" },
+
+  "deleteAccountConfirmPrompt": "To confirm, type {word} below.",
+  "@deleteAccountConfirmPrompt": {
+    "description": "Prompt asking the user to type the confirmation word",
+    "placeholders": { "word": { "type": "String" } }
+  },
+
+  "newGroup": "New group",
+  "@newGroup": { "description": "Create a new group chat button" },
+
+  "acceptRequest": "Accept",
+  "@acceptRequest": { "description": "Accept friend request button" },
+
+  "messages": "Messages",
+  "@messages": { "description": "Messages / conversations screen title" },
+
+  "deleteAccountConfirmHint": "Confirmation word",
+  "@deleteAccountConfirmHint": { "description": "Label of the deletion confirmation text field" }
 }

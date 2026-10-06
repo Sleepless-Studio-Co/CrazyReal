@@ -3,6 +3,7 @@ import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
 import '../services/api_exception.dart';
 import '../services/feed_service.dart';
+import '../widgets/paper.dart';
 import '../widgets/post_card.dart';
 
 /// Onglet « Feed » d'un groupe : posts réalisés sur les défis du groupe.
@@ -42,7 +43,7 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e is ApiException ? e.message : 'Erreur de chargement'),
-            backgroundColor: Colors.red,
+            backgroundColor: paperDanger,
           ),
         );
       }
@@ -80,30 +81,24 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: paperAccent));
     }
 
     if (_posts.isEmpty) {
       return RefreshIndicator(
         onRefresh: _load,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 120),
-            Center(
-              child: Text(
-                'Aucune photo. Relevez un défi depuis l\'appareil photo !',
-                style: TextStyle(color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
+        color: paperAccent,
+        child: const PaperEmptyState(
+          icon: Icons.photo_library_outlined,
+          title: 'Aucune photo',
+          message: 'Relève un défi depuis l\'appareil photo pour remplir ce feed !',
         ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _load,
+      color: paperAccent,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),

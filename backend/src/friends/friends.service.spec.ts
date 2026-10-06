@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FriendsService } from './friends.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('FriendsService', () => {
+  let notificationGateway: { sendToUser: jest.Mock };
   let service: FriendsService;
   let prismaService: {
     user: {
@@ -20,6 +22,7 @@ describe('FriendsService', () => {
   };
 
   beforeEach(async () => {
+    notificationGateway = { sendToUser: jest.fn() };
     prismaService = {
       user: {
         findUnique: jest.fn(),
@@ -40,6 +43,10 @@ describe('FriendsService', () => {
         {
           provide: PrismaService,
           useValue: prismaService,
+        },
+        {
+          provide: NotificationGateway,
+          useValue: notificationGateway,
         },
       ],
     }).compile();
@@ -79,6 +86,7 @@ describe('FriendsService', () => {
         userId: 1,
         friendId: 2,
         status: 'PENDING',
+        requester: { username: 'alice' },
       });
 
       const result = await service.sendFriendRequest(1, 'bob');
@@ -89,12 +97,19 @@ describe('FriendsService', () => {
           friendId: 2,
           status: 'PENDING',
         },
+        include: {
+          requester: { select: { username: true } },
+        },
+      });
+      expect(notificationGateway.sendToUser).toHaveBeenCalledWith(2, 'friendRequestReceived', {
+        requesterUsername: 'alice',
       });
       expect(result).toEqual({
         id: 10,
         userId: 1,
         friendId: 2,
         status: 'PENDING',
+        requester: { username: 'alice' },
       });
     });
 

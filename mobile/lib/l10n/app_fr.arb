@@ -269,6 +269,31 @@
   "@errorSendingPhoto": {
     "description": "Message d'erreur lors de l'envoi de la photo"
   },
+
+  "captureModePhoto": "Photo",
+  "@captureModePhoto": {
+    "description": "Mode capture photo"
+  },
+
+  "captureModeVideo": "Vidéo",
+  "@captureModeVideo": {
+    "description": "Mode capture vidéo"
+  },
+
+  "videoSentToFeed": "Vidéo envoyée dans ton Feed !",
+  "@videoSentToFeed": {
+    "description": "Message de succès quand la vidéo est envoyée"
+  },
+
+  "errorSendingVideo": "❌ Erreur lors de l'envoi de la vidéo",
+  "@errorSendingVideo": {
+    "description": "Message d'erreur lors de l'envoi de la vidéo"
+  },
+
+  "recordingVideo": "Enregistrement...",
+  "@recordingVideo": {
+    "description": "Indicateur d'enregistrement vidéo en cours"
+  },
   
   "pleaseLoginFirst": "🔒 Veuillez vous connecter d'abord",
   "@pleaseLoginFirst": {
@@ -550,6 +575,31 @@
     }
   },
 
+  "notificationFriendRequestTitle": "Demande d'ami",
+  "@notificationFriendRequestTitle": {
+    "description": "Titre de la notification de demande d'ami"
+  },
+
+  "notificationFriendRequestBody": "{username} vous a envoyé une demande d'ami",
+  "@notificationFriendRequestBody": {
+    "description": "Corps de la notification de demande d'ami",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
+  "notificationNewMessageTitle": "Nouveau message de {username}",
+  "@notificationNewMessageTitle": {
+    "description": "Titre de la notification de nouveau message",
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+
   "deleteAccount": "Supprimer le compte",
   "@deleteAccount": { "description": "Bouton supprimer le compte" },
 
@@ -695,5 +745,26 @@
   },
 
   "adminLoadError": "Impossible de charger les défis",
-  "@adminLoadError": { "description": "Erreur au chargement de la liste" }
+  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
+
+  "deleteAccountConfirmWord": "SUPPRIMER",
+  "@deleteAccountConfirmWord": { "description": "Mot à saisir pour confirmer la suppression du compte" },
+
+  "deleteAccountConfirmPrompt": "Pour confirmer, écris {word} ci-dessous.",
+  "@deleteAccountConfirmPrompt": {
+    "description": "Invite demandant de saisir le mot de confirmation",
+    "placeholders": { "word": { "type": "String" } }
+  },
+
+  "newGroup": "Nouveau groupe",
+  "@newGroup": { "description": "Bouton de création d'un groupe de discussion" },
+
+  "acceptRequest": "Accepter",
+  "@acceptRequest": { "description": "Bouton accepter une demande d'ami" },
+
+  "messages": "Messages",
+  "@messages": { "description": "Titre de l'écran des discussions" },
+
+  "deleteAccountConfirmHint": "Mot de confirmation",
+  "@deleteAccountConfirmHint": { "description": "Label du champ de confirmation de suppression" }
 }

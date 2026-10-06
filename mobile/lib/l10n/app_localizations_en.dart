@@ -173,6 +173,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorSendingPhoto => '❌ Error sending photo';
 
   @override
+  String get captureModePhoto => 'Photo';
+
+  @override
+  String get captureModeVideo => 'Video';
+
+  @override
+  String get videoSentToFeed => 'Video sent to your Feed!';
+
+  @override
+  String get errorSendingVideo => '❌ Error sending video';
+
+  @override
+  String get recordingVideo => 'Recording...';
+
+  @override
   String get pleaseLoginFirst => '🔒 Please login first';
 
   @override
@@ -334,6 +349,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String timeAgoDays(int days) {
     return '$days d ago';
+  }
+
+  @override
+  String get notificationFriendRequestTitle => 'Friend Request';
+
+  @override
+  String notificationFriendRequestBody(String username) {
+    return '$username sent you a friend request';
+  }
+
+  @override
+  String notificationNewMessageTitle(String username) {
+    return 'New message from $username';
   }
 
   @override
@@ -499,4 +527,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Could not load challenges';
+
+  @override
+  String get deleteAccountConfirmWord => 'DELETE';
+
+  @override
+  String deleteAccountConfirmPrompt(String word) {
+    return 'To confirm, type $word below.';
+  }
+
+  @override
+  String get newGroup => 'New group';
+
+  @override
+  String get acceptRequest => 'Accept';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get deleteAccountConfirmHint => 'Confirmation word';
 }
