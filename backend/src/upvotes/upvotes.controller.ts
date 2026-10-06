@@ -5,6 +5,9 @@ import {
   Param,
   UseGuards,
   ParseIntPipe,
+  Body,
+  BadRequestException,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -42,5 +45,31 @@ export class UpVotesController {
     @Param('id', ParseIntPipe) postId: number,
   ) {
     return this.upVotesService.removeUpvote(user.userId, postId);
+  }
+
+  @Post(':id/reaction')
+  @ApiOperation({ summary: 'Ajouter une réaction emoji à un post' })
+  addReaction(
+    @CurrentUser() user: ValidatedUser,
+    @Param('id', ParseIntPipe) postId: number,
+    @Body('emoji') emoji: string,
+  ) {
+    if (!emoji || emoji.length > 16) {
+      throw new BadRequestException('Emoji invalide.');
+    }
+    return this.upVotesService.addReaction(user.userId, postId, emoji);
+  }
+
+  @Delete(':id/reaction')
+  @ApiOperation({ summary: 'Retirer une réaction emoji d’un post' })
+  removeReaction(
+    @CurrentUser() user: ValidatedUser,
+    @Param('id', ParseIntPipe) postId: number,
+    @Query('emoji') emoji: string,
+  ) {
+    if (!emoji || emoji.length > 16) {
+      throw new BadRequestException('Emoji invalide.');
+    }
+    return this.upVotesService.removeReaction(user.userId, postId, emoji);
   }
 }

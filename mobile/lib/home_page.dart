@@ -12,7 +12,6 @@ import 'utils/media_url.dart';
 import 'widgets/post_card.dart';
 import 'widgets/post_card_skeleton.dart';
 
-
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
 
@@ -315,6 +314,25 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  Future<FeedPost> _toggleReaction(int postId, String emoji) async {
+    final post = _posts.firstWhere((item) => item.id == postId);
+    final reaction = post.reactions.firstWhere(
+      (item) => item.emoji == emoji,
+      orElse: () => const FeedReaction(
+        emoji: '',
+        count: 0,
+        reactedByMe: false,
+      ),
+    );
+    final updated = reaction.reactedByMe
+        ? await _feedService.removeReaction(postId, emoji)
+        : await _feedService.addReaction(postId, emoji);
+    if (!mounted) return updated;
+    final index = _posts.indexWhere((item) => item.id == postId);
+    if (index != -1) setState(() => _posts[index] = updated);
+    return updated;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -481,6 +499,7 @@ class HomePageState extends State<HomePage> {
             post: post,
             unknownUserLabel: l10n.unknownUser,
             onUpvote: () => _toggleUpvote(post.id),
+            onReaction: (emoji) => _toggleReaction(post.id, emoji),
           );
         },
       ),

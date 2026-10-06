@@ -77,6 +77,23 @@ class FeedService {
 
   Future<FeedPost> removeUpvote(int postId) => _vote(postId, remove: true);
 
+  Future<FeedPost> addReaction(int postId, String emoji) async {
+    final data = await _authedRequest(
+      'POST',
+      '/posts/$postId/reaction',
+      body: {'emoji': emoji},
+    );
+    return FeedPost.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<FeedPost> removeReaction(int postId, String emoji) async {
+    final data = await _authedRequest(
+      'DELETE',
+      '/posts/$postId/reaction?emoji=${Uri.encodeQueryComponent(emoji)}',
+    );
+    return FeedPost.fromJson(data as Map<String, dynamic>);
+  }
+
   Future<FeedPost> _vote(int postId, {required bool remove}) async {
     final data = await _authedRequest(
       remove ? 'DELETE' : 'POST',
@@ -85,7 +102,11 @@ class FeedService {
     return FeedPost.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<dynamic> _authedRequest(String method, String path) async {
+  Future<dynamic> _authedRequest(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
     final token = await _authService.getAccessToken();
     if (token == null || token.isEmpty) {
       throw UnauthorizedException();
@@ -101,7 +122,11 @@ class FeedService {
     try {
       switch (method) {
         case 'POST':
-          response = await http.post(uri, headers: headers);
+          response = await http.post(
+            uri,
+            headers: headers,
+            body: body == null ? null : jsonEncode(body),
+          );
           break;
         case 'DELETE':
           response = await http.delete(uri, headers: headers);

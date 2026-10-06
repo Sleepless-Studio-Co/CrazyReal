@@ -12,30 +12,51 @@ const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
 const Color _cardColor = Color(0xFFFFF7E6);
 
-class PostCard extends StatelessWidget {
+class PostCard extends StatefulWidget {
   const PostCard({
     super.key,
     required this.post,
     required this.unknownUserLabel,
     this.onUpvote,
+    this.onReaction,
   });
 
   final FeedPost post;
   final String unknownUserLabel;
   final VoidCallback? onUpvote;
+  final Future<FeedPost> Function(String emoji)? onReaction;
+
+  @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  late FeedPost _post;
+
+  @override
+  void initState() {
+    super.initState();
+    _post = widget.post;
+  }
+
+  @override
+  void didUpdateWidget(covariant PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.post != widget.post) _post = widget.post;
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final username = post.user.username.isEmpty
-        ? unknownUserLabel
-        : post.user.username;
-    final photoUrl = resolveMediaUrl(post.photoUrl) ?? '';
-    final challengeLabel =
-        post.challenge?.title.isNotEmpty == true ? post.challenge!.title : l10n.appTitle;
-    final timeLabel = post.createdAt != null
-        ? formatTimeAgo(post.createdAt!, l10n)
-        : null;
+    final username = _post.user.username.isEmpty
+        ? widget.unknownUserLabel
+        : _post.user.username;
+    final photoUrl = resolveMediaUrl(_post.photoUrl) ?? '';
+    final challengeLabel = _post.challenge?.title.isNotEmpty == true
+        ? _post.challenge!.title
+        : l10n.appTitle;
+    final timeLabel =
+        _post.createdAt != null ? formatTimeAgo(_post.createdAt!, l10n) : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -59,9 +80,9 @@ class PostCard extends StatelessWidget {
             child: Row(
               children: [
                 FeedAvatar(
-                  username: post.user.username,
-                  avatarUrl: post.user.avatarUrl,
-                  avatarKey: post.user.avatarKey,
+                  username: _post.user.username,
+                  avatarUrl: _post.user.avatarUrl,
+                  avatarKey: _post.user.avatarKey,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -83,6 +104,18 @@ class PostCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Text(
+                      challengeLabel,
+                      style: _labelStyle(),
+                      textAlign: TextAlign.right,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -92,13 +125,13 @@ class PostCard extends StatelessWidget {
                 : () => FullScreenPhotoPage.open(
                       context,
                       imageUrl: photoUrl,
-                      heroTag: 'post-photo-${post.id}',
+                      heroTag: 'post-photo-${_post.id}',
                       caption: challengeLabel,
                     ),
             child: AspectRatio(
               aspectRatio: 4 / 5,
               child: Hero(
-                tag: 'post-photo-${post.id}',
+                tag: 'post-photo-${_post.id}',
                 child: Image.network(
                   photoUrl,
                   fit: BoxFit.cover,
@@ -130,39 +163,34 @@ class PostCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Row(
               children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      challengeLabel,
-                      style: _labelStyle(),
-                    ),
-                  ),
-                ),
+                Expanded(child: _buildReactions(context)),
                 const SizedBox(width: 8),
                 InkWell(
-                  onTap: onUpvote,
+                  onTap: widget.onUpvote,
                   borderRadius: BorderRadius.circular(20),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          post.hasUpvoted ? Icons.favorite : Icons.favorite_border,
-                          color: post.hasUpvoted ? const Color(0xFFE05252) : _inkMuted,
+                          _post.hasUpvoted
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: _post.hasUpvoted
+                              ? const Color(0xFFE05252)
+                              : _inkMuted,
                           size: 22,
                         ),
-                        if (post.upvoteCount > 0) ...[
+                        if (_post.upvoteCount > 0) ...[
                           const SizedBox(width: 4),
                           Text(
-                            '${post.upvoteCount}',
+                            '${_post.upvoteCount}',
                             style: _labelStyle().copyWith(
-                              color: post.hasUpvoted ? const Color(0xFFE05252) : _inkMuted,
+                              color: _post.hasUpvoted
+                                  ? const Color(0xFFE05252)
+                                  : _inkMuted,
                             ),
                           ),
                         ],
@@ -176,6 +204,77 @@ class PostCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildReactions(BuildContext context) {
+    final visible = _post.reactions.take(3).toList();
+    final extraCount = _post.reactions.length - visible.length;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed:
+              widget.onReaction == null ? null : () => _chooseReaction(context),
+          icon: const Icon(Icons.add_reaction_outlined, color: _inkMuted),
+          tooltip: 'Ajouter une réaction',
+          visualDensity: VisualDensity.compact,
+        ),
+        ...visible.map(
+          (reaction) => InkWell(
+            onTap: widget.onReaction == null
+                ? null
+                : () => _toggleReaction(reaction.emoji),
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: Text(
+                '${reaction.emoji} ${reaction.count}',
+                style: _labelStyle().copyWith(
+                  color: reaction.reactedByMe ? _inkColor : _inkMuted,
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (extraCount > 0) Text('+$extraCount', style: _labelStyle()),
+      ],
+    );
+  }
+
+  Future<void> _chooseReaction(BuildContext context) async {
+    const emojis = ['❤️', '😂', '🔥', '👏', '😍', '😮', '😢', '💪', '💀'];
+    final emoji = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFFF3D7B2),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
+            children: emojis
+                .map((value) => TextButton(
+                      onPressed: () => Navigator.pop(context, value),
+                      child: Text(value, style: const TextStyle(fontSize: 28)),
+                    ))
+                .toList(),
+          ),
+        ),
+      ),
+    );
+    if (emoji != null) _toggleReaction(emoji);
+  }
+
+  Future<void> _toggleReaction(String emoji) async {
+    final current = _post.reactions.firstWhere(
+      (reaction) => reaction.emoji == emoji,
+      orElse: () => const FeedReaction(emoji: '', count: 0, reactedByMe: false),
+    );
+    final updated = current.reactedByMe
+        ? await widget.onReaction!(emoji)
+        : await widget.onReaction!(emoji);
+    if (mounted) setState(() => _post = updated);
   }
 
   TextStyle _labelStyle() {

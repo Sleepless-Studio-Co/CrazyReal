@@ -62,6 +62,7 @@ model Post {
   challengeId Int
   createdAt   DateTime  @default(now())
   upVotes     UpVote[]
+  reactions   PostReaction[]
 }
 
 model UpVote {
@@ -74,6 +75,20 @@ model UpVote {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+}
+
+model PostReaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  emoji     String   @db.VarChar(16)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, emoji])
+  @@index([postId, emoji])
 }
 
 model User {
@@ -90,6 +105,7 @@ model User {
   role          Role           @default(USER)
   posts         Post[]
   upVotes       UpVote[]
+  reactions     PostReaction[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")
