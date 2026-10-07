@@ -19,6 +19,24 @@ class FeedService {
     return FeedPost.listFromJson(data);
   }
 
+  Future<List<FeedPost>> fetchPostsForChallenge(int? challengeId) async {
+    final path =
+        challengeId == null ? '/posts' : '/posts?challengeId=$challengeId';
+    final data = await _authedRequest('GET', path);
+    return FeedPost.listFromJson(data);
+  }
+
+  Future<List<AvailableChallenge>> fetchAvailableChallenges() async {
+    final data = await _authedRequest('GET', '/challenges/available');
+    if (data is! List) return [];
+    return data
+        .whereType<Map>()
+        .map((item) => AvailableChallenge.fromJson(
+              Map<String, dynamic>.from(item),
+            ))
+        .toList();
+  }
+
   /// Feed privé d'un groupe : posts réalisés sur les défis de ce groupe.
   Future<List<FeedPost>> fetchGroupPosts(int conversationId) async {
     final data = await _authedRequest('GET', '/chat/$conversationId/feed');

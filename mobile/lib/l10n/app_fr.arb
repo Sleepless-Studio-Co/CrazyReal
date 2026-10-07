@@ -530,6 +530,21 @@
     "description": "Tooltip du bouton refresh du feed"
   },
 
+  "feedAllChallenges": "Tous les défis récents",
+  "@feedAllChallenges": {
+    "description": "Filtre du feed pour les défis récents"
+  },
+
+  "feedGlobalChallenge": "Global",
+  "@feedGlobalChallenge": {
+    "description": "Catégorie des défis globaux"
+  },
+
+  "feedFriendChallenge": "Amis",
+  "@feedFriendChallenge": {
+    "description": "Catégorie des défis entre amis"
+  },
+
   "publishFirstPost": "Publier une photo",
   "@publishFirstPost": {
     "description": "Bouton CTA quand le feed est vide"
@@ -599,6 +614,22 @@
       }
     }
   },
+  "notificationChallengeCreatedTitle": "Nouveau défi",
+  "@notificationChallengeCreatedTitle": {
+    "description": "Titre de notification pour un nouveau défi"
+  },
+  "notificationChallengeCreatedBody": "Le défi « {title} » est disponible.",
+  "@notificationChallengeCreatedBody": {
+    "description": "Corps de notification pour un nouveau défi"
+  },
+  "notificationChallengeReminderTitle": "Défi bientôt terminé",
+  "@notificationChallengeReminderTitle": {
+    "description": "Titre de notification pour un rappel de défi"
+  },
+  "notificationChallengeReminderBody": "Il reste {hours} h pour le défi « {title} ».",
+  "@notificationChallengeReminderBody": {
+    "description": "Corps de notification pour un rappel de défi"
+  },
 
   "deleteAccount": "Supprimer le compte",
   "@deleteAccount": { "description": "Bouton supprimer le compte" },
@@ -648,6 +679,27 @@
   "comingSoon": "Bientôt disponible",
   "@comingSoon": { "description": "Message pour les fonctionnalités non encore implémentées" },
 
+  "deleteAccountConfirmWord": "SUPPRIMER",
+  "@deleteAccountConfirmWord": { "description": "Mot à saisir pour confirmer la suppression du compte" },
+
+  "deleteAccountConfirmPrompt": "Pour confirmer, écris {word} ci-dessous.",
+  "@deleteAccountConfirmPrompt": {
+    "description": "Invite demandant de saisir le mot de confirmation",
+    "placeholders": { "word": { "type": "String" } }
+  },
+
+  "newGroup": "Nouveau groupe",
+  "@newGroup": { "description": "Bouton de création d'un groupe de discussion" },
+
+  "acceptRequest": "Accepter",
+  "@acceptRequest": { "description": "Bouton accepter une demande d'ami" },
+
+  "messages": "Messages",
+  "@messages": { "description": "Titre de l'écran des discussions" },
+
+  "deleteAccountConfirmHint": "Mot de confirmation",
+  "@deleteAccountConfirmHint": { "description": "Label du champ de confirmation de suppression" },
+
   "administration": "Administration",
   "@administration": { "description": "En-tête et tuile admin dans les réglages" },
 
@@ -674,6 +726,20 @@
 
   "adminChallengeTypeLabel": "Type",
   "@adminChallengeTypeLabel": { "description": "Label du champ type" },
+  "adminCustomDuration": "Durée personnalisée",
+  "@adminCustomDuration": { "description": "Activer une durée personnalisée" },
+  "adminCustomDurationHint": "Sinon, la durée dépend du type choisi.",
+  "@adminCustomDurationHint": { "description": "Aide pour la durée personnalisée" },
+  "adminDurationHours": "Durée en heures",
+  "@adminDurationHours": { "description": "Durée personnalisée en heures" },
+  "adminDurationHoursHint": "Entre 1 et 8760 heures",
+  "@adminDurationHoursHint": { "description": "Limites de durée personnalisée" },
+  "adminDurationFromType": "La durée dépend du type choisi.",
+  "@adminDurationFromType": { "description": "Durée dérivée du type" },
+  "adminCustomEndDate": "Fin personnalisée",
+  "@adminCustomEndDate": { "description": "Date et heure de fin personnalisées" },
+  "adminEndDateRequired": "Choisissez une date et une heure de fin futures.",
+  "@adminEndDateRequired": { "description": "Validation de la fin personnalisée" },
 
   "adminChallengeActiveLabel": "Actif",
   "@adminChallengeActiveLabel": { "description": "Label de l'interrupteur actif" },
@@ -745,26 +811,5 @@
   },
 
   "adminLoadError": "Impossible de charger les défis",
-  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
-
-  "deleteAccountConfirmWord": "SUPPRIMER",
-  "@deleteAccountConfirmWord": { "description": "Mot à saisir pour confirmer la suppression du compte" },
-
-  "deleteAccountConfirmPrompt": "Pour confirmer, écris {word} ci-dessous.",
-  "@deleteAccountConfirmPrompt": {
-    "description": "Invite demandant de saisir le mot de confirmation",
-    "placeholders": { "word": { "type": "String" } }
-  },
-
-  "newGroup": "Nouveau groupe",
-  "@newGroup": { "description": "Bouton de création d'un groupe de discussion" },
-
-  "acceptRequest": "Accepter",
-  "@acceptRequest": { "description": "Bouton accepter une demande d'ami" },
-
-  "messages": "Messages",
-  "@messages": { "description": "Titre de l'écran des discussions" },
-
-  "deleteAccountConfirmHint": "Mot de confirmation",
-  "@deleteAccountConfirmHint": { "description": "Label du champ de confirmation de suppression" }
+  "@adminLoadError": { "description": "Erreur au chargement de la liste" }
 }

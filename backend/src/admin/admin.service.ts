@@ -10,10 +10,14 @@ import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationGateway: NotificationGateway,
+  ) {}
 
   async importChallengesFromFile(): Promise<{ imported: number }> {
     try {
@@ -37,6 +41,7 @@ export class AdminService {
         description: c.description || '',
         date: c.date ? new Date(c.date) : new Date(),
         type: c.type || ChallengeType.WEEKLY_A,
+        ...(c.durationHours !== undefined && { durationHours: c.durationHours }),
         isActive: c.isActive !== undefined ? c.isActive : true,
       }));
 
@@ -65,15 +70,23 @@ export class AdminService {
 
   async createChallenge(dto: CreateChallengeDto) {
     try {
-      return await this.prisma.challenge.create({
+      const challenge = await this.prisma.challenge.create({
         data: {
           title: dto.title.trim(),
           description: dto.description?.trim() ?? '',
           date: dto.date ? new Date(dto.date) : new Date(),
           type: dto.type ?? ChallengeType.WEEKLY_A,
+          durationHours: dto.endsAt ? null : dto.durationHours ?? null,
+          endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
           isActive: dto.isActive ?? true,
         },
       });
+      this.notificationGateway.broadcast('challengeCreated', {
+        challengeId: challenge.id,
+        challengeTitle: challenge.title,
+        isGlobal: true,
+      });
+      return challenge;
     } catch (e) {
       throw this.mapPrismaError(e);
     }
@@ -92,6 +105,14 @@ export class AdminService {
           }),
           ...(dto.date !== undefined && { date: new Date(dto.date) }),
           ...(dto.type !== undefined && { type: dto.type }),
+          ...(dto.endsAt !== undefined && {
+            endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
+            durationHours: null,
+          }),
+          ...(dto.durationHours !== undefined && dto.endsAt === undefined && {
+            durationHours: dto.durationHours,
+            endsAt: null,
+          }),
           ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         },
       });

@@ -6,6 +6,7 @@ import {
   Get,
   NotFoundException,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
   UseGuards,
@@ -55,7 +56,13 @@ export class AppController {
   }
 
   private isChallengeActiveNow(
-    challenge: { date: Date; type: ChallengeType; isActive: boolean },
+    challenge: {
+      date: Date;
+      type: ChallengeType;
+      durationHours: number | null;
+      endsAt?: Date | null;
+      isActive: boolean;
+    },
     now: Date,
   ): boolean {
     if (!challenge.isActive) {
@@ -63,15 +70,18 @@ export class AppController {
     }
 
     const startsAt = new Date(challenge.date);
-    const durationHours = challenge.type === 'SPECIAL' ? 24 : 84;
-    const endsAt = new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
+    const durationHours =
+      challenge.durationHours ?? (challenge.type === 'SPECIAL' ? 24 : 84);
+    const endsAt =
+      challenge.endsAt ??
+      new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
 
     return now >= startsAt && now < endsAt;
   }
 
   private async getCurrentChallengeForDate(now: Date) {
-    // Maximum challenge duration is 84 hours (WEEKLY), so look back that far
-    const maxDurationMs = 84 * 60 * 60 * 1000;
+    // Custom durations are limited to one year by the admin DTO.
+    const maxDurationMs = 8760 * 60 * 60 * 1000;
     const lookbackDate = new Date(now.getTime() - maxDurationMs);
 
     const candidateChallenges = await this.prisma.challenge.findMany({
@@ -102,6 +112,22 @@ export class AppController {
     return activeChallenges[0] || null;
   }
 
+  private async getActiveGlobalChallenges(now: Date) {
+    const lookbackDate = new Date(now.getTime() - 8760 * 60 * 60 * 1000);
+    const challenges = await this.prisma.challenge.findMany({
+      where: {
+        isActive: true,
+        conversationId: null,
+        date: { lte: now, gte: lookbackDate },
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    return challenges
+      .filter((challenge) => this.isChallengeActiveNow(challenge, now))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }
+
   @Get('challenge/current')
   @ApiOperation({ summary: 'Récupérer le challenge actuel' })
   @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
@@ -122,7 +148,7 @@ export class AppController {
   async getAvailableChallenges(@CurrentUser() user: ValidatedUser) {
     const now = new Date();
 
-    const global = await this.getCurrentChallengeForDate(now);
+    const globalChallenges = await this.getActiveGlobalChallenges(now);
 
     const groupChallenges = await this.prisma.challenge.findMany({
       where: {
@@ -135,7 +161,20 @@ export class AppController {
     });
 
     return [
-      ...(global ? [{ ...global, group: null }] : []),
+      ...globalChallenges.map((global) => ({
+            ...global,
+            endsAt:
+              global.endsAt ??
+              new Date(
+                global.date.getTime() +
+                  (global.durationHours ??
+                    (global.type === 'SPECIAL' ? 24 : 84)) *
+                    60 *
+                    60 *
+                    1000,
+              ),
+            group: null,
+          })),
       ...groupChallenges.map(({ conversation, ...c }) => ({
         ...c,
         group: conversation,
@@ -350,16 +389,48 @@ export class AppController {
   @Get('posts')
   @ApiOperation({ summary: 'Récupérer les posts du feed (amis + soi)' })
   @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
-  async getPosts(@CurrentUser() user: ValidatedUser) {
+  async getPosts(
+    @CurrentUser() user: ValidatedUser,
+    @Query('challengeId') challengeIdRaw?: string,
+  ) {
     const friendIds = await this.getAcceptedFriendIds(user.userId);
     const feedUserIds = [...new Set([...friendIds, user.userId])];
+
+    const now = new Date();
+    const globalChallenges = await this.getActiveGlobalChallenges(now);
+    const groupChallenges = await this.prisma.challenge.findMany({
+      where: {
+        conversation: { is: { participants: { some: { userId: user.userId } } } },
+        date: { lte: now },
+        endsAt: { gt: now },
+      },
+      orderBy: { date: 'desc' },
+    });
+    const selectableChallengeIds = [
+      ...globalChallenges.map((challenge) => challenge.id),
+      ...groupChallenges.map((challenge) => challenge.id),
+    ];
+    const allModeChallengeIds = [
+      ...globalChallenges.slice(0, 2).map((challenge) => challenge.id),
+      ...groupChallenges.slice(0, 2).map((challenge) => challenge.id),
+    ];
+
+    let challengeIds = allModeChallengeIds;
+    if (challengeIdRaw != null && challengeIdRaw !== 'all') {
+      const challengeId = Number(challengeIdRaw);
+      if (!Number.isInteger(challengeId)) {
+        throw new BadRequestException('challengeId invalide.');
+      }
+      if (!selectableChallengeIds.includes(challengeId)) {
+        throw new BadRequestException('Ce défi n\'est pas visible dans le feed.');
+      }
+      challengeIds = [challengeId];
+    }
 
     const posts = await this.prisma.post.findMany({
       where: {
         userId: { in: feedUserIds },
-        // Feed global : uniquement les posts de challenges globaux.
-        // Les posts de défis de groupe restent privés au groupe.
-        challenge: { is: { conversationId: null } },
+        challengeId: { in: challengeIds },
       },
       orderBy: {
         createdAt: 'desc',
