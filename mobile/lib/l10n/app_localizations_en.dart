@@ -594,5 +594,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Could not load challenges';
-
 }

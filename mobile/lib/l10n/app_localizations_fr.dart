@@ -600,24 +600,4 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
-=========
-  String get deleteAccountConfirmWord => 'SUPPRIMER';
-
-  @override
-  String deleteAccountConfirmPrompt(String word) {
-    return 'Pour confirmer, écris $word ci-dessous.';
-  }
-
-  @override
-  String get newGroup => 'Nouveau groupe';
-
-  @override
-  String get acceptRequest => 'Accepter';
-
-  @override
-  String get messages => 'Messages';
-
-  @override
-  String get deleteAccountConfirmHint => 'Mot de confirmation';
->>>>>>>>> Temporary merge branch 2
 }
