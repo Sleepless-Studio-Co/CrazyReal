@@ -31,6 +31,7 @@ Projet **EIP** (Epitech) — monorepo **Flutter** (client) + **NestJS** (API).
 | Domaine | Description |
 |--------|-------------|
 | **Challenges** | Défis hebdomadaires et spéciaux, actifs sur une fenêtre temporelle définie |
+| **Administration** | Page mobile réservée aux admins pour créer, modifier, activer/désactiver et supprimer les défis globaux |
 | **Publications** | Prise de photo via la caméra, upload lié au challenge en cours, fil d’actualité |
 | **Comptes** | Inscription, connexion JWT (access + refresh), profil et avatars |
 | **Amis** | Demandes, acceptation, liste d’amis |
@@ -299,6 +300,28 @@ Chaque participant d'un groupe a un rôle : `ADMIN` (peut retirer un membre, pro
 ### Utilisateurs — `/users`
 
 Routes protégées pour le profil et la gestion des avatars (sélection prédéfinie ou upload).
+
+### Administration — `/admin`
+
+Réservé aux comptes `role = ADMIN` (`JwtAuthGuard` + `AdminGuard`). Ces routes ne portent que
+sur les **défis globaux** ; les défis de groupe restent gérés par leur conversation.
+Elles alimentent la page Administration de l'app mobile (Réglages → Administration,
+visible uniquement pour un admin).
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/admin/challenges` | Lister les défis globaux (avec le nombre de posts liés) |
+| `POST` | `/admin/challenges` | Créer un défi (`title`, `description?`, `date?`, `type?`, `isActive?`) |
+| `PATCH` | `/admin/challenges/:id` | Modifier un défi (champs partiels, dont `isActive`) |
+| `DELETE` | `/admin/challenges/:id` | Supprimer un défi (refusé s'il contient des posts) |
+| `POST` | `/admin/import-challenges` | Importer en masse depuis `prisma/challenges.json` |
+
+> **À savoir** : la contrainte `@@unique([date, type, conversationId])` ne protège **pas** les défis
+> globaux des doublons. PostgreSQL considère deux `NULL` comme distincts dans un index unique, et
+> `conversationId` vaut `NULL` pour tout défi global — deux défis de même date et même type sont donc
+> acceptés. Si leurs fenêtres d'activité se chevauchent, `GET /challenge/current` n'en renvoie qu'un
+> seul (tri : `SPECIAL` d'abord, puis date décroissante) et l'autre reste invisible dans l'app.
+> L'API renvoie `409 Conflict` uniquement si la contrainte se déclenche réellement.
 
 ---
 
