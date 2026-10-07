@@ -422,6 +422,36 @@ abstract class AppLocalizations {
   /// **'❌ Error sending photo'**
   String get errorSendingPhoto;
 
+  /// Photo capture mode
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get captureModePhoto;
+
+  /// Video capture mode
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get captureModeVideo;
+
+  /// Success message when video is sent
+  ///
+  /// In en, this message translates to:
+  /// **'Video sent to your Feed!'**
+  String get videoSentToFeed;
+
+  /// Error message when sending video fails
+  ///
+  /// In en, this message translates to:
+  /// **'❌ Error sending video'**
+  String get errorSendingVideo;
+
+  /// Video recording in progress indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Recording...'**
+  String get recordingVideo;
+
   /// Message asking to login
   ///
   /// In en, this message translates to:
@@ -1135,6 +1165,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load challenges'**
   String get adminLoadError;
+
+  /// Word the user must type to confirm account deletion
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get deleteAccountConfirmWord;
+
+  /// Prompt asking the user to type the confirmation word
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm, type {word} below.'**
+  String deleteAccountConfirmPrompt(String word);
+
+  /// Create a new group chat button
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get newGroup;
+
+  /// Accept friend request button
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get acceptRequest;
+
+  /// Messages / conversations screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get messages;
+
+  /// Label of the deletion confirmation text field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation word'**
+  String get deleteAccountConfirmHint;
 }
 
 class _AppLocalizationsDelegate

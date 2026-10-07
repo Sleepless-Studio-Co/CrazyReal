@@ -1,3 +1,6 @@
 */.env
 .env
 .claude
+/.vscode
+backend/uploads/
+mobile/android/build/

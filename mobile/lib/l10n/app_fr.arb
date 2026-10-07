@@ -269,6 +269,31 @@
   "@errorSendingPhoto": {
     "description": "Message d'erreur lors de l'envoi de la photo"
   },
+
+  "captureModePhoto": "Photo",
+  "@captureModePhoto": {
+    "description": "Mode capture photo"
+  },
+
+  "captureModeVideo": "Vidéo",
+  "@captureModeVideo": {
+    "description": "Mode capture vidéo"
+  },
+
+  "videoSentToFeed": "Vidéo envoyée dans ton Feed !",
+  "@videoSentToFeed": {
+    "description": "Message de succès quand la vidéo est envoyée"
+  },
+
+  "errorSendingVideo": "❌ Erreur lors de l'envoi de la vidéo",
+  "@errorSendingVideo": {
+    "description": "Message d'erreur lors de l'envoi de la vidéo"
+  },
+
+  "recordingVideo": "Enregistrement...",
+  "@recordingVideo": {
+    "description": "Indicateur d'enregistrement vidéo en cours"
+  },
   
   "pleaseLoginFirst": "🔒 Veuillez vous connecter d'abord",
   "@pleaseLoginFirst": {

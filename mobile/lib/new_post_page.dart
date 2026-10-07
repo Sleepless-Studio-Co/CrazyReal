@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -31,11 +32,14 @@ class _NewPageState extends State<NewPage> {
   int? _selectedChallengeId;
   String? challengeError;
   bool isUploading = false;
+  bool isRecording = false;
   List<CameraDescription> _cameras = [];
   int _currentCameraIndex = 0;
   FlashMode _currentFlashMode = FlashMode.off;
   Timer? _challengeTimer;
   Duration? _remainingChallengeTime;
+  Timer? _recordingTimer;
+  Duration _recordingDuration = Duration.zero;
 
   @override
   void initState() {
@@ -52,36 +56,47 @@ class _NewPageState extends State<NewPage> {
     try {
       _cameras = await availableCameras();
       if (_cameras.isNotEmpty) {
-        _controller = CameraController(
-            _cameras[_currentCameraIndex], ResolutionPreset.veryHigh);
-        _initializeControllerFuture = _controller!.initialize();
-        setState(() {});
+        await _setupCameraController(_currentCameraIndex);
       }
     } catch (e) {
       print('Camera not available on this platform: $e');
     }
   }
 
+  Future<void> _setupCameraController(int cameraIndex) async {
+    await _controller?.dispose();
+    _controller = CameraController(
+      _cameras[cameraIndex],
+      ResolutionPreset.veryHigh,
+      enableAudio: true,
+    );
+    _initializeControllerFuture = _controller!.initialize();
+    if (_currentFlashMode != FlashMode.off) {
+      try {
+        await _initializeControllerFuture;
+        await _controller!.setFlashMode(_currentFlashMode);
+      } catch (_) {}
+    }
+    if (mounted) setState(() {});
+  }
+
   Future<void> _switchCamera() async {
-    if (_cameras.length < 2) {
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.onlyOneCamera)),
-      );
+    if (_cameras.length < 2 || isRecording) {
+      if (_cameras.length < 2) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.onlyOneCamera)),
+        );
+      }
       return;
     }
 
     _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
-    await _controller?.dispose();
-
-    _controller = CameraController(
-        _cameras[_currentCameraIndex], ResolutionPreset.veryHigh);
-    _initializeControllerFuture = _controller!.initialize();
-    setState(() {});
+    await _setupCameraController(_currentCameraIndex);
   }
 
   Future<void> _toggleFlash() async {
-    if (_controller == null) return;
+    if (_controller == null || isRecording) return;
 
     try {
       switch (_currentFlashMode) {
@@ -154,7 +169,9 @@ class _NewPageState extends State<NewPage> {
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           setState(() => challengeError = l10n
+              
               .serverError('${response.statusCode}')
+              
               .replaceAll('{code}', '${response.statusCode}'));
         }
       }
@@ -198,6 +215,103 @@ class _NewPageState extends State<NewPage> {
     return '${hours}h ${minutes}m ${seconds}s';
   }
 
+  Future<void> _uploadMedia(String filePath, {required bool isVideo}) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    try {
+      setState(() => isUploading = true);
+
+      final mediaFile = File(filePath);
+      if (!await mediaFile.exists() || await mediaFile.length() == 0) {
+        throw StateError('The captured media file is missing or empty');
+      }
+
+      final authService = AuthService();
+      final token = await authService.getAccessToken();
+
+      if (token == null) {
+        if (!mounted) return;
+        widget.onUnauthorized();
+        return;
+      }
+
+      final request =
+          http.MultipartRequest('POST', Uri.parse('$baseUrl/posts'));
+      final image = await _controller!.takePicture();
+
+      request.headers['Authorization'] = 'Bearer $token';
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        filePath,
+        filename: filePath.split(Platform.pathSeparator).last,
+      ));
+      final response = await request.send().timeout(const Duration(minutes: 5));
+      final responseBody = await response.stream.bytesToString();
+
+      request.files.add(await http.MultipartFile.fromPath('file', image.path));
+      if (_selectedChallengeId != null) {
+        request.fields['challengeId'] = _selectedChallengeId.toString();
+      }
+
+      print('Upload response status: ${response.statusCode}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isVideo ? l10n.videoSentToFeed : l10n.photoSentToFeed,
+              ),
+            ),
+          );
+          widget.onPostCreated?.call();
+        }
+      } else if (response.statusCode == 401) {
+        if (mounted) {
+          widget.onUnauthorized();
+        }
+      } else {
+        final serverMessage = _serverErrorMessage(responseBody);
+        print('Error uploading media: ${response.statusCode} - $responseBody');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(serverMessage ??
+                  (isVideo ? l10n.errorSendingVideo : l10n.errorSendingPhoto)),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Exception during upload: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isVideo ? l10n.errorSendingVideo : l10n.errorSendingPhoto,
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isUploading = false);
+      }
+    }
+  }
+
+  String? _serverErrorMessage(String responseBody) {
+    try {
+      final decoded = jsonDecode(responseBody);
+      if (decoded is Map<String, dynamic>) {
+        final message = decoded['message'];
+        if (message is List) return message.join(', ');
+        if (message is String && message.isNotEmpty) return message;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<void> takeAndUploadPicture() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -210,60 +324,87 @@ class _NewPageState extends State<NewPage> {
 
     try {
       await _initializeControllerFuture;
-      setState(() => isUploading = true);
-
-      final authService = AuthService();
-      final token = await authService.getAccessToken();
-
-      if (token == null) {
-        if (!mounted) return;
-        widget.onUnauthorized();
-        return;
-      }
-
       final image = await _controller!.takePicture();
-      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/posts'));
-
-      request.headers['Authorization'] = 'Bearer $token';
-
-      request.files.add(await http.MultipartFile.fromPath('file', image.path));
-      if (_selectedChallengeId != null) {
-        request.fields['challengeId'] = _selectedChallengeId.toString();
-      }
-      var response = await request.send();
-
-      print('Upload response status: ${response.statusCode}');
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.photoSentToFeed)),
-          );
-          widget.onPostCreated?.call();
-        }
-      } else if (response.statusCode == 401) {
-        if (mounted) {
-          widget.onUnauthorized();
-        }
-      } else {
-        final responseBody = await response.stream.bytesToString();
-        print('Error uploading photo: ${response.statusCode} - $responseBody');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.errorSendingPhoto)),
-          );
-        }
-      }
+      await _uploadMedia(image.path, isVideo: false);
     } catch (e) {
-      print('Exception during upload: $e');
+      print('Exception during photo capture: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.errorSendingPhoto)),
         );
       }
-    } finally {
+    }
+  }
+
+  void _startRecordingTimer() {
+    _recordingDuration = Duration.zero;
+    _recordingTimer?.cancel();
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
-        setState(() => isUploading = false);
+        setState(() {
+          _recordingDuration += const Duration(seconds: 1);
+        });
+      }
+    });
+  }
+
+  void _stopRecordingTimer() {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+    _recordingDuration = Duration.zero;
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  Future<void> _startVideoRecording() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (isUploading || isRecording) return;
+
+    if (_controller == null || !_controller!.value.isInitialized) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.cameraNotAvailable)),
+      );
+      return;
+    }
+
+    try {
+      await _controller!.startVideoRecording();
+      _startRecordingTimer();
+      if (mounted) setState(() => isRecording = true);
+    } catch (e) {
+      print('Exception during video recording: $e');
+      _stopRecordingTimer();
+      if (mounted) {
+        setState(() => isRecording = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorSendingVideo)),
+        );
+      }
+    }
+  }
+
+  Future<void> _stopVideoRecording() async {
+    if (!isRecording || _controller == null) return;
+
+    try {
+      final video = await _controller!.stopVideoRecording();
+      _stopRecordingTimer();
+      if (mounted) setState(() => isRecording = false);
+      await _uploadMedia(video.path, isVideo: true);
+    } catch (e) {
+      print('Exception while stopping video recording: $e');
+      _stopRecordingTimer();
+      if (mounted) {
+        setState(() => isRecording = false);
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorSendingVideo)),
+        );
       }
     }
   }
@@ -271,8 +412,53 @@ class _NewPageState extends State<NewPage> {
   @override
   void dispose() {
     _challengeTimer?.cancel();
+    _recordingTimer?.cancel();
     _controller?.dispose();
     super.dispose();
+  }
+
+  Widget _buildShutterButton() {
+    if (isUploading) {
+      return const SizedBox(
+        width: 80,
+        height: 80,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFFFFE500),
+            strokeWidth: 3,
+          ),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: isRecording ? null : takeAndUploadPicture,
+      onLongPressStart: (_) => _startVideoRecording(),
+      onLongPressEnd: (_) => _stopVideoRecording(),
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isRecording ? Colors.red : Colors.white,
+            width: 4,
+          ),
+        ),
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: isRecording ? 32 : 56,
+            height: isRecording ? 32 : 56,
+            decoration: BoxDecoration(
+              color: isRecording ? Colors.red : Colors.white,
+              shape: isRecording ? BoxShape.rectangle : BoxShape.circle,
+              borderRadius: isRecording ? BorderRadius.circular(8) : null,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildChallengePicker(AppLocalizations l10n) {
@@ -453,3 +639,4 @@ class _NewPageState extends State<NewPage> {
     );
   }
 }
+
