@@ -54,7 +54,7 @@ export class UpVotesController {
     @Param('id', ParseIntPipe) postId: number,
     @Body('emoji') emoji: string,
   ) {
-    if (!emoji || emoji.length > 16) {
+    if (!emoji || emoji.length > 255) {
       throw new BadRequestException('Emoji invalide.');
     }
     return this.upVotesService.addReaction(user.userId, postId, emoji);
@@ -67,7 +67,7 @@ export class UpVotesController {
     @Param('id', ParseIntPipe) postId: number,
     @Query('emoji') emoji: string,
   ) {
-    if (!emoji || emoji.length > 16) {
+    if (!emoji || emoji.length > 255) {
       throw new BadRequestException('Emoji invalide.');
     }
     return this.upVotesService.removeReaction(user.userId, postId, emoji);
