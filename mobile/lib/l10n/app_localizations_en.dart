@@ -595,23 +595,4 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get adminLoadError => 'Could not load challenges';
 
-  @override
-  String get deleteAccountConfirmWord => 'DELETE';
-
-  @override
-  String deleteAccountConfirmPrompt(String word) {
-    return 'To confirm, type $word below.';
-  }
-
-  @override
-  String get newGroup => 'New group';
-
-  @override
-  String get acceptRequest => 'Accept';
-
-  @override
-  String get messages => 'Messages';
-
-  @override
-  String get deleteAccountConfirmHint => 'Confirmation word';
 }
