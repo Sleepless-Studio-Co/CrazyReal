@@ -520,6 +520,41 @@
     "description": "Friend challenge category"
   },
 
+  "challengeIdeaOpen": "Suggest a challenge",
+  "@challengeIdeaOpen": {
+    "description": "Tooltip for opening the challenge idea box"
+  },
+
+  "challengeIdeaTitle": "Idea box",
+  "@challengeIdeaTitle": {
+    "description": "Challenge idea box title"
+  },
+
+  "challengeIdeaDescription": "Have an idea for a challenge? Share it with the team.",
+  "@challengeIdeaDescription": {
+    "description": "Description shown in the challenge idea box"
+  },
+
+  "challengeIdeaHint": "My challenge idea...",
+  "@challengeIdeaHint": {
+    "description": "Placeholder for the challenge idea field"
+  },
+
+  "challengeIdeaSend": "Send idea",
+  "@challengeIdeaSend": {
+    "description": "Button to submit a challenge idea"
+  },
+
+  "challengeIdeaSuccess": "Thanks for your idea!",
+  "@challengeIdeaSuccess": {
+    "description": "Confirmation after submitting a challenge idea"
+  },
+
+  "challengeIdeaError": "Could not send your idea.",
+  "@challengeIdeaError": {
+    "description": "Error after submitting a challenge idea"
+  },
+
   "publishFirstPost": "Publish a photo",
   "@publishFirstPost": {
     "description": "CTA button when feed is empty"
@@ -683,6 +718,18 @@
 
   "adminChallengesTitle": "Challenges",
   "@adminChallengesTitle": { "description": "Title of the admin challenges page" },
+
+  "adminChallengeIdeasTitle": "Challenge ideas",
+  "@adminChallengeIdeasTitle": { "description": "Title and settings entry for challenge ideas" },
+  "adminChallengeIdeasDesc": "Review submitted challenge ideas",
+  "@adminChallengeIdeasDesc": { "description": "Subtitle of the challenge ideas settings entry" },
+  "adminChallengeIdeasLoadError": "Could not load challenge ideas.",
+  "adminNoChallengeIdeas": "No challenge ideas yet",
+  "adminIdeaPending": "Pending",
+  "adminIdeaApproved": "Approved",
+  "adminIdeaRejected": "Rejected",
+  "adminIdeaApprove": "Approve",
+  "adminIdeaReject": "Reject",
 
   "adminNewChallenge": "New challenge",
   "@adminNewChallenge": { "description": "Create challenge button and dialog title" },

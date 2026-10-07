@@ -15,6 +15,7 @@ import { AdminGuard } from '../auth/admin.guard';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
+import { UpdateChallengeIdeaStatusDto } from './dto/update-challenge-idea-status.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -53,5 +54,20 @@ export class AdminController {
   @ApiOperation({ summary: 'Supprimer un défi global' })
   async deleteChallenge(@Param('id', ParseIntPipe) id: number) {
     return this.adminService.deleteChallenge(id);
+  }
+
+  @Get('challenge-ideas')
+  @ApiOperation({ summary: 'Lister les idées de défis' })
+  async listChallengeIdeas() {
+    return this.adminService.listChallengeIdeas();
+  }
+
+  @Patch('challenge-ideas/:id/status')
+  @ApiOperation({ summary: 'Modifier le statut d’une idée de défi' })
+  async updateChallengeIdeaStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateChallengeIdeaStatusDto,
+  ) {
+    return this.adminService.updateChallengeIdeaStatus(id, dto.status);
   }
 }

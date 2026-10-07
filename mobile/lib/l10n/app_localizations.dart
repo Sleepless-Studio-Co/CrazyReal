@@ -704,6 +704,48 @@ abstract class AppLocalizations {
   /// **'Friends'**
   String get feedFriendChallenge;
 
+  /// Tooltip for opening the challenge idea box
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a challenge'**
+  String get challengeIdeaOpen;
+
+  /// Challenge idea box title
+  ///
+  /// In en, this message translates to:
+  /// **'Idea box'**
+  String get challengeIdeaTitle;
+
+  /// Description shown in the challenge idea box
+  ///
+  /// In en, this message translates to:
+  /// **'Have an idea for a challenge? Share it with the team.'**
+  String get challengeIdeaDescription;
+
+  /// Placeholder for the challenge idea field
+  ///
+  /// In en, this message translates to:
+  /// **'My challenge idea...'**
+  String get challengeIdeaHint;
+
+  /// Button to submit a challenge idea
+  ///
+  /// In en, this message translates to:
+  /// **'Send idea'**
+  String get challengeIdeaSend;
+
+  /// Confirmation after submitting a challenge idea
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks for your idea!'**
+  String get challengeIdeaSuccess;
+
+  /// Error after submitting a challenge idea
+  ///
+  /// In en, this message translates to:
+  /// **'Could not send your idea.'**
+  String get challengeIdeaError;
+
   /// CTA button when feed is empty
   ///
   /// In en, this message translates to:
@@ -931,6 +973,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Challenges'**
   String get adminChallengesTitle;
+
+  /// Title and settings entry for challenge ideas
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge ideas'**
+  String get adminChallengeIdeasTitle;
+
+  /// Subtitle of the challenge ideas settings entry
+  ///
+  /// In en, this message translates to:
+  /// **'Review submitted challenge ideas'**
+  String get adminChallengeIdeasDesc;
+
+  /// No description provided for @adminChallengeIdeasLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load challenge ideas.'**
+  String get adminChallengeIdeasLoadError;
+
+  /// No description provided for @adminNoChallengeIdeas.
+  ///
+  /// In en, this message translates to:
+  /// **'No challenge ideas yet'**
+  String get adminNoChallengeIdeas;
+
+  /// No description provided for @adminIdeaPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get adminIdeaPending;
+
+  /// No description provided for @adminIdeaApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get adminIdeaApproved;
+
+  /// No description provided for @adminIdeaRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get adminIdeaRejected;
+
+  /// No description provided for @adminIdeaApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get adminIdeaApprove;
+
+  /// No description provided for @adminIdeaReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get adminIdeaReject;
 
   /// Create challenge button and dialog title
   ///

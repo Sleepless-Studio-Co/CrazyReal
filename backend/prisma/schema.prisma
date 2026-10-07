@@ -31,6 +31,12 @@ enum MediaType {
   VIDEO
 }
 
+enum ChallengeIdeaStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -104,6 +110,7 @@ model User {
   createdAt     DateTime       @default(now())
   role          Role           @default(USER)
   posts         Post[]
+  challengeIdeas ChallengeIdea[]
   upVotes       UpVote[]
   reactions     PostReaction[]
   refreshTokens RefreshToken[]
@@ -112,6 +119,17 @@ model User {
   receivedRequests Friendship[] @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
+}
+
+model ChallengeIdea {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.VarChar(500)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    ChallengeIdeaStatus @default(PENDING)
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
 }
 
 model EmailVerificationToken {

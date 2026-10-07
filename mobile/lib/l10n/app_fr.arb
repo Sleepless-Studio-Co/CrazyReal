@@ -520,6 +520,41 @@
     "description": "Catégorie des défis entre amis"
   },
 
+  "challengeIdeaOpen": "Proposer un défi",
+  "@challengeIdeaOpen": {
+    "description": "Tooltip pour ouvrir la boîte à idées"
+  },
+
+  "challengeIdeaTitle": "Boîte à idées",
+  "@challengeIdeaTitle": {
+    "description": "Titre de la boîte à idées de défis"
+  },
+
+  "challengeIdeaDescription": "Une idée de défi ? Partage-la avec l’équipe.",
+  "@challengeIdeaDescription": {
+    "description": "Description affichée dans la boîte à idées"
+  },
+
+  "challengeIdeaHint": "Mon idée de défi...",
+  "@challengeIdeaHint": {
+    "description": "Placeholder du champ d’idée de défi"
+  },
+
+  "challengeIdeaSend": "Envoyer l’idée",
+  "@challengeIdeaSend": {
+    "description": "Bouton pour envoyer une idée de défi"
+  },
+
+  "challengeIdeaSuccess": "Merci pour ton idée !",
+  "@challengeIdeaSuccess": {
+    "description": "Confirmation après l’envoi d’une idée de défi"
+  },
+
+  "challengeIdeaError": "Impossible d’envoyer ton idée.",
+  "@challengeIdeaError": {
+    "description": "Erreur après l’envoi d’une idée de défi"
+  },
+
   "publishFirstPost": "Publier une photo",
   "@publishFirstPost": {
     "description": "Bouton CTA quand le feed est vide"
@@ -683,6 +718,18 @@
 
   "adminChallengesTitle": "Défis",
   "@adminChallengesTitle": { "description": "Titre de la page admin des défis" },
+
+  "adminChallengeIdeasTitle": "Idées de défis",
+  "@adminChallengeIdeasTitle": { "description": "Titre et entrée des idées de défis" },
+  "adminChallengeIdeasDesc": "Valider les idées proposées",
+  "@adminChallengeIdeasDesc": { "description": "Sous-titre de l'entrée des idées de défis" },
+  "adminChallengeIdeasLoadError": "Impossible de charger les idées de défis.",
+  "adminNoChallengeIdeas": "Aucune idée de défi pour le moment",
+  "adminIdeaPending": "En attente",
+  "adminIdeaApproved": "Validée",
+  "adminIdeaRejected": "Non validée",
+  "adminIdeaApprove": "Valider",
+  "adminIdeaReject": "Refuser",
 
   "adminNewChallenge": "Nouveau défi",
   "@adminNewChallenge": { "description": "Bouton de création et titre de la boîte de dialogue" },
