@@ -123,8 +123,10 @@ export class AuthService {
       username: user.username,
       avatarUrl: user.avatarUrl,
       avatarKey: user.avatarKey,
+      isPrivate: user.isPrivate,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
+      role: user.role,
     };
   }
 

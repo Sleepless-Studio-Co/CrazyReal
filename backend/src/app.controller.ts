@@ -6,6 +6,7 @@ import {
   Get,
   NotFoundException,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
   UseGuards,
@@ -15,15 +16,21 @@ import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth
 import { PrismaService } from './prisma/prisma.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { readdirSync, promises as fs } from 'fs';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import { join } from 'path';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CurrentUser } from './auth/current-user.decorator';
-import { ChallengeType } from '@prisma/client';
+import { ChallengeType, MediaType } from '@prisma/client';
 import { FeedGateway } from './feed/feed.gateway';
 import type { ValidatedUser } from './auth/interfaces/auth-user.interface';
 import {
   formatPostWithUpvotes,
   postIncludeWithUpvotes,
 } from './posts/post.utils';
+
+const execFileAsync = promisify(execFile);
 
 @ApiTags('CrazyReal')
 @ApiBearerAuth('access-token')
@@ -49,7 +56,13 @@ export class AppController {
   }
 
   private isChallengeActiveNow(
-    challenge: { date: Date; type: ChallengeType; isActive: boolean },
+    challenge: {
+      date: Date;
+      type: ChallengeType;
+      durationHours: number | null;
+      endsAt?: Date | null;
+      isActive: boolean;
+    },
     now: Date,
   ): boolean {
     if (!challenge.isActive) {
@@ -57,15 +70,18 @@ export class AppController {
     }
 
     const startsAt = new Date(challenge.date);
-    const durationHours = challenge.type === 'SPECIAL' ? 24 : 84;
-    const endsAt = new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
+    const durationHours =
+      challenge.durationHours ?? (challenge.type === 'SPECIAL' ? 24 : 84);
+    const endsAt =
+      challenge.endsAt ??
+      new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
 
     return now >= startsAt && now < endsAt;
   }
 
   private async getCurrentChallengeForDate(now: Date) {
-    // Maximum challenge duration is 84 hours (WEEKLY), so look back that far
-    const maxDurationMs = 84 * 60 * 60 * 1000;
+    // Custom durations are limited to one year by the admin DTO.
+    const maxDurationMs = 8760 * 60 * 60 * 1000;
     const lookbackDate = new Date(now.getTime() - maxDurationMs);
 
     const candidateChallenges = await this.prisma.challenge.findMany({
@@ -96,6 +112,22 @@ export class AppController {
     return activeChallenges[0] || null;
   }
 
+  private async getActiveGlobalChallenges(now: Date) {
+    const lookbackDate = new Date(now.getTime() - 8760 * 60 * 60 * 1000);
+    const challenges = await this.prisma.challenge.findMany({
+      where: {
+        isActive: true,
+        conversationId: null,
+        date: { lte: now, gte: lookbackDate },
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    return challenges
+      .filter((challenge) => this.isChallengeActiveNow(challenge, now))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }
+
   @Get('challenge/current')
   @ApiOperation({ summary: 'Récupérer le challenge actuel' })
   @ApiResponse({ status: 200, description: 'Challenge récupéré avec succès' })
@@ -116,7 +148,7 @@ export class AppController {
   async getAvailableChallenges(@CurrentUser() user: ValidatedUser) {
     const now = new Date();
 
-    const global = await this.getCurrentChallengeForDate(now);
+    const globalChallenges = await this.getActiveGlobalChallenges(now);
 
     const groupChallenges = await this.prisma.challenge.findMany({
       where: {
@@ -129,7 +161,20 @@ export class AppController {
     });
 
     return [
-      ...(global ? [{ ...global, group: null }] : []),
+      ...globalChallenges.map((global) => ({
+            ...global,
+            endsAt:
+              global.endsAt ??
+              new Date(
+                global.date.getTime() +
+                  (global.durationHours ??
+                    (global.type === 'SPECIAL' ? 24 : 84)) *
+                    60 *
+                    60 *
+                    1000,
+              ),
+            group: null,
+          })),
       ...groupChallenges.map(({ conversation, ...c }) => ({
         ...c,
         group: conversation,
@@ -180,8 +225,54 @@ export class AppController {
     return challenge;
   }
 
+  private resolveMediaType(mimetype: string, originalname: string): MediaType {
+    const extension = extname(originalname || '').toLowerCase();
+    const isVideo = (mimetype || '').startsWith('video/') || [
+      '.mp4',
+      '.mov',
+      '.webm',
+      '.3gp',
+    ].includes(extension);
+
+    if (isVideo) {
+      return MediaType.VIDEO;
+    }
+    return MediaType.PHOTO;
+  }
+
+  private async normalizeVideo(file: Express.Multer.File): Promise<void> {
+    const normalizedPath = `${file.path}.normalized.mp4`;
+    const outputFilename = `${file.filename.replace(extname(file.filename), '')}.mp4`;
+    const outputPath = join(file.destination, outputFilename);
+
+    try {
+      await execFileAsync('ffmpeg', [
+        '-y',
+        '-i', file.path,
+        '-c:v', 'libx264',
+        '-profile:v', 'baseline',
+        '-level', '3.1',
+        '-preset', 'veryfast',
+        '-pix_fmt', 'yuv420p',
+        '-c:a', 'aac',
+        '-b:a', '128k',
+        '-ar', '44100',
+        '-ac', '2',
+        '-movflags', '+faststart',
+        normalizedPath,
+      ]);
+      await fs.unlink(file.path);
+      await fs.rename(normalizedPath, outputPath);
+      file.filename = outputFilename;
+      file.path = outputPath;
+    } catch (error) {
+      await fs.unlink(normalizedPath).catch(() => undefined);
+      throw new BadRequestException('Unable to process video');
+    }
+  }
+
   @Post('posts')
-  @ApiOperation({ summary: 'Upload une photo pour le challenge' })
+  @ApiOperation({ summary: 'Upload une photo ou vidéo pour le challenge' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -198,62 +289,148 @@ export class AppController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Photo uploadée avec succès' })
+  @ApiResponse({ status: 201, description: 'Média uploadé avec succès' })
   @UseInterceptors(FileInterceptor('file', {
+    // Les vidéos enregistrées en haute résolution dépassent facilement 50 Mo.
+    limits: { fileSize: 200 * 1024 * 1024 },
+    fileFilter: (_req, file, callback) => {
+      const allowedMimeTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/heic',
+        'image/heif',
+        'video/mp4',
+        'video/quicktime',
+        'video/webm',
+        'video/3gpp',
+      ];
+      const allowedExtensions = [
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.webp',
+        '.heic',
+        '.heif',
+        '.mp4',
+        '.mov',
+        '.webm',
+        '.3gp',
+      ];
+      const extension = extname(file.originalname).toLowerCase();
+      const hasAllowedMimeType = allowedMimeTypes.includes(file.mimetype);
+      const hasAllowedExtension = allowedExtensions.includes(extension);
+
+      if (!hasAllowedMimeType && !hasAllowedExtension) {
+        callback(new Error('Unsupported media type'), false);
+        return;
+      }
+      callback(null, true);
+    },
     storage: diskStorage({
       destination: './uploads',
       filename: (req, file, callback) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = extname(file.originalname);
-        callback(null, `image-${uniqueSuffix}${ext}`);
+        const originalExtension = extname(file.originalname).toLowerCase();
+        const isVideo = file.mimetype.startsWith('video/') || [
+          '.mp4',
+          '.mov',
+          '.webm',
+          '.3gp',
+        ].includes(originalExtension);
+        const prefix = isVideo ? 'video' : 'image';
+        const extension = isVideo ? '.mp4' : '.jpg';
+        callback(null, `${prefix}-${uniqueSuffix}${extension}`);
       },
     }),
   }))
-  async uploadPhoto(
-    @UploadedFile() file: Express.Multer.File,
-    @CurrentUser() user: ValidatedUser,
-    @Body('challengeId') challengeIdRaw?: string,
-  ) {
-    const challengeId = challengeIdRaw ? Number(challengeIdRaw) : undefined;
-    if (challengeIdRaw && Number.isNaN(challengeId!)) {
-      throw new BadRequestException('challengeId invalide.');
+  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
+    if (!file) {
+      throw new BadRequestException('No file provided');
     }
 
-    const challenge = await this.resolveChallengeForPost(user.userId, challengeId);
+    const mediaType = this.resolveMediaType(file.mimetype, file.originalname);
+    try {
+      if (mediaType === MediaType.VIDEO) {
+        await this.normalizeVideo(file);
+      }
 
-    const post = await this.prisma.post.create({
-      data: {
-        photoUrl: `/uploads/${file.filename}`,
-        challengeId: challenge.id,
-        userId: user.userId,
-      },
-      include: postIncludeWithUpvotes(user.userId),
-    });
+      const currentChallenge = await this.getCurrentChallengeForDate(new Date());
+      if (!currentChallenge) {
+        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
+      }
 
-    const formattedPost = formatPostWithUpvotes(post);
+      const post = await this.prisma.post.create({
+        data: {
+          photoUrl: `/uploads/${file.filename}`,
+          mediaType,
+          challengeId: currentChallenge.id,
+          userId: user.userId,
+        },
+        include: postIncludeWithUpvotes(user.userId),
+      });
 
-    // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
+      const formattedPost = formatPostWithUpvotes(post);
+      // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
     // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
-    if (challenge.conversationId == null) {
+      if (currentChallenge.conversationId == null) {
       this.feedGateway.broadcastNewPost(formattedPost);
-    }
+      console.log('[posts] created', post.id, file.filename, mediaType);
+      }
 
-    return formattedPost;
+      return formattedPost;
+    } catch (error) {
+      await fs.unlink(file.path).catch(() => undefined);
+      console.error('[posts] upload failed', error);
+      throw error;
+    }
   }
 
   @Get('posts')
   @ApiOperation({ summary: 'Récupérer les posts du feed (amis + soi)' })
   @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
-  async getPosts(@CurrentUser() user: ValidatedUser) {
+  async getPosts(
+    @CurrentUser() user: ValidatedUser,
+    @Query('challengeId') challengeIdRaw?: string,
+  ) {
     const friendIds = await this.getAcceptedFriendIds(user.userId);
     const feedUserIds = [...new Set([...friendIds, user.userId])];
+
+    const now = new Date();
+    const globalChallenges = await this.getActiveGlobalChallenges(now);
+    const groupChallenges = await this.prisma.challenge.findMany({
+      where: {
+        conversation: { is: { participants: { some: { userId: user.userId } } } },
+        date: { lte: now },
+        endsAt: { gt: now },
+      },
+      orderBy: { date: 'desc' },
+    });
+    const selectableChallengeIds = [
+      ...globalChallenges.map((challenge) => challenge.id),
+      ...groupChallenges.map((challenge) => challenge.id),
+    ];
+    const allModeChallengeIds = [
+      ...globalChallenges.slice(0, 2).map((challenge) => challenge.id),
+      ...groupChallenges.slice(0, 2).map((challenge) => challenge.id),
+    ];
+
+    let challengeIds = allModeChallengeIds;
+    if (challengeIdRaw != null && challengeIdRaw !== 'all') {
+      const challengeId = Number(challengeIdRaw);
+      if (!Number.isInteger(challengeId)) {
+        throw new BadRequestException('challengeId invalide.');
+      }
+      if (!selectableChallengeIds.includes(challengeId)) {
+        throw new BadRequestException('Ce défi n\'est pas visible dans le feed.');
+      }
+      challengeIds = [challengeId];
+    }
 
     const posts = await this.prisma.post.findMany({
       where: {
         userId: { in: feedUserIds },
-        // Feed global : uniquement les posts de challenges globaux.
-        // Les posts de défis de groupe restent privés au groupe.
-        challenge: { is: { conversationId: null } },
+        challengeId: { in: challengeIds },
       },
       orderBy: {
         createdAt: 'desc',

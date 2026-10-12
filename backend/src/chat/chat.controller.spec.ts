@@ -3,6 +3,7 @@ import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('ChatController', () => {
   let controller: ChatController;
@@ -69,6 +70,12 @@ describe('ChatController', () => {
         {
           provide: PrismaService,
           useValue: prismaService,
+        },
+        {
+          provide: NotificationGateway,
+          useValue: {
+            sendToUsers: jest.fn(),
+          },
         },
       ],
     }).compile();
