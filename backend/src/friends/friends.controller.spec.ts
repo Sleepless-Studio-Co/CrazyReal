@@ -3,7 +3,6 @@ import { FriendsController } from './friends.controller';
 import { FriendsService } from './friends.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
-import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('FriendsController', () => {
   let notificationGateway: { sendToUser: jest.Mock };
@@ -48,9 +47,7 @@ describe('FriendsController', () => {
         },
         {
           provide: NotificationGateway,
-          useValue: {
-            sendToUser: jest.fn(),
-          },
+          useValue: notificationGateway,
         },
       ],
     }).compile();

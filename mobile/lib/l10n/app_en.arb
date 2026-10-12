@@ -880,5 +880,4 @@
 
   "deleteAccountConfirmHint": "Confirmation word",
   "@deleteAccountConfirmHint": { "description": "Label of the deletion confirmation text field" }
-  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" }
 }

@@ -388,7 +388,7 @@ export class AppController {
         include: postIncludeWithUpvotes(user.userId),
       });
 
-      const formattedPost = formatPostWithUpvotes(post);
+      const formattedPost = formatPostWithUpvotes(post, user.userId);
       // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
     // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
       if (currentChallenge.conversationId == null) {

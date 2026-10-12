@@ -176,9 +176,7 @@ class _NewPageState extends State<NewPage> {
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           setState(() => challengeError = l10n
-              
               .serverError('${response.statusCode}')
-              
               .replaceAll('{code}', '${response.statusCode}'));
         }
       }
@@ -294,7 +292,7 @@ class _NewPageState extends State<NewPage> {
     return '${hours}h ${minutes}m ${seconds}s';
   }
 
-  Future<void> takeAndUploadPicture() async {
+  Future<void> _uploadMedia(String filePath, {required bool isVideo}) async {
     final l10n = AppLocalizations.of(context)!;
 
     try {
@@ -316,7 +314,6 @@ class _NewPageState extends State<NewPage> {
 
       final request =
           http.MultipartRequest('POST', Uri.parse('$baseUrl/posts'));
-      final image = await _controller!.takePicture();
 
       request.headers['Authorization'] = 'Bearer $token';
       request.files.add(await http.MultipartFile.fromPath(
@@ -324,13 +321,12 @@ class _NewPageState extends State<NewPage> {
         filePath,
         filename: filePath.split(Platform.pathSeparator).last,
       ));
-      final response = await request.send().timeout(const Duration(minutes: 5));
-      final responseBody = await response.stream.bytesToString();
-
-      request.files.add(await http.MultipartFile.fromPath('file', image.path));
       if (_selectedChallengeId != null) {
         request.fields['challengeId'] = _selectedChallengeId.toString();
       }
+
+      final response = await request.send().timeout(const Duration(minutes: 5));
+      final responseBody = await response.stream.bytesToString();
 
       print('Upload response status: ${response.statusCode}');
 
@@ -740,4 +736,3 @@ class _NewPageState extends State<NewPage> {
     );
   }
 }
-

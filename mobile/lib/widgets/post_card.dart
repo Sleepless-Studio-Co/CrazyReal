@@ -126,7 +126,7 @@ class _PostCardState extends State<PostCard> {
             onTap: photoUrl.isEmpty
                 ? null
                 : () {
-                    if (post.isVideo) {
+                    if (_post.isVideo) {
                       _VideoPreview.pauseActiveVideo();
                       FullScreenVideoPage.open(
                         context,
@@ -137,17 +137,17 @@ class _PostCardState extends State<PostCard> {
                       FullScreenPhotoPage.open(
                         context,
                         imageUrl: photoUrl,
-                        heroTag: 'post-photo-${post.id}',
+                        heroTag: 'post-photo-${_post.id}',
                         caption: challengeLabel,
                       );
                     }
                   },
             child: AspectRatio(
               aspectRatio: 4 / 5,
-              child: post.isVideo
+              child: _post.isVideo
                   ? _VideoPreview(mediaUrl: photoUrl)
                   : Hero(
-                      tag: 'post-photo-${post.id}',
+                      tag: 'post-photo-${_post.id}',
                       child: Image.network(
                         photoUrl,
                         fit: BoxFit.cover,
@@ -365,7 +365,9 @@ class _VideoPreviewState extends State<_VideoPreview> {
   }
 
   void _playIfVisible() {
-    if (!mounted || !_controller.value.isInitialized || _visibleFraction < 0.6) {
+    if (!mounted ||
+        !_controller.value.isInitialized ||
+        _visibleFraction < 0.6) {
       return;
     }
 

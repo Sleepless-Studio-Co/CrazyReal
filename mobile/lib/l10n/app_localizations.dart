@@ -953,6 +953,42 @@ abstract class AppLocalizations {
   /// Word the user must type to confirm account deletion
   ///
   /// In en, this message translates to:
+  /// **'DELETE'**
+  String get deleteAccountConfirmWord;
+
+  /// Prompt asking the user to type the confirmation word
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm, type {word} below.'**
+  String deleteAccountConfirmPrompt(String word);
+
+  /// Create a new group chat button
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get newGroup;
+
+  /// Accept friend request button
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get acceptRequest;
+
+  /// Messages / conversations screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get messages;
+
+  /// Label of the deletion confirmation text field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation word'**
+  String get deleteAccountConfirmHint;
+
+  /// Admin section header and tile in settings
+  ///
+  /// In en, this message translates to:
   /// **'Administration'**
   String get administration;
 
@@ -986,7 +1022,7 @@ abstract class AppLocalizations {
   /// **'Could not load challenge ideas.'**
   String get adminChallengeIdeasLoadError;
 
-  /// Admin section header and tile in settings
+  /// No description provided for @adminNoChallengeIdeas.
   ///
   /// In en, this message translates to:
   /// **'No challenge ideas yet'**
