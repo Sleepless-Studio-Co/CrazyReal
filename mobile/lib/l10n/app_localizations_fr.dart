@@ -470,6 +470,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get comingSoon => 'Bientôt disponible';
 
   @override
+  String get deleteAccountConfirmWord => 'SUPPRIMER';
+
+  @override
+  String deleteAccountConfirmPrompt(String word) {
+    return 'Pour confirmer, écris $word ci-dessous.';
+  }
+
+  @override
+  String get newGroup => 'Nouveau groupe';
+
+  @override
+  String get acceptRequest => 'Accepter';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get deleteAccountConfirmHint => 'Mot de confirmation';
+
+  @override
   String get administration => 'Administration';
 
   @override
@@ -630,24 +650,4 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
-
-  @override
-  String get deleteAccountConfirmWord => 'SUPPRIMER';
-
-  @override
-  String deleteAccountConfirmPrompt(String word) {
-    return 'Pour confirmer, écris $word ci-dessous.';
-  }
-
-  @override
-  String get newGroup => 'Nouveau groupe';
-
-  @override
-  String get acceptRequest => 'Accepter';
-
-  @override
-  String get messages => 'Messages';
-
-  @override
-  String get deleteAccountConfirmHint => 'Mot de confirmation';
 }

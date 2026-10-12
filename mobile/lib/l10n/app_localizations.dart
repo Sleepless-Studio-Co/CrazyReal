@@ -950,7 +950,7 @@ abstract class AppLocalizations {
   /// **'Coming soon'**
   String get comingSoon;
 
-  /// Admin section header and tile in settings
+  /// Word the user must type to confirm account deletion
   ///
   /// In en, this message translates to:
   /// **'Administration'**
@@ -986,7 +986,7 @@ abstract class AppLocalizations {
   /// **'Could not load challenge ideas.'**
   String get adminChallengeIdeasLoadError;
 
-  /// No description provided for @adminNoChallengeIdeas.
+  /// Admin section header and tile in settings
   ///
   /// In en, this message translates to:
   /// **'No challenge ideas yet'**
@@ -1225,42 +1225,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load challenges'**
   String get adminLoadError;
-
-  /// Word the user must type to confirm account deletion
-  ///
-  /// In en, this message translates to:
-  /// **'DELETE'**
-  String get deleteAccountConfirmWord;
-
-  /// Prompt asking the user to type the confirmation word
-  ///
-  /// In en, this message translates to:
-  /// **'To confirm, type {word} below.'**
-  String deleteAccountConfirmPrompt(String word);
-
-  /// Create a new group chat button
-  ///
-  /// In en, this message translates to:
-  /// **'New group'**
-  String get newGroup;
-
-  /// Accept friend request button
-  ///
-  /// In en, this message translates to:
-  /// **'Accept'**
-  String get acceptRequest;
-
-  /// Messages / conversations screen title
-  ///
-  /// In en, this message translates to:
-  /// **'Messages'**
-  String get messages;
-
-  /// Label of the deletion confirmation text field
-  ///
-  /// In en, this message translates to:
-  /// **'Confirmation word'**
-  String get deleteAccountConfirmHint;
 }
 
 class _AppLocalizationsDelegate
