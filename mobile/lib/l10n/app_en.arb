@@ -269,7 +269,32 @@
   "@errorSendingPhoto": {
     "description": "Error message when photo send fails"
   },
-  
+
+  "captureModePhoto": "Photo",
+  "@captureModePhoto": {
+    "description": "Photo capture mode"
+  },
+
+  "captureModeVideo": "Video",
+  "@captureModeVideo": {
+    "description": "Video capture mode"
+  },
+
+  "videoSentToFeed": "Video sent to your Feed!",
+  "@videoSentToFeed": {
+    "description": "Success message when video is sent"
+  },
+
+  "errorSendingVideo": "❌ Error sending video",
+  "@errorSendingVideo": {
+    "description": "Error message when sending video fails"
+  },
+
+  "recordingVideo": "Recording...",
+  "@recordingVideo": {
+    "description": "Video recording in progress indicator"
+  },
+
   "pleaseLoginFirst": "🔒 Please login first",
   "@pleaseLoginFirst": {
     "description": "Message asking to login"

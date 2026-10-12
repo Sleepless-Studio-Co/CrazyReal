@@ -41,6 +41,17 @@ class FeedChallenge {
   }
 }
 
+enum PostMediaType { photo, video }
+
+PostMediaType parsePostMediaType(String? value) {
+  switch (value?.toUpperCase()) {
+    case 'VIDEO':
+      return PostMediaType.video;
+    default:
+      return PostMediaType.photo;
+  }
+}
+
 class FeedReaction {
   const FeedReaction({
     required this.emoji,
@@ -100,6 +111,7 @@ class FeedPost {
     this.challenge,
     this.upvoteCount = 0,
     this.hasUpvoted = false,
+    this.mediaType = PostMediaType.photo,
     this.reactions = const [],
   });
 
@@ -110,6 +122,9 @@ class FeedPost {
   final FeedChallenge? challenge;
   final int upvoteCount;
   final bool hasUpvoted;
+  final PostMediaType mediaType;
+
+  bool get isVideo => mediaType == PostMediaType.video;
   final List<FeedReaction> reactions;
 
   FeedPost copyWith({
@@ -124,6 +139,7 @@ class FeedPost {
       challenge: challenge,
       upvoteCount: upvoteCount ?? this.upvoteCount,
       hasUpvoted: hasUpvoted ?? this.hasUpvoted,
+      mediaType: mediaType,
       reactions: reactions,
     );
   }
@@ -150,6 +166,7 @@ class FeedPost {
           : null,
       upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
       hasUpvoted: json['hasUpvoted'] == true,
+      mediaType: parsePostMediaType(json['mediaType']?.toString()),
       reactions: (json['reactions'] is List)
           ? (json['reactions'] as List)
               .whereType<Map>()

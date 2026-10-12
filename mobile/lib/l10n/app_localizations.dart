@@ -422,6 +422,36 @@ abstract class AppLocalizations {
   /// **'❌ Error sending photo'**
   String get errorSendingPhoto;
 
+  /// Photo capture mode
+  ///
+  /// In en, this message translates to:
+  /// **'Photo'**
+  String get captureModePhoto;
+
+  /// Video capture mode
+  ///
+  /// In en, this message translates to:
+  /// **'Video'**
+  String get captureModeVideo;
+
+  /// Success message when video is sent
+  ///
+  /// In en, this message translates to:
+  /// **'Video sent to your Feed!'**
+  String get videoSentToFeed;
+
+  /// Error message when sending video fails
+  ///
+  /// In en, this message translates to:
+  /// **'❌ Error sending video'**
+  String get errorSendingVideo;
+
+  /// Video recording in progress indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Recording...'**
+  String get recordingVideo;
+
   /// Message asking to login
   ///
   /// In en, this message translates to:
