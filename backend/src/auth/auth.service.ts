@@ -128,6 +128,7 @@ export class AuthService {
       isPrivate: user.isPrivate,
       emailVerified: user.emailVerified,
       createdAt: user.createdAt,
+      role: user.role,
     };
   }
 

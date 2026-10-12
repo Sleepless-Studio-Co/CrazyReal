@@ -6,6 +6,7 @@ import { ChatGateway } from './chat.gateway';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JWT_CONFIG_KEYS } from '../auth/jwt.config';
+import { NotificationsModule } from '../bootstrap/notifications.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { JWT_CONFIG_KEYS } from '../auth/jwt.config';
       }),
       inject: [ConfigService],
     }),
+    NotificationsModule,
   ],
   controllers: [ChatController],
   providers: [ChatService, ChatGateway],
