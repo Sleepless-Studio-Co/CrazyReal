@@ -62,6 +62,18 @@ model Post {
   challengeId Int
   createdAt   DateTime  @default(now())
   upVotes     UpVote[]
+  shareLinks   ShareLink[]
+}
+
+model ShareLink {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token, expiresAt])
 }
 
 model UpVote {

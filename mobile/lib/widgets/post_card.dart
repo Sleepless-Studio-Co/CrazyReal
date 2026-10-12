@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
@@ -10,6 +11,7 @@ import '../utils/time_ago.dart';
 import 'feed_avatar.dart';
 import 'full_screen_photo_page.dart';
 import 'full_screen_video_page.dart';
+import '../services/share_service.dart';
 
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
@@ -26,19 +28,31 @@ class PostCard extends StatelessWidget {
   final FeedPost post;
   final String unknownUserLabel;
   final VoidCallback? onUpvote;
+  static final ShareService _shareService = ShareService();
+
+  Future<void> _share(BuildContext context) async {
+    try {
+      final link = await _shareService.createShareLink(post.id);
+      await SharePlus.instance.share(ShareParams(uri: Uri.parse(link)));
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible de créer le lien : $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final username = post.user.username.isEmpty
-        ? unknownUserLabel
-        : post.user.username;
+    final username =
+        post.user.username.isEmpty ? unknownUserLabel : post.user.username;
     final photoUrl = resolveMediaUrl(post.photoUrl) ?? '';
-    final challengeLabel =
-        post.challenge?.title.isNotEmpty == true ? post.challenge!.title : l10n.appTitle;
-    final timeLabel = post.createdAt != null
-        ? formatTimeAgo(post.createdAt!, l10n)
-        : null;
+    final challengeLabel = post.challenge?.title.isNotEmpty == true
+        ? post.challenge!.title
+        : l10n.appTitle;
+    final timeLabel =
+        post.createdAt != null ? formatTimeAgo(post.createdAt!, l10n) : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -150,7 +164,8 @@ class PostCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -163,16 +178,34 @@ class PostCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 InkWell(
+                  onTap: photoUrl.isEmpty ? null : () => _share(context),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Icon(
+                      Icons.share_outlined,
+                      color: _inkMuted,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
                   onTap: onUpvote,
                   borderRadius: BorderRadius.circular(20),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          post.hasUpvoted ? Icons.favorite : Icons.favorite_border,
-                          color: post.hasUpvoted ? const Color(0xFFE05252) : _inkMuted,
+                          post.hasUpvoted
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color: post.hasUpvoted
+                              ? const Color(0xFFE05252)
+                              : _inkMuted,
                           size: 22,
                         ),
                         if (post.upvoteCount > 0) ...[
@@ -180,7 +213,9 @@ class PostCard extends StatelessWidget {
                           Text(
                             '${post.upvoteCount}',
                             style: _labelStyle().copyWith(
-                              color: post.hasUpvoted ? const Color(0xFFE05252) : _inkMuted,
+                              color: post.hasUpvoted
+                                  ? const Color(0xFFE05252)
+                                  : _inkMuted,
                             ),
                           ),
                         ],
@@ -266,7 +301,9 @@ class _VideoPreviewState extends State<_VideoPreview> {
   }
 
   void _playIfVisible() {
-    if (!mounted || !_controller.value.isInitialized || _visibleFraction < 0.6) {
+    if (!mounted ||
+        !_controller.value.isInitialized ||
+        _visibleFraction < 0.6) {
       return;
     }
 
