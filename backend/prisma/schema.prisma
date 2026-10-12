@@ -31,6 +31,12 @@ enum MediaType {
   VIDEO
 }
 
+enum ChallengeIdeaStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -62,6 +68,7 @@ model Post {
   challengeId Int
   createdAt   DateTime  @default(now())
   upVotes     UpVote[]
+  reactions   PostReaction[]
 }
 
 model UpVote {
@@ -74,6 +81,20 @@ model UpVote {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+}
+
+model PostReaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  emoji     String   @db.VarChar(16)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, emoji])
+  @@index([postId, emoji])
 }
 
 model User {
@@ -89,13 +110,26 @@ model User {
   createdAt     DateTime       @default(now())
   role          Role           @default(USER)
   posts         Post[]
+  challengeIdeas ChallengeIdea[]
   upVotes       UpVote[]
+  reactions     PostReaction[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")
   receivedRequests Friendship[] @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
+}
+
+model ChallengeIdea {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.VarChar(500)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    ChallengeIdeaStatus @default(PENDING)
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
 }
 
 model EmailVerificationToken {

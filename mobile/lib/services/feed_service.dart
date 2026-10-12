@@ -19,9 +19,16 @@ class FeedService {
     return FeedPost.listFromJson(data);
   }
 
-  Future<List<FeedPost>> fetchPostsForChallenge(int? challengeId) async {
-    final path =
-        challengeId == null ? '/posts' : '/posts?challengeId=$challengeId';
+  Future<List<FeedPost>> fetchPostsForChallenge(
+    int? challengeId, {
+    bool? global,
+  }) async {
+    final query = <String, String>{};
+    if (challengeId != null) query['challengeId'] = '$challengeId';
+    if (global != null) query['scope'] = global ? 'global' : 'friends';
+    final path = query.isEmpty
+        ? '/posts'
+        : '/posts?${query.entries.map((entry) => '${entry.key}=${entry.value}').join('&')}';
     final data = await _authedRequest('GET', path);
     return FeedPost.listFromJson(data);
   }
@@ -70,6 +77,31 @@ class FeedService {
 
   Future<FeedPost> removeUpvote(int postId) => _vote(postId, remove: true);
 
+  Future<FeedPost> addReaction(int postId, String emoji) async {
+    final data = await _authedRequest(
+      'POST',
+      '/posts/$postId/reaction',
+      body: {'emoji': emoji},
+    );
+    return FeedPost.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<FeedPost> removeReaction(int postId, String emoji) async {
+    final data = await _authedRequest(
+      'DELETE',
+      '/posts/$postId/reaction?emoji=${Uri.encodeQueryComponent(emoji)}',
+    );
+    return FeedPost.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<void> submitChallengeIdea(String content) async {
+    await _authedRequest(
+      'POST',
+      '/challenge-ideas',
+      body: {'content': content},
+    );
+  }
+
   Future<FeedPost> _vote(int postId, {required bool remove}) async {
     final data = await _authedRequest(
       remove ? 'DELETE' : 'POST',
@@ -78,7 +110,11 @@ class FeedService {
     return FeedPost.fromJson(data as Map<String, dynamic>);
   }
 
-  Future<dynamic> _authedRequest(String method, String path) async {
+  Future<dynamic> _authedRequest(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
     final token = await _authService.getAccessToken();
     if (token == null || token.isEmpty) {
       throw UnauthorizedException();
@@ -94,7 +130,11 @@ class FeedService {
     try {
       switch (method) {
         case 'POST':
-          response = await http.post(uri, headers: headers);
+          response = await http.post(
+            uri,
+            headers: headers,
+            body: body == null ? null : jsonEncode(body),
+          );
           break;
         case 'DELETE':
           response = await http.delete(uri, headers: headers);

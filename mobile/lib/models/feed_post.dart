@@ -43,6 +43,26 @@ class FeedChallenge {
 
 enum PostMediaType { photo, video }
 
+class FeedReaction {
+  const FeedReaction({
+    required this.emoji,
+    required this.count,
+    required this.reactedByMe,
+  });
+
+  final String emoji;
+  final int count;
+  final bool reactedByMe;
+
+  factory FeedReaction.fromJson(Map<String, dynamic> json) {
+    return FeedReaction(
+      emoji: json['emoji']?.toString() ?? '',
+      count: json['count'] is int ? json['count'] as int : 0,
+      reactedByMe: json['reactedByMe'] == true,
+    );
+  }
+}
+
 PostMediaType parsePostMediaType(String? value) {
   switch (value?.toUpperCase()) {
     case 'VIDEO':
@@ -91,6 +111,7 @@ class FeedPost {
     this.challenge,
     this.upvoteCount = 0,
     this.hasUpvoted = false,
+    this.reactions = const [],
     this.mediaType = PostMediaType.photo,
   });
 
@@ -101,6 +122,7 @@ class FeedPost {
   final FeedChallenge? challenge;
   final int upvoteCount;
   final bool hasUpvoted;
+  final List<FeedReaction> reactions;
   final PostMediaType mediaType;
 
   bool get isVideo => mediaType == PostMediaType.video;
@@ -117,6 +139,7 @@ class FeedPost {
       challenge: challenge,
       upvoteCount: upvoteCount ?? this.upvoteCount,
       hasUpvoted: hasUpvoted ?? this.hasUpvoted,
+      reactions: reactions,
       mediaType: mediaType,
     );
   }
@@ -143,6 +166,10 @@ class FeedPost {
           : null,
       upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
       hasUpvoted: json['hasUpvoted'] == true,
+      reactions: (json['reactions'] is List ? json['reactions'] as List : [])
+          .whereType<Map>()
+          .map((item) => FeedReaction.fromJson(Map<String, dynamic>.from(item)))
+          .toList(),
       mediaType: parsePostMediaType(json['mediaType']?.toString()),
     );
   }
@@ -161,6 +188,16 @@ class FeedPost {
       if (a[i].id != b[i].id ||
           a[i].upvoteCount != b[i].upvoteCount ||
           a[i].hasUpvoted != b[i].hasUpvoted) {
+        return false;
+      }
+      if (a[i].reactions.length != b[i].reactions.length ||
+          a[i].reactions.asMap().entries.any((entry) {
+            final other = b[i].reactions[entry.key];
+            final reaction = entry.value;
+            return reaction.emoji != other.emoji ||
+                reaction.count != other.count ||
+                reaction.reactedByMe != other.reactedByMe;
+          })) {
         return false;
       }
     }
