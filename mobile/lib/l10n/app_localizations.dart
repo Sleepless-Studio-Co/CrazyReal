@@ -716,6 +716,24 @@ abstract class AppLocalizations {
   /// **'Refresh'**
   String get feedRefresh;
 
+  /// Feed filter for recent challenges
+  ///
+  /// In en, this message translates to:
+  /// **'All recent challenges'**
+  String get feedAllChallenges;
+
+  /// Global challenge category
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get feedGlobalChallenge;
+
+  /// Friend challenge category
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get feedFriendChallenge;
+
   /// CTA button when feed is empty
   ///
   /// In en, this message translates to:
@@ -769,6 +787,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New message from {username}'**
   String notificationNewMessageTitle(String username);
+
+  /// Notification title for a new challenge
+  ///
+  /// In en, this message translates to:
+  /// **'New challenge'**
+  String get notificationChallengeCreatedTitle;
+
+  /// Notification body for a new challenge
+  ///
+  /// In en, this message translates to:
+  /// **'The challenge \"{title}\" is now available.'**
+  String notificationChallengeCreatedBody(Object title);
+
+  /// Notification title for a challenge reminder
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge ending soon'**
+  String get notificationChallengeReminderTitle;
+
+  /// Notification body for a challenge reminder
+  ///
+  /// In en, this message translates to:
+  /// **'There are {hours} hours left for \"{title}\".'**
+  String notificationChallengeReminderBody(Object hours, Object title);
 
   /// Delete account button
   ///
@@ -866,6 +908,42 @@ abstract class AppLocalizations {
   /// **'Coming soon'**
   String get comingSoon;
 
+  /// Word the user must type to confirm account deletion
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get deleteAccountConfirmWord;
+
+  /// Prompt asking the user to type the confirmation word
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm, type {word} below.'**
+  String deleteAccountConfirmPrompt(String word);
+
+  /// Create a new group chat button
+  ///
+  /// In en, this message translates to:
+  /// **'New group'**
+  String get newGroup;
+
+  /// Accept friend request button
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get acceptRequest;
+
+  /// Messages / conversations screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get messages;
+
+  /// Label of the deletion confirmation text field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation word'**
+  String get deleteAccountConfirmHint;
+
   /// Admin section header and tile in settings
   ///
   /// In en, this message translates to:
@@ -919,6 +997,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Type'**
   String get adminChallengeTypeLabel;
+
+  /// Enable a custom duration
+  ///
+  /// In en, this message translates to:
+  /// **'Custom duration'**
+  String get adminCustomDuration;
+
+  /// Custom duration help text
+  ///
+  /// In en, this message translates to:
+  /// **'Otherwise, duration depends on the selected type.'**
+  String get adminCustomDurationHint;
+
+  /// Custom duration in hours
+  ///
+  /// In en, this message translates to:
+  /// **'Duration in hours'**
+  String get adminDurationHours;
+
+  /// Custom duration limits
+  ///
+  /// In en, this message translates to:
+  /// **'Between 1 and 8760 hours'**
+  String get adminDurationHoursHint;
+
+  /// Duration derived from type
+  ///
+  /// In en, this message translates to:
+  /// **'Duration depends on the selected type.'**
+  String get adminDurationFromType;
+
+  /// Custom challenge end date and time
+  ///
+  /// In en, this message translates to:
+  /// **'Custom end date'**
+  String get adminCustomEndDate;
+
+  /// Custom end date validation
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a future end date and time.'**
+  String get adminEndDateRequired;
 
   /// Challenge active switch label
   ///
@@ -1045,42 +1165,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load challenges'**
   String get adminLoadError;
-
-  /// Word the user must type to confirm account deletion
-  ///
-  /// In en, this message translates to:
-  /// **'DELETE'**
-  String get deleteAccountConfirmWord;
-
-  /// Prompt asking the user to type the confirmation word
-  ///
-  /// In en, this message translates to:
-  /// **'To confirm, type {word} below.'**
-  String deleteAccountConfirmPrompt(String word);
-
-  /// Create a new group chat button
-  ///
-  /// In en, this message translates to:
-  /// **'New group'**
-  String get newGroup;
-
-  /// Accept friend request button
-  ///
-  /// In en, this message translates to:
-  /// **'Accept'**
-  String get acceptRequest;
-
-  /// Messages / conversations screen title
-  ///
-  /// In en, this message translates to:
-  /// **'Messages'**
-  String get messages;
-
-  /// Label of the deletion confirmation text field
-  ///
-  /// In en, this message translates to:
-  /// **'Confirmation word'**
-  String get deleteAccountConfirmHint;
 }
 
 class _AppLocalizationsDelegate

@@ -332,6 +332,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get feedRefresh => 'Actualiser';
 
   @override
+  String get feedAllChallenges => 'Tous les défis récents';
+
+  @override
+  String get feedGlobalChallenge => 'Global';
+
+  @override
+  String get feedFriendChallenge => 'Amis';
+
+  @override
   String get publishFirstPost => 'Publier une photo';
 
   @override
@@ -367,6 +376,22 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String notificationNewMessageTitle(String username) {
     return 'Nouveau message de $username';
+  }
+
+  @override
+  String get notificationChallengeCreatedTitle => 'Nouveau défi';
+
+  @override
+  String notificationChallengeCreatedBody(Object title) {
+    return 'Le défi « $title » est disponible.';
+  }
+
+  @override
+  String get notificationChallengeReminderTitle => 'Défi bientôt terminé';
+
+  @override
+  String notificationChallengeReminderBody(Object hours, Object title) {
+    return 'Il reste $hours h pour le défi « $title ».';
   }
 
   @override
@@ -423,6 +448,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get comingSoon => 'Bientôt disponible';
 
   @override
+  String get deleteAccountConfirmWord => 'SUPPRIMER';
+
+  @override
+  String deleteAccountConfirmPrompt(String word) {
+    return 'Pour confirmer, écris $word ci-dessous.';
+  }
+
+  @override
+  String get newGroup => 'Nouveau groupe';
+
+  @override
+  String get acceptRequest => 'Accepter';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get deleteAccountConfirmHint => 'Mot de confirmation';
+
+  @override
   String get administration => 'Administration';
 
   @override
@@ -448,6 +493,29 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminChallengeTypeLabel => 'Type';
+
+  @override
+  String get adminCustomDuration => 'Durée personnalisée';
+
+  @override
+  String get adminCustomDurationHint =>
+      'Sinon, la durée dépend du type choisi.';
+
+  @override
+  String get adminDurationHours => 'Durée en heures';
+
+  @override
+  String get adminDurationHoursHint => 'Entre 1 et 8760 heures';
+
+  @override
+  String get adminDurationFromType => 'La durée dépend du type choisi.';
+
+  @override
+  String get adminCustomEndDate => 'Fin personnalisée';
+
+  @override
+  String get adminEndDateRequired =>
+      'Choisissez une date et une heure de fin futures.';
 
   @override
   String get adminChallengeActiveLabel => 'Actif';
@@ -532,24 +600,4 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
-
-  @override
-  String get deleteAccountConfirmWord => 'SUPPRIMER';
-
-  @override
-  String deleteAccountConfirmPrompt(String word) {
-    return 'Pour confirmer, écris $word ci-dessous.';
-  }
-
-  @override
-  String get newGroup => 'Nouveau groupe';
-
-  @override
-  String get acceptRequest => 'Accepter';
-
-  @override
-  String get messages => 'Messages';
-
-  @override
-  String get deleteAccountConfirmHint => 'Mot de confirmation';
 }

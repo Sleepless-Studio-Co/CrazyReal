@@ -72,7 +72,8 @@ class _AdminPageState extends State<AdminPage> {
 
   void _showInfo(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// Exécute une action admin en gérant les états de chargement et les erreurs.
@@ -114,6 +115,8 @@ class _AdminPageState extends State<AdminPage> {
           description: result.description,
           date: result.date,
           type: result.type,
+          durationHours: result.durationHours,
+          customEndsAt: result.customEndsAt,
           isActive: result.isActive,
         );
         _showInfo(l10n.adminChallengeCreated);
@@ -124,6 +127,10 @@ class _AdminPageState extends State<AdminPage> {
           description: result.description,
           date: result.date,
           type: result.type,
+          durationHours: result.durationHours,
+          customEndsAt: result.customEndsAt,
+          clearCustomEndsAt: result.customEndsAt == null,
+          clearDuration: result.durationHours == null,
           isActive: result.isActive,
         );
         _showInfo(l10n.adminChallengeUpdated);
@@ -446,6 +453,8 @@ class _ChallengeDraft {
     required this.description,
     required this.date,
     required this.type,
+    required this.durationHours,
+    required this.customEndsAt,
     required this.isActive,
   });
 
@@ -453,6 +462,8 @@ class _ChallengeDraft {
   final String description;
   final DateTime date;
   final ChallengeType type;
+  final int? durationHours;
+  final DateTime? customEndsAt;
   final bool isActive;
 }
 
@@ -470,8 +481,11 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
   late final TextEditingController _descriptionController;
   late DateTime _date;
   late ChallengeType _type;
+  late bool _customDuration;
+  late DateTime? _customEndsAt;
   late bool _isActive;
   String? _titleError;
+  String? _durationError;
 
   @override
   void initState() {
@@ -482,6 +496,9 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
         TextEditingController(text: challenge?.description ?? '');
     _date = challenge?.date ?? DateTime.now();
     _type = challenge?.type ?? ChallengeType.weeklyA;
+    _customDuration =
+        challenge?.durationHours != null || challenge?.customEndsAt != null;
+    _customEndsAt = challenge?.customEndsAt;
     _isActive = challenge?.isActive ?? true;
   }
 
@@ -519,11 +536,45 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
     });
   }
 
+  Future<void> _pickCustomEndDate() async {
+    final initial = _customEndsAt ?? _date.add(const Duration(days: 3));
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: _date,
+      lastDate: _date.add(const Duration(days: 365 * 2)),
+    );
+    if (date == null || !mounted) return;
+
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (!mounted) return;
+
+    setState(() {
+      _customEndsAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time?.hour ?? initial.hour,
+        time?.minute ?? initial.minute,
+      );
+      _durationError = null;
+    });
+  }
+
   void _submit() {
     final l10n = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       setState(() => _titleError = l10n.adminTitleRequired);
+      return;
+    }
+
+    if (_customDuration &&
+        (_customEndsAt == null || !_customEndsAt!.isAfter(_date))) {
+      setState(() => _durationError = l10n.adminEndDateRequired);
       return;
     }
 
@@ -534,6 +585,8 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
         description: _descriptionController.text.trim(),
         date: _date,
         type: _type,
+        durationHours: null,
+        customEndsAt: _customDuration ? _customEndsAt : null,
         isActive: _isActive,
       ),
     );
@@ -604,6 +657,46 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
               },
             ),
             const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _customDuration,
+              activeThumbColor: _accentColor,
+              title: Text(
+                l10n.adminCustomDuration,
+                style: GoogleFonts.karla(color: _inkColor, fontSize: 15),
+              ),
+              subtitle: Text(
+                _customDuration
+                    ? l10n.adminCustomDurationHint
+                    : l10n.adminDurationFromType,
+                style: GoogleFonts.karla(color: _inkMuted, fontSize: 12),
+              ),
+              onChanged: (value) => setState(() => _customDuration = value),
+            ),
+            if (_customDuration)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.timer_outlined, color: _accentColor),
+                title: Text(
+                  l10n.adminCustomEndDate,
+                  style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+                ),
+                subtitle: Text(
+                  _customEndsAt == null
+                      ? l10n.adminEndDateRequired
+                      : dateFormat.format(_customEndsAt!),
+                  style: GoogleFonts.karla(
+                    color: _durationError == null ? _inkColor : Colors.red,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                trailing: TextButton(
+                  onPressed: _pickCustomEndDate,
+                  child: Text(l10n.edit),
+                ),
+              ),
+            const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event, color: _accentColor),
@@ -625,7 +718,15 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
               ),
             ),
             Text(
-              l10n.adminEndsOn(dateFormat.format(_date.add(_type.duration))),
+              l10n.adminEndsOn(
+                dateFormat.format(
+                  _date.add(
+                    _customDuration && _customEndsAt != null
+                        ? _customEndsAt!.difference(_date)
+                        : _type.duration,
+                  ),
+                ),
+              ),
               style: GoogleFonts.karla(color: _inkMuted, fontSize: 12),
             ),
             const SizedBox(height: 8),

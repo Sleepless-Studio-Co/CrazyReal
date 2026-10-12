@@ -38,6 +38,8 @@ class HomePageState extends State<HomePage> {
   bool _isRefreshing = false;
   String? _errorMessage;
   String? _challengeSubtitle;
+  List<AvailableChallenge> _availableChallenges = [];
+  int _selectedChallengeId = -1;
   bool _isActive = true;
 
   IO.Socket? _socket;
@@ -50,6 +52,7 @@ class HomePageState extends State<HomePage> {
     super.initState();
     _initSocket();
     refreshFeed(showLoading: true);
+    _loadAvailableChallenges();
     _loadChallengeSubtitle();
     _startPolling();
   }
@@ -83,7 +86,9 @@ class HomePageState extends State<HomePage> {
     }
 
     try {
-      final posts = await _feedService.fetchPosts();
+      final posts = await _feedService.fetchPostsForChallenge(
+        _selectedChallengeId == -1 ? null : _selectedChallengeId,
+      );
       if (!mounted) return;
 
       final shouldUpdate = !FeedPost.sameVoteState(_posts, posts);
@@ -107,6 +112,24 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _loadAvailableChallenges() async {
+    try {
+      final challenges = await _feedService.fetchAvailableChallenges();
+      if (!mounted) return;
+      setState(() => _availableChallenges = challenges);
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (_) {
+      // The feed remains usable if the filter list cannot be loaded.
+    }
+  }
+
+  void _selectChallenge(int id) {
+    if (_selectedChallengeId == id) return;
+    setState(() => _selectedChallengeId = id);
+    refreshFeed(showLoading: true);
+  }
+
   Future<void> _loadChallengeSubtitle() async {
     final challenge = await _feedService.fetchCurrentChallenge();
     if (!mounted || challenge == null) return;
@@ -123,7 +146,10 @@ class HomePageState extends State<HomePage> {
   void _initSocket() {
     _socket = IO.io(
       '$apiBaseUrl/feed',
-      IO.OptionBuilder().setTransports(['websocket']).disableAutoConnect().build(),
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect()
+          .build(),
     );
 
     _socket!.connect();
@@ -135,6 +161,7 @@ class HomePageState extends State<HomePage> {
 
     try {
       final post = FeedPost.fromJson(Map<String, dynamic>.from(data as Map));
+      if (!_isPostVisibleForCurrentFilter(post)) return;
       if (_posts.any((existing) => existing.id == post.id)) return;
 
       setState(() {
@@ -144,6 +171,24 @@ class HomePageState extends State<HomePage> {
     } catch (_) {
       refreshFeed(showLoading: false);
     }
+  }
+
+  bool _isPostVisibleForCurrentFilter(FeedPost post) {
+    final challengeId = post.challenge?.id;
+    if (challengeId == null) return false;
+    if (_selectedChallengeId != -1) {
+      return challengeId == _selectedChallengeId;
+    }
+
+    final globalIds = _availableChallenges
+        .where((challenge) => challenge.isGlobal)
+        .take(2)
+        .map((challenge) => challenge.id);
+    final friendIds = _availableChallenges
+        .where((challenge) => !challenge.isGlobal)
+        .take(2)
+        .map((challenge) => challenge.id);
+    return {...globalIds, ...friendIds}.contains(challengeId);
   }
 
   void _startPolling() {
@@ -224,7 +269,44 @@ class HomePageState extends State<HomePage> {
             ),
         ],
       ),
-      body: _buildBody(l10n),
+      body: Column(
+        children: [
+          _buildChallengeFilter(l10n),
+          Expanded(child: _buildBody(l10n)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChallengeFilter(AppLocalizations l10n) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      color: const Color(0xFFF7EBD1),
+      child: DropdownButton<int>(
+        value: _selectedChallengeId,
+        isExpanded: true,
+        underline: const SizedBox.shrink(),
+        items: [
+          DropdownMenuItem<int>(
+            value: -1,
+            child: Text(l10n.feedAllChallenges),
+          ),
+          ..._availableChallenges.map(
+            (challenge) => DropdownMenuItem<int>(
+              value: challenge.id,
+              child: Text(
+                challenge.label(
+                    l10n.feedGlobalChallenge, l10n.feedFriendChallenge),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+        onChanged: (id) {
+          if (id != null) _selectChallenge(id);
+        },
+      ),
     );
   }
 
@@ -245,7 +327,8 @@ class HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.cloud_off_outlined, size: 48, color: _inkMuted.withValues(alpha: 0.8)),
+              Icon(Icons.cloud_off_outlined,
+                  size: 48, color: _inkMuted.withValues(alpha: 0.8)),
               const SizedBox(height: 16),
               Text(
                 l10n.feedLoadError,
@@ -274,7 +357,8 @@ class HomePageState extends State<HomePage> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SizedBox(height: 80),
-            Icon(Icons.photo_camera_outlined, size: 64, color: _inkMuted.withValues(alpha: 0.7)),
+            Icon(Icons.photo_camera_outlined,
+                size: 64, color: _inkMuted.withValues(alpha: 0.7)),
             const SizedBox(height: 16),
             Center(child: Text(l10n.noPostsYet, style: _mutedStyle())),
             const SizedBox(height: 8),

@@ -36,6 +36,8 @@ class _NewPageState extends State<NewPage> {
   List<CameraDescription> _cameras = [];
   int _currentCameraIndex = 0;
   FlashMode _currentFlashMode = FlashMode.off;
+  Timer? _challengeTimer;
+  Duration? _remainingChallengeTime;
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
 
@@ -44,6 +46,10 @@ class _NewPageState extends State<NewPage> {
     super.initState();
     _initializeCamera();
     fetchChallenges();
+    _challengeTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _updateChallengeTimer(),
+    );
   }
 
   Future<void> _initializeCamera() async {
@@ -154,6 +160,7 @@ class _NewPageState extends State<NewPage> {
               _challenges.isNotEmpty ? _challenges.first['id'] as int : null;
           challengeError = null;
         });
+        _updateChallengeTimer();
       } else if (response.statusCode == 401) {
         if (mounted) {
           widget.onUnauthorized();
@@ -176,13 +183,36 @@ class _NewPageState extends State<NewPage> {
     }
   }
 
-  String _challengeLabel(Map<String, dynamic> c) {
+  String _challengeLabel(Map<String, dynamic> c, AppLocalizations l10n) {
     final title = c['title']?.toString() ?? '';
     final group = c['group'];
     if (group is Map && group['name'] != null) {
-      return '${group['name']} · $title';
+      return '${l10n.feedFriendChallenge} · ${group['name']} · $title';
     }
-    return title;
+    return '${l10n.feedGlobalChallenge} · $title';
+  }
+
+  void _updateChallengeTimer() {
+    final selected = _challenges.where(
+      (challenge) => challenge['id'] == _selectedChallengeId,
+    );
+    final endsAt = selected.isEmpty
+        ? null
+        : DateTime.tryParse(selected.first['endsAt']?.toString() ?? '')
+            ?.toLocal();
+    final remaining = endsAt?.difference(DateTime.now());
+    if (!mounted) return;
+    setState(() {
+      _remainingChallengeTime =
+          remaining != null && !remaining.isNegative ? remaining : null;
+    });
+  }
+
+  String _formatRemaining(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '${hours}h ${minutes}m ${seconds}s';
   }
 
   Future<void> _uploadMedia(String filePath, {required bool isVideo}) async {
@@ -381,6 +411,7 @@ class _NewPageState extends State<NewPage> {
 
   @override
   void dispose() {
+    _challengeTimer?.cancel();
     _recordingTimer?.cancel();
     _controller?.dispose();
     super.dispose();
@@ -464,7 +495,7 @@ class _NewPageState extends State<NewPage> {
               .map((c) => DropdownMenuItem<int>(
                     value: c['id'] as int,
                     child: Text(
-                      _challengeLabel(c),
+                      _challengeLabel(c, l10n),
                       style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -473,7 +504,10 @@ class _NewPageState extends State<NewPage> {
                     ),
                   ))
               .toList(),
-          onChanged: (id) => setState(() => _selectedChallengeId = id),
+          onChanged: (id) {
+            setState(() => _selectedChallengeId = id);
+            _updateChallengeTimer();
+          },
         ),
         if (description.isNotEmpty)
           Text(
@@ -481,6 +515,17 @@ class _NewPageState extends State<NewPage> {
             style: const TextStyle(fontSize: 14, color: Colors.black87),
             textAlign: TextAlign.center,
           ),
+        if (_remainingChallengeTime != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Temps restant : ${_formatRemaining(_remainingChallengeTime!)}',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFB85C38),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -492,123 +537,101 @@ class _NewPageState extends State<NewPage> {
     return Scaffold(
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            color: const Color(0xFFF7EBD1),
-            width: double.infinity,
-            child: _buildChallengePicker(l10n),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: constraints.maxHeight * 0.42,
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                  child: _buildChallengePicker(l10n),
+                ),
+              );
+            },
           ),
-          Container(
-            height: 600,
-            width: double.infinity,
-            margin: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
-              color: Colors.black,
-            ),
-            clipBehavior: Clip.hardEdge,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _controller == null
-                    ? Center(
-                        child: Text(
-                          l10n.cameraOnlyMobile,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25),
+                color: Colors.black,
+              ),
+              clipBehavior: Clip.hardEdge,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _controller == null
+                      ? Center(
+                          child: Text(
+                            l10n.cameraOnlyMobile,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
+                        )
+                      : FutureBuilder<void>(
+                          future: _initializeControllerFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return CameraPreview(_controller!);
+                            }
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
                         ),
-                      )
-                    : FutureBuilder<void>(
-                        future: _initializeControllerFuture,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.done) {
-                            return CameraPreview(_controller!);
-                          }
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        },
-                      ),
-                if (isRecording)
                   Positioned(
-                    top: 16,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        FloatingActionButton(
+                          heroTag: 'flash',
+                          onPressed: _toggleFlash,
+                          backgroundColor: const Color(0xFF195A3B),
+                          foregroundColor: Colors.white,
+                          child: Icon(_getFlashIcon()),
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.55),
-                          borderRadius: BorderRadius.circular(20),
+                        SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: FloatingActionButton(
+                            heroTag: 'photo',
+                            onPressed:
+                                isUploading ? null : takeAndUploadPicture,
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            splashColor: Colors.grey.withOpacity(0.3),
+                            focusColor: Colors.grey.withOpacity(0.2),
+                            elevation: 0,
+                            child: isUploading
+                                ? const CircularProgressIndicator(
+                                    color: Color(0xFFFFE500),
+                                    strokeWidth: 3,
+                                  )
+                                : const Icon(Icons.circle_outlined, size: 80),
+                          ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${l10n.recordingVideo} ${_formatDuration(_recordingDuration)}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        FloatingActionButton(
+                          heroTag: 'flip',
+                          onPressed: _cameras.length > 1 ? _switchCamera : null,
+                          backgroundColor: const Color(0xFF195A3B),
+                          foregroundColor: Colors.white,
+                          child: const Icon(Icons.flip_camera_ios),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: Stack(
-        children: [
-          Positioned(
-            bottom: 12,
-            left: MediaQuery.of(context).size.width / 2 - 40,
-            child: _buildShutterButton(),
-          ),
-          Positioned(
-            bottom: 12,
-            right: 12,
-            child: FloatingActionButton(
-              heroTag: 'flip',
-              onPressed: (_cameras.length > 1 && !isRecording && !isUploading)
-                  ? _switchCamera
-                  : null,
-              backgroundColor: const Color(0xFF195A3B),
-              foregroundColor: Colors.white,
-              splashColor: const Color(0xFFE54128),
-              focusColor: const Color(0xFFE54128),
-              child: const Icon(Icons.flip_camera_ios),
-            ),
-          ),
-          Positioned(
-            bottom: 12,
-            left: 42,
-            child: FloatingActionButton(
-              heroTag: 'flash',
-              onPressed: isRecording || isUploading ? null : _toggleFlash,
-              backgroundColor: const Color(0xFF195A3B),
-              foregroundColor: Colors.white,
-              splashColor: const Color(0xFFE54128),
-              focusColor: const Color(0xFFE54128),
-              child: Icon(_getFlashIcon()),
+                ],
+              ),
             ),
           ),
         ],
