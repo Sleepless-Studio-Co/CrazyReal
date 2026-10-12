@@ -269,7 +269,32 @@
   "@errorSendingPhoto": {
     "description": "Error message when photo send fails"
   },
-  
+
+  "captureModePhoto": "Photo",
+  "@captureModePhoto": {
+    "description": "Photo capture mode"
+  },
+
+  "captureModeVideo": "Video",
+  "@captureModeVideo": {
+    "description": "Video capture mode"
+  },
+
+  "videoSentToFeed": "Video sent to your Feed!",
+  "@videoSentToFeed": {
+    "description": "Success message when video is sent"
+  },
+
+  "errorSendingVideo": "❌ Error sending video",
+  "@errorSendingVideo": {
+    "description": "Error message when sending video fails"
+  },
+
+  "recordingVideo": "Recording...",
+  "@recordingVideo": {
+    "description": "Video recording in progress indicator"
+  },
+
   "pleaseLoginFirst": "🔒 Please login first",
   "@pleaseLoginFirst": {
     "description": "Message asking to login"
@@ -689,27 +714,6 @@
   "comingSoon": "Coming soon",
   "@comingSoon": { "description": "Coming soon message for unimplemented features" },
 
-  "deleteAccountConfirmWord": "DELETE",
-  "@deleteAccountConfirmWord": { "description": "Word the user must type to confirm account deletion" },
-
-  "deleteAccountConfirmPrompt": "To confirm, type {word} below.",
-  "@deleteAccountConfirmPrompt": {
-    "description": "Prompt asking the user to type the confirmation word",
-    "placeholders": { "word": { "type": "String" } }
-  },
-
-  "newGroup": "New group",
-  "@newGroup": { "description": "Create a new group chat button" },
-
-  "acceptRequest": "Accept",
-  "@acceptRequest": { "description": "Accept friend request button" },
-
-  "messages": "Messages",
-  "@messages": { "description": "Messages / conversations screen title" },
-
-  "deleteAccountConfirmHint": "Confirmation word",
-  "@deleteAccountConfirmHint": { "description": "Label of the deletion confirmation text field" },
-
   "administration": "Administration",
   "@administration": { "description": "Admin section header and tile in settings" },
 
@@ -833,5 +837,26 @@
   },
 
   "adminLoadError": "Could not load challenges",
-  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" }
+  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" },
+
+  "deleteAccountConfirmWord": "DELETE",
+  "@deleteAccountConfirmWord": { "description": "Word the user must type to confirm account deletion" },
+
+  "deleteAccountConfirmPrompt": "To confirm, type {word} below.",
+  "@deleteAccountConfirmPrompt": {
+    "description": "Prompt asking the user to type the confirmation word",
+    "placeholders": { "word": { "type": "String" } }
+  },
+
+  "newGroup": "New group",
+  "@newGroup": { "description": "Create a new group chat button" },
+
+  "acceptRequest": "Accept",
+  "@acceptRequest": { "description": "Accept friend request button" },
+
+  "messages": "Messages",
+  "@messages": { "description": "Messages / conversations screen title" },
+
+  "deleteAccountConfirmHint": "Confirmation word",
+  "@deleteAccountConfirmHint": { "description": "Label of the deletion confirmation text field" }
 }

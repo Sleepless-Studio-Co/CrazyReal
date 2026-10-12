@@ -55,6 +55,10 @@
 	<string>Main</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to your photo library to set a profile picture.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow access to your camera to take photos and videos for the feed.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow access to your microphone to record videos with sound.</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

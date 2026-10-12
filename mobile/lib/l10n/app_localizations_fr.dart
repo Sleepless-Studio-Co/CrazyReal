@@ -174,6 +174,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get errorSendingPhoto => '❌ Erreur lors de l\'envoi de la photo';
 
   @override
+  String get captureModePhoto => 'Photo';
+
+  @override
+  String get captureModeVideo => 'Vidéo';
+
+  @override
+  String get videoSentToFeed => 'Vidéo envoyée dans ton Feed !';
+
+  @override
+  String get errorSendingVideo => '❌ Erreur lors de l\'envoi de la vidéo';
+
+  @override
+  String get recordingVideo => 'Enregistrement...';
+
+  @override
   String get pleaseLoginFirst => '🔒 Veuillez vous connecter d\'abord';
 
   @override
@@ -455,26 +470,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get comingSoon => 'Bientôt disponible';
 
   @override
-  String get deleteAccountConfirmWord => 'SUPPRIMER';
-
-  @override
-  String deleteAccountConfirmPrompt(String word) {
-    return 'Pour confirmer, écris $word ci-dessous.';
-  }
-
-  @override
-  String get newGroup => 'Nouveau groupe';
-
-  @override
-  String get acceptRequest => 'Accepter';
-
-  @override
-  String get messages => 'Messages';
-
-  @override
-  String get deleteAccountConfirmHint => 'Mot de confirmation';
-
-  @override
   String get administration => 'Administration';
 
   @override
@@ -635,4 +630,24 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
+
+  @override
+  String get deleteAccountConfirmWord => 'SUPPRIMER';
+
+  @override
+  String deleteAccountConfirmPrompt(String word) {
+    return 'Pour confirmer, écris $word ci-dessous.';
+  }
+
+  @override
+  String get newGroup => 'Nouveau groupe';
+
+  @override
+  String get acceptRequest => 'Accepter';
+
+  @override
+  String get messages => 'Messages';
+
+  @override
+  String get deleteAccountConfirmHint => 'Mot de confirmation';
 }

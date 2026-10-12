@@ -41,53 +41,14 @@ class FeedChallenge {
   }
 }
 
-class FeedReaction {
-  const FeedReaction({
-    required this.emoji,
-    required this.count,
-    required this.reactedByMe,
-  });
+enum PostMediaType { photo, video }
 
-  final String emoji;
-  final int count;
-  final bool reactedByMe;
-
-  factory FeedReaction.fromJson(Map<String, dynamic> json) {
-    return FeedReaction(
-      emoji: json['emoji']?.toString() ?? '',
-      count: json['count'] is int ? json['count'] as int : 0,
-      reactedByMe: json['reactedByMe'] == true,
-    );
-  }
-}
-
-class AvailableChallenge {
-  const AvailableChallenge({
-    required this.id,
-    required this.title,
-    required this.isGlobal,
-    this.groupName,
-  });
-
-  final int id;
-  final String title;
-  final bool isGlobal;
-  final String? groupName;
-
-  factory AvailableChallenge.fromJson(Map<String, dynamic> json) {
-    final group = json['group'];
-    return AvailableChallenge(
-      id: json['id'] as int,
-      title: json['title']?.toString() ?? '',
-      isGlobal: group == null,
-      groupName: group is Map ? group['name']?.toString() : null,
-    );
-  }
-
-  String label(String globalLabel, String friendLabel) {
-    final scope = isGlobal ? globalLabel : friendLabel;
-    final prefix = groupName == null ? scope : '$scope · $groupName';
-    return '$prefix · $title';
+PostMediaType parsePostMediaType(String? value) {
+  switch (value?.toUpperCase()) {
+    case 'VIDEO':
+      return PostMediaType.video;
+    default:
+      return PostMediaType.photo;
   }
 }
 
@@ -100,7 +61,7 @@ class FeedPost {
     this.challenge,
     this.upvoteCount = 0,
     this.hasUpvoted = false,
-    this.reactions = const [],
+    this.mediaType = PostMediaType.photo,
   });
 
   final int id;
@@ -110,7 +71,9 @@ class FeedPost {
   final FeedChallenge? challenge;
   final int upvoteCount;
   final bool hasUpvoted;
-  final List<FeedReaction> reactions;
+  final PostMediaType mediaType;
+
+  bool get isVideo => mediaType == PostMediaType.video;
 
   FeedPost copyWith({
     int? upvoteCount,
@@ -124,7 +87,7 @@ class FeedPost {
       challenge: challenge,
       upvoteCount: upvoteCount ?? this.upvoteCount,
       hasUpvoted: hasUpvoted ?? this.hasUpvoted,
-      reactions: reactions,
+      mediaType: mediaType,
     );
   }
 
@@ -150,14 +113,7 @@ class FeedPost {
           : null,
       upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
       hasUpvoted: json['hasUpvoted'] == true,
-      reactions: (json['reactions'] is List)
-          ? (json['reactions'] as List)
-              .whereType<Map>()
-              .map((item) => FeedReaction.fromJson(
-                    Map<String, dynamic>.from(item),
-                  ))
-              .toList()
-          : const [],
+      mediaType: parsePostMediaType(json['mediaType']?.toString()),
     );
   }
 
