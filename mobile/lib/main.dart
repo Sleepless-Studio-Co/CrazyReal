@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_links/app_links.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
 import 'home_page.dart';
@@ -11,6 +14,7 @@ import 'setting_page.dart';
 import 'account_page.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
+import 'guest_share_page.dart';
 import 'services/chat_socket_service.dart';
 import 'services/notification_service.dart';
 import 'services/global_notification_service.dart';
@@ -24,11 +28,14 @@ Future<void> main() async {
   final savedLang = prefs.getString('app_locale') ?? 'en';
   appLocale.value = Locale(savedLang, '');
   await NotificationService().init(navKey: navigatorKey);
-  runApp(const MyApp());
+  final initialShareToken = await _readInitialShareToken();
+  runApp(MyApp(initialShareToken: initialShareToken));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.initialShareToken});
+
+  final String? initialShareToken;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +44,7 @@ class MyApp extends StatelessWidget {
       builder: (context, locale, _) {
         return MaterialApp(
           navigatorKey: navigatorKey,
-      title: 'CrazyReal',
+          title: 'CrazyReal',
           locale: locale,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -53,7 +60,7 @@ class MyApp extends StatelessWidget {
             Locale('en', ''),
             Locale('fr', ''),
           ],
-          home: const AuthGate(),
+          home: AuthGate(initialShareToken: initialShareToken),
         );
       },
     );
@@ -61,7 +68,9 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
+  const AuthGate({super.key, this.initialShareToken});
+
+  final String? initialShareToken;
 
   @override
   State<AuthGate> createState() => _AuthGateState();
@@ -72,12 +81,27 @@ class _AuthGateState extends State<AuthGate> {
   final ChatSocketService _chatSocket = ChatSocketService();
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  String? _shareToken;
+  StreamSubscription<Uri>? _shareLinkSubscription;
 
   @override
   void initState() {
     super.initState();
+    _shareToken = widget.initialShareToken;
+    _shareLinkSubscription = AppLinks().uriLinkStream.listen((uri) {
+      final token = _shareTokenFromUri(uri);
+      if (token != null && mounted && !_isAuthenticated) {
+        setState(() => _shareToken = token);
+      }
+    });
     _checkAuth();
     NotificationService().requestPermissions();
+  }
+
+  @override
+  void dispose() {
+    _shareLinkSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _checkAuth() async {
@@ -101,6 +125,7 @@ class _AuthGateState extends State<AuthGate> {
     GlobalNotificationService().connect();
     setState(() {
       _isAuthenticated = true;
+      _shareToken = null;
     });
   }
 
@@ -125,6 +150,14 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
 
+    if (_shareToken != null) {
+      return GuestSharePage(
+        token: _shareToken!,
+        isAuthenticated: _isAuthenticated,
+        onAuthSuccess: _handleAuthSuccess,
+      );
+    }
+
     if (!_isAuthenticated) {
       return LoginPage(onAuthSuccess: _handleAuthSuccess);
     }
@@ -134,6 +167,22 @@ class _AuthGateState extends State<AuthGate> {
       onUnauthorized: () => _handleLogoutOrUnauthorized(),
     );
   }
+}
+
+Future<String?> _readInitialShareToken() async {
+  final uri = await AppLinks().getInitialLink();
+  return _shareTokenFromUri(uri);
+}
+
+String? _shareTokenFromUri(Uri? uri) {
+  if (uri == null) return null;
+  if (uri.scheme == 'crazyreal' && uri.host == 'share') {
+    return uri.pathSegments.isEmpty ? null : uri.pathSegments.first;
+  }
+  if (uri.pathSegments.length >= 2 && uri.pathSegments.first == 'share') {
+    return uri.pathSegments[1];
+  }
+  return null;
 }
 
 class MainScreen extends StatefulWidget {
@@ -204,7 +253,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
