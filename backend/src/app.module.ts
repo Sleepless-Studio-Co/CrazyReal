@@ -13,6 +13,7 @@ import { AdminModule } from './admin/admin.module';
 import { FeedModule } from './feed/feed.module';
 import { UpVotesModule } from './upvotes/upvotes.module';
 import { NotificationsModule } from './bootstrap/notifications.module';
+import { ShareModule } from './share/share.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { NotificationsModule } from './bootstrap/notifications.module';
     FeedModule,
     UpVotesModule,
     NotificationsModule,
+    ShareModule,
   ],
   controllers: [AppController],
   providers: [
