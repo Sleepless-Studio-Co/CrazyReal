@@ -23,14 +23,17 @@ void main() {
 
   testWithApi(
     'tapping the author avatar in the feed opens their profile',
-    () => FakeApi({'GET /users/7': (_) => json(profileJson(id: 7, username: 'carol'))}),
+    () => FakeApi(
+        {'GET /users/7': (_) => json(profileJson(id: 7, username: 'carol'))}),
     (tester, api) async {
       await tester.pumpWidget(card());
 
       await tester.tap(find.byType(FeedAvatar));
       await tester.pumpAndSettle();
 
-      expect(tester.widget<UserProfilePage>(find.byType(UserProfilePage)).userId, 7);
+      expect(
+          tester.widget<UserProfilePage>(find.byType(UserProfilePage)).userId,
+          7);
       expect(api.calls, ['GET /users/7']);
     },
   );
