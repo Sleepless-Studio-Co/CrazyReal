@@ -528,13 +528,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
-            ExcludeSemantics(
-              child: FeedAvatar(
-                username: senderName,
-                avatarUrl: sender?['avatarUrl']?.toString(),
-                avatarKey: sender?['avatarKey']?.toString(),
-                size: 30,
-              ),
+            FeedAvatar(
+              username: senderName,
+              avatarUrl: sender?['avatarUrl']?.toString(),
+              avatarKey: sender?['avatarKey']?.toString(),
+              size: 30,
+              userId: sender?['id'] as int?,
             ),
             const SizedBox(width: 8),
           ],

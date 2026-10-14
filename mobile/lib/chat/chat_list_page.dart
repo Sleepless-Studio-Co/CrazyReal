@@ -266,9 +266,9 @@ class _ConversationCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                ExcludeSemantics(
-                  child: isGroup
-                      ? Container(
+                isGroup
+                    ? ExcludeSemantics(
+                        child: Container(
                           width: 48,
                           height: 48,
                           decoration: const BoxDecoration(
@@ -277,14 +277,15 @@ class _ConversationCard extends StatelessWidget {
                           ),
                           child: const Icon(Icons.groups_outlined,
                               color: paperAccentStrong),
-                        )
-                      : FeedAvatar(
-                          username: other?['username']?.toString() ?? name,
-                          avatarUrl: other?['avatarUrl']?.toString(),
-                          avatarKey: other?['avatarKey']?.toString(),
-                          size: 48,
                         ),
-                ),
+                      )
+                    : FeedAvatar(
+                        username: other?['username']?.toString() ?? name,
+                        avatarUrl: other?['avatarUrl']?.toString(),
+                        avatarKey: other?['avatarKey']?.toString(),
+                        size: 48,
+                        userId: other?['id'] as int?,
+                      ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: MergeSemantics(
