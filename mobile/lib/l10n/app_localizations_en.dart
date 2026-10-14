@@ -597,4 +597,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Could not load challenges';
+
+  @override
+  String viewProfile(String username) {
+    return 'View $username\'s profile';
+  }
+
+  @override
+  String profilePostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'challenges',
+      one: 'challenge',
+      zero: 'challenges',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'followers',
+      one: 'follower',
+      zero: 'followers',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profileNoPosts => 'No challenges completed yet';
+
+  @override
+  String get profilePrivateTitle => 'This account is private';
+
+  @override
+  String get profilePrivateMessage => 'Become friends to see their challenges.';
+
+  @override
+  String get profileLoadError => 'Couldn\'t load the profile';
+
+  @override
+  String get profilePosts => 'Challenges';
 }
