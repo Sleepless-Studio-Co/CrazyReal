@@ -464,15 +464,15 @@ class _NewPageState extends State<NewPage> {
     if (challengeError != null) {
       return Text(
         challengeError!,
-        style: const TextStyle(fontSize: 14, color: Colors.red),
+        style: TextStyle(fontSize: 14, color: context.paper.danger),
         textAlign: TextAlign.center,
       );
     }
     if (_challenges.isEmpty) {
       return Text(
         l10n.loadingChallenge,
-        style: const TextStyle(
-            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+        style: TextStyle(
+            fontSize: 18, fontWeight: FontWeight.bold, color: context.paper.ink),
         textAlign: TextAlign.center,
       );
     }
@@ -490,15 +490,17 @@ class _NewPageState extends State<NewPage> {
           value: selected['id'] as int,
           isExpanded: true,
           underline: const SizedBox.shrink(),
+          dropdownColor: context.paper.card,
+          iconEnabledColor: context.paper.ink,
           items: _challenges
               .map((c) => DropdownMenuItem<int>(
                     value: c['id'] as int,
                     child: Text(
                       _challengeLabel(c, l10n),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black),
+                          color: context.paper.ink),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ))
@@ -511,7 +513,7 @@ class _NewPageState extends State<NewPage> {
         if (description.isNotEmpty)
           Text(
             description,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            style: TextStyle(fontSize: 14, color: context.paper.inkMuted),
             textAlign: TextAlign.center,
           ),
         if (_remainingChallengeTime != null) ...[
