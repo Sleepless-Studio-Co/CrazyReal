@@ -13,7 +13,9 @@ void main() {
     for (var i = 1; i <= 3; i++) postJson(i, challenge: 'Défi $i'),
   ];
 
-  FakeApi profileApi(Map<String, dynamic> profile, [Map<String, http.Response Function(http.Request)> extra = const {}]) =>
+  FakeApi profileApi(Map<String, dynamic> profile,
+          [Map<String, http.Response Function(http.Request)> extra =
+              const {}]) =>
       FakeApi({'GET /users/2': (_) => json(profile), ...extra});
 
   Future<void> openProfile(WidgetTester tester) async {
@@ -55,7 +57,8 @@ void main() {
 
     testWithApi(
       'shows a lock next to the name of a private account',
-      () => profileApi(profileJson(isPrivate: true, isFriend: true, posts: threePosts)),
+      () => profileApi(
+          profileJson(isPrivate: true, isFriend: true, posts: threePosts)),
       (tester, api) async {
         await openProfile(tester);
 
@@ -73,7 +76,8 @@ void main() {
         await openProfile(tester);
 
         expect(gridTiles(), findsNWidgets(3));
-        expect(find.byType(GridView), findsNothing, reason: 'built as a sliver');
+        expect(find.byType(GridView), findsNothing,
+            reason: 'built as a sliver');
       },
     );
 
@@ -111,7 +115,9 @@ void main() {
         await openProfile(tester);
 
         expect(find.text('Ce compte est privé'), findsOneWidget);
-        expect(find.text('Deviens ami avec cette personne pour voir ses défis.'), findsOneWidget);
+        expect(
+            find.text('Deviens ami avec cette personne pour voir ses défis.'),
+            findsOneWidget);
         expect(find.text('défis'), findsNothing);
         expect(find.text('4'), findsOneWidget);
         expect(gridTiles(), findsNothing);
@@ -120,7 +126,8 @@ void main() {
 
     testWithApi(
       'is open to the owner',
-      () => profileApi(profileJson(isPrivate: true, isSelf: true, posts: threePosts)),
+      () => profileApi(
+          profileJson(isPrivate: true, isSelf: true, posts: threePosts)),
       (tester, api) async {
         await openProfile(tester);
 
@@ -211,7 +218,11 @@ void main() {
       (tester, api) async {
         await openTile(tester, 0);
 
-        expect(tester.widget<PostCard>(find.byType(PostCard).first).linkAvatarToProfile, isFalse);
+        expect(
+            tester
+                .widget<PostCard>(find.byType(PostCard).first)
+                .linkAvatarToProfile,
+            isFalse);
         expect(find.bySemanticsLabel('Voir le profil de bob'), findsNothing);
       },
     );
@@ -219,7 +230,8 @@ void main() {
     testWithApi(
       'upvoting updates the heart and the counter',
       () => profileApi(profileJson(posts: threePosts), {
-        'POST /posts/1/upvote': (_) => json(postJson(1, challenge: 'Défi 1', upvotes: 1, hasUpvoted: true)),
+        'POST /posts/1/upvote': (_) => json(
+            postJson(1, challenge: 'Défi 1', upvotes: 1, hasUpvoted: true)),
       }),
       (tester, api) async {
         await openTile(tester, 0);
@@ -235,7 +247,8 @@ void main() {
 
     testWithApi(
       'removing an upvote sends DELETE',
-      () => profileApi(profileJson(posts: [postJson(1, upvotes: 2, hasUpvoted: true)]), {
+      () => profileApi(
+          profileJson(posts: [postJson(1, upvotes: 2, hasUpvoted: true)]), {
         'DELETE /posts/1/upvote': (_) => json(postJson(1, upvotes: 1)),
       }),
       (tester, api) async {
@@ -268,7 +281,8 @@ void main() {
     testWithApi(
       'the vote survives going back to the grid and reopening the list',
       () => profileApi(profileJson(posts: threePosts), {
-        'POST /posts/1/upvote': (_) => json(postJson(1, challenge: 'Défi 1', upvotes: 1, hasUpvoted: true)),
+        'POST /posts/1/upvote': (_) => json(
+            postJson(1, challenge: 'Défi 1', upvotes: 1, hasUpvoted: true)),
       }),
       (tester, api) async {
         await openTile(tester, 0);

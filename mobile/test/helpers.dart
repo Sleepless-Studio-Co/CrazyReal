@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -10,6 +11,8 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mobile/l10n/app_localizations.dart';
+import 'package:mobile/services/chat_socket_service.dart';
+import 'package:mobile/widgets/paper.dart';
 
 /// Fake backend: map "METHOD /path" to a handler, and keep every request so
 /// tests can assert on what the app actually sent.
@@ -23,7 +26,8 @@ class FakeApi {
     requests.add(request);
     final key = '${request.method} ${request.url.path}';
     final handler = routes[key];
-    if (handler == null) return http.Response('{"message":"no route $key"}', 404);
+    if (handler == null)
+      return http.Response('{"message":"no route $key"}', 404);
     return handler(request);
   });
 
@@ -41,7 +45,10 @@ http.Response json(Object body, [int status = 200]) => http.Response(
 /// no font downloads from the test runner.
 void setUpTestEnv({String? token = 'tok'}) {
   dotenv.testLoad(fileInput: 'API_BASE_URL=http://api.test');
-  SharedPreferences.setMockInitialValues({if (token != null) 'access_token': token});
+  SharedPreferences.setMockInitialValues({
+    if (token != null) 'access_token': token,
+    'user': jsonEncode(meJson),
+  });
   GoogleFonts.config.allowRuntimeFetching = false;
 }
 
@@ -54,12 +61,24 @@ void testWithApi(
   testWidgets(description, (tester) async {
     usePhoneScreen(tester);
     final fake = api();
-    await http.runWithClient(() => body(tester, fake), () => fake.client);
+    await HttpOverrides.runZoned(
+      () => http.runWithClient(() => body(tester, fake), () => fake.client),
+      createHttpClient: (_) => _OfflineHttpClient(),
+    );
+    // Dispose pages, then stop the app-wide chat socket (a singleton that
+    // outlives pages) so no reconnect timer leaks into the next test.
+    await tester.pumpWidget(const SizedBox());
+    ChatSocketService().disconnect();
+    await tester.pump(const Duration(seconds: 2));
   });
 }
 
-Widget wrapApp(Widget child) => MaterialApp(
+Widget wrapApp(Widget child, {ThemeMode themeMode = ThemeMode.light}) =>
+    MaterialApp(
       locale: const Locale('fr'),
+      theme: paperTheme(Brightness.light),
+      darkTheme: paperTheme(Brightness.dark),
+      themeMode: themeMode,
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -115,4 +134,29 @@ void usePhoneScreen(WidgetTester tester) {
   tester.view.physicalSize = const Size(390 * 3, 844 * 3);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
+}
+
+const Map<String, dynamic> meJson = {
+  'id': 1,
+  'username': 'alice',
+  'email': 'alice@example.com',
+  'avatarUrl': null,
+  'avatarKey': null,
+  'isPrivate': false,
+  'emailVerified': true,
+  'role': 'ADMIN',
+};
+
+/// dart:io client that is always offline: websockets (feed/chat) and
+/// network images fail fast instead of hitting flutter_test's mock client,
+/// which cannot upgrade to a websocket.
+class _OfflineHttpClient implements HttpClient {
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.isMethod) {
+      return Future<HttpClientRequest>.error(
+          const SocketException('offline (test)'));
+    }
+    return null;
+  }
 }

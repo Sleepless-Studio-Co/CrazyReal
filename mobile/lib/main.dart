@@ -19,6 +19,7 @@ import 'guest_share_page.dart';
 import 'services/chat_socket_service.dart';
 import 'services/notification_service.dart';
 import 'services/global_notification_service.dart';
+import 'widgets/paper.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -47,33 +48,24 @@ class MyApp extends StatelessWidget {
         return ValueListenableBuilder<ThemeMode>(
           valueListenable: appThemeMode,
           builder: (context, themeMode, _) => MaterialApp(
-          navigatorKey: navigatorKey,
-          title: 'CrazyReal',
-          title: 'CrazyReal',
-          locale: locale,
-          themeMode: themeMode,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            scaffoldBackgroundColor: const Color(0xFFF7EBD1),
+            navigatorKey: navigatorKey,
+            title: 'CrazyReal',
+            locale: locale,
+            themeMode: themeMode,
+            theme: paperTheme(Brightness.light),
+            darkTheme: paperTheme(Brightness.dark),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', ''),
+              Locale('fr', ''),
+            ],
+            home: AuthGate(initialShareToken: initialShareToken),
           ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple,
-              brightness: Brightness.dark,
-            ),
-            scaffoldBackgroundColor: const Color(0xFF171311),
-          ),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', ''),
-            Locale('fr', ''),
-          ],
-          home: AuthGate(initialShareToken: initialShareToken),
         );
       },
     );

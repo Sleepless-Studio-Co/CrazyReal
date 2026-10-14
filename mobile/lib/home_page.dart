@@ -11,10 +11,7 @@ import 'services/feed_service.dart';
 import 'utils/media_url.dart';
 import 'widgets/post_card.dart';
 import 'widgets/post_card_skeleton.dart';
-
-
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
+import 'widgets/paper.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -236,7 +233,7 @@ class HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF7EBD1),
+        backgroundColor: context.paper.bg,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,7 +260,7 @@ class HomePageState extends State<HomePage> {
             )
           else
             IconButton(
-              icon: const Icon(Icons.refresh, color: _inkColor),
+              icon: Icon(Icons.refresh, color: context.paper.ink),
               onPressed: () => refreshFeed(showLoading: false),
               tooltip: l10n.feedRefresh,
             ),
@@ -282,7 +279,7 @@ class HomePageState extends State<HomePage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      color: const Color(0xFFF7EBD1),
+      color: context.paper.bg,
       child: DropdownButton<int>(
         value: _selectedChallengeId,
         isExpanded: true,
@@ -328,7 +325,8 @@ class HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.cloud_off_outlined,
-                  size: 48, color: _inkMuted.withValues(alpha: 0.8)),
+                  size: 48,
+                  color: context.paper.inkMuted.withValues(alpha: 0.8)),
               const SizedBox(height: 16),
               Text(
                 l10n.feedLoadError,
@@ -339,8 +337,8 @@ class HomePageState extends State<HomePage> {
               FilledButton(
                 onPressed: () => refreshFeed(showLoading: true),
                 style: FilledButton.styleFrom(
-                  backgroundColor: _inkColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: context.paper.ink,
+                  foregroundColor: context.paper.bg,
                 ),
                 child: Text(l10n.feedRetry),
               ),
@@ -358,7 +356,7 @@ class HomePageState extends State<HomePage> {
           children: [
             const SizedBox(height: 80),
             Icon(Icons.photo_camera_outlined,
-                size: 64, color: _inkMuted.withValues(alpha: 0.7)),
+                size: 64, color: context.paper.inkMuted.withValues(alpha: 0.7)),
             const SizedBox(height: 16),
             Center(child: Text(l10n.noPostsYet, style: _mutedStyle())),
             const SizedBox(height: 8),
@@ -377,8 +375,8 @@ class HomePageState extends State<HomePage> {
                   icon: const Icon(Icons.add_a_photo_outlined),
                   label: Text(l10n.publishFirstPost),
                   style: FilledButton.styleFrom(
-                    backgroundColor: _inkColor,
-                    foregroundColor: Colors.white,
+                    backgroundColor: context.paper.ink,
+                    foregroundColor: context.paper.bg,
                   ),
                 ),
               ),
@@ -409,7 +407,7 @@ class HomePageState extends State<HomePage> {
 
   TextStyle _titleStyle() {
     return GoogleFonts.dmSerifDisplay(
-      color: _inkColor,
+      color: context.paper.ink,
       fontSize: 24,
       letterSpacing: 0.2,
     );
@@ -417,7 +415,7 @@ class HomePageState extends State<HomePage> {
 
   TextStyle _mutedStyle({double fontSize = 14}) {
     return GoogleFonts.karla(
-      color: _inkMuted,
+      color: context.paper.inkMuted,
       fontSize: fontSize,
     );
   }

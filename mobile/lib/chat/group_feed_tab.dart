@@ -42,7 +42,8 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e is ApiException ? e.message : 'Erreur de chargement'),
+            content:
+                Text(e is ApiException ? e.message : 'Erreur de chargement'),
             backgroundColor: paperDanger,
           ),
         );
@@ -81,24 +82,26 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: paperAccent));
+      return Center(
+          child: CircularProgressIndicator(color: context.paper.accent));
     }
 
     if (_posts.isEmpty) {
       return RefreshIndicator(
         onRefresh: _load,
-        color: paperAccent,
+        color: context.paper.accent,
         child: const PaperEmptyState(
           icon: Icons.photo_library_outlined,
           title: 'Aucune photo',
-          message: 'Relève un défi depuis l\'appareil photo pour remplir ce feed !',
+          message:
+              'Relève un défi depuis l\'appareil photo pour remplir ce feed !',
         ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: paperAccent,
+      color: context.paper.accent,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),

@@ -52,7 +52,9 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        final message = e is ApiException ? e.message : 'Erreur lors du chargement des membres';
+        final message = e is ApiException
+            ? e.message
+            : 'Erreur lors du chargement des membres';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
@@ -61,16 +63,15 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   }
 
   Future<void> _openAddMembers() async {
-    final memberIds = _members
-        .map((m) => (m['user'] as Map)['id'] as int)
-        .toSet();
+    final memberIds =
+        _members.map((m) => (m['user'] as Map)['id'] as int).toSet();
 
     final added = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: paperCard,
+      backgroundColor: context.paper.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -122,7 +123,8 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   }
 
   void _showError(Object error) {
-    final message = error is ApiException ? error.message : 'Une erreur est survenue';
+    final message =
+        error is ApiException ? error.message : 'Une erreur est survenue';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: paperDanger),
     );
@@ -131,16 +133,18 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: paperBg,
+      backgroundColor: context.paper.bg,
       appBar: paperAppBar(
+        context,
         title: 'Membres',
         subtitle: _isLoading ? null : '${_members.length} membre(s)',
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: paperAccent))
+          ? Center(
+              child: CircularProgressIndicator(color: context.paper.accent))
           : RefreshIndicator(
               onRefresh: _load,
-              color: paperAccent,
+              color: context.paper.accent,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -155,7 +159,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
 
                   return Container(
                     padding: const EdgeInsets.all(14),
-                    decoration: paperCardDecoration(),
+                    decoration: paperCardDecoration(context),
                     child: Row(
                       children: [
                         FeedAvatar(
@@ -173,7 +177,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                               children: [
                                 Text(
                                   isMe ? '$username (toi)' : username,
-                                  style: paperValue(fontSize: 16),
+                                  style: paperValue(context, fontSize: 16),
                                 ),
                                 const SizedBox(height: 4),
                                 _RoleChip(isAdmin: isAdmin),
@@ -185,8 +189,8 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                           PopupMenuButton<String>(
                             tooltip: 'Gérer $username',
                             icon: const Icon(Icons.more_vert),
-                            color: paperCard,
-                            iconColor: paperInk,
+                            color: context.paper.card,
+                            iconColor: context.paper.ink,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
@@ -202,21 +206,22 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                                 PopupMenuItem(
                                   value: 'promote',
                                   child: Text('Promouvoir admin',
-                                      style: paperValue(fontSize: 14)),
+                                      style: paperValue(context, fontSize: 14)),
                                 ),
                               if (isAdmin)
                                 PopupMenuItem(
                                   value: 'demote',
                                   child: Text('Rétrograder membre',
-                                      style: paperValue(fontSize: 14)),
+                                      style: paperValue(context, fontSize: 14)),
                                 ),
                               PopupMenuItem(
                                 value: 'remove',
                                 child: Text(
                                   'Retirer du groupe',
                                   style: paperValue(
+                                    context,
                                     fontSize: 14,
-                                    color: paperDanger,
+                                    color: context.paper.danger,
                                   ),
                                 ),
                               ),
@@ -237,7 +242,8 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
               backgroundColor: paperAccentStrong,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.person_add_alt_1),
-              label: Text('Ajouter', style: paperValue(color: Colors.white)),
+              label: Text('Ajouter',
+                  style: paperValue(context, color: Colors.white)),
             ),
     );
   }
@@ -253,7 +259,7 @@ class _RoleChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: paperChip,
+        color: context.paper.chip,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -263,11 +269,12 @@ class _RoleChip extends StatelessWidget {
             child: Icon(
               isAdmin ? Icons.shield_outlined : Icons.person_outline,
               size: 13,
-              color: paperInkMuted,
+              color: context.paper.inkMuted,
             ),
           ),
           const SizedBox(width: 4),
-          Text(isAdmin ? 'Admin' : 'Membre', style: paperLabel(fontSize: 11)),
+          Text(isAdmin ? 'Admin' : 'Membre',
+              style: paperLabel(context, fontSize: 11)),
         ],
       ),
     );
@@ -317,7 +324,8 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError(e is ApiException ? e.message : 'Erreur lors du chargement des amis');
+      _showError(
+          e is ApiException ? e.message : 'Erreur lors du chargement des amis');
     }
   }
 
@@ -353,7 +361,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
               alignment: Alignment.centerLeft,
               child: Semantics(
                 header: true,
-                child: Text('Ajouter des membres', style: paperTitle()),
+                child: Text('Ajouter des membres', style: paperTitle(context)),
               ),
             ),
           ),
@@ -381,7 +389,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
                     backgroundColor: paperAccentStrong,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 52),
-                    textStyle: paperValue(color: Colors.white),
+                    textStyle: paperValue(context, color: Colors.white),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -396,7 +404,8 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
 
   Widget _buildList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: paperAccent));
+      return Center(
+          child: CircularProgressIndicator(color: context.paper.accent));
     }
 
     if (_candidates.isEmpty) {
@@ -422,7 +431,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? paperAccent : paperBorder,
+              color: isSelected ? context.paper.accent : context.paper.border,
             ),
           ),
           clipBehavior: Clip.antiAlias,
@@ -437,7 +446,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
             }),
             activeColor: paperAccentStrong,
             controlAffinity: ListTileControlAffinity.trailing,
-            title: Text(username, style: paperValue()),
+            title: Text(username, style: paperValue(context)),
             secondary: ExcludeSemantics(
               child: FeedAvatar(
                 username: username,

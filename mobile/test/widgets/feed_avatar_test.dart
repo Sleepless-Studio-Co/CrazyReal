@@ -10,14 +10,17 @@ void main() {
 
   FakeApi profileApi() => FakeApi({'GET /users/2': (_) => json(profileJson())});
 
-  testWithApi('without userId the avatar is not tappable', profileApi, (tester, api) async {
-    await tester.pumpWidget(wrapApp(const Scaffold(body: FeedAvatar(username: 'bob'))));
+  testWithApi('without userId the avatar is not tappable', profileApi,
+      (tester, api) async {
+    await tester
+        .pumpWidget(wrapApp(const Scaffold(body: FeedAvatar(username: 'bob'))));
 
     expect(find.byType(InkWell), findsNothing);
     expect(find.bySemanticsLabel('Voir le profil de bob'), findsNothing);
   });
 
-  testWithApi('a non-positive userId is ignored', profileApi, (tester, api) async {
+  testWithApi('a non-positive userId is ignored', profileApi,
+      (tester, api) async {
     await tester.pumpWidget(
       wrapApp(const Scaffold(body: FeedAvatar(username: 'bob', userId: 0))),
     );
@@ -25,7 +28,8 @@ void main() {
     expect(find.byType(InkWell), findsNothing);
   });
 
-  testWithApi('tapping the avatar opens the profile of that user', profileApi, (tester, api) async {
+  testWithApi('tapping the avatar opens the profile of that user', profileApi,
+      (tester, api) async {
     await tester.pumpWidget(
       wrapApp(const Scaffold(body: FeedAvatar(username: 'bob', userId: 2))),
     );
@@ -38,7 +42,8 @@ void main() {
     expect(api.calls, ['GET /users/2']);
   });
 
-  testWithApi('screen readers announce it as a button', profileApi, (tester, api) async {
+  testWithApi('screen readers announce it as a button', profileApi,
+      (tester, api) async {
     final handle = tester.ensureSemantics();
     await tester.pumpWidget(
       wrapApp(const Scaffold(body: FeedAvatar(username: 'bob', userId: 2))),
@@ -57,9 +62,11 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('falls back to the initial when there is no photo', (tester) async {
+  testWidgets('falls back to the initial when there is no photo',
+      (tester) async {
     setUpTestEnv();
-    await tester.pumpWidget(wrapApp(const Scaffold(body: FeedAvatar(username: 'bob'))));
+    await tester
+        .pumpWidget(wrapApp(const Scaffold(body: FeedAvatar(username: 'bob'))));
 
     expect(find.text('B'), findsOneWidget);
   });

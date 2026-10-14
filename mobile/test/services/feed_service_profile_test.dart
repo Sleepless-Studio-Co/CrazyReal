@@ -14,12 +14,15 @@ void main() {
   group('FeedService.fetchUserProfile', () {
     setUp(setUpTestEnv);
 
-    test('calls GET /users/:id with the bearer token and parses the profile', () async {
+    test('calls GET /users/:id with the bearer token and parses the profile',
+        () async {
       final api = FakeApi({
-        'GET /users/42': (_) => json(profileJson(id: 42, friendCount: 3, posts: [postJson(1)])),
+        'GET /users/42': (_) =>
+            json(profileJson(id: 42, friendCount: 3, posts: [postJson(1)])),
       });
 
-      final profile = await withApi(api, () => FeedService().fetchUserProfile(42));
+      final profile =
+          await withApi(api, () => FeedService().fetchUserProfile(42));
 
       expect(profile.user.id, 42);
       expect(profile.friendCount, 3);
@@ -29,7 +32,9 @@ void main() {
     });
 
     test('throws UnauthorizedException on 401', () async {
-      final api = FakeApi({'GET /users/42': (_) => json({'message': 'Unauthorized'}, 401)});
+      final api = FakeApi({
+        'GET /users/42': (_) => json({'message': 'Unauthorized'}, 401)
+      });
 
       await expectLater(
         withApi(api, () => FeedService().fetchUserProfile(42)),
@@ -38,7 +43,9 @@ void main() {
     });
 
     test('surfaces the backend message on 404', () async {
-      final api = FakeApi({'GET /users/42': (_) => json({'message': 'user not found'}, 404)});
+      final api = FakeApi({
+        'GET /users/42': (_) => json({'message': 'user not found'}, 404)
+      });
 
       await expectLater(
         withApi(api, () => FeedService().fetchUserProfile(42)),
@@ -65,7 +72,8 @@ void main() {
 
     test('upvotePost sends POST and removeUpvote sends DELETE', () async {
       final api = FakeApi({
-        'POST /posts/7/upvote': (_) => json(postJson(7, upvotes: 1, hasUpvoted: true)),
+        'POST /posts/7/upvote': (_) =>
+            json(postJson(7, upvotes: 1, hasUpvoted: true)),
         'DELETE /posts/7/upvote': (_) => json(postJson(7)),
       });
 

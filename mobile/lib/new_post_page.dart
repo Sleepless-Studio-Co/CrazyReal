@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'l10n/app_localizations.dart';
 import 'auth/auth_service.dart';
 import 'utils/media_url.dart';
+import 'widgets/paper.dart';
 
 final String baseUrl = apiBaseUrl;
 
@@ -169,9 +170,7 @@ class _NewPageState extends State<NewPage> {
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           setState(() => challengeError = l10n
-              
               .serverError('${response.statusCode}')
-              
               .replaceAll('{code}', '${response.statusCode}'));
         }
       }
@@ -519,10 +518,10 @@ class _NewPageState extends State<NewPage> {
           const SizedBox(height: 8),
           Text(
             'Temps restant : ${_formatRemaining(_remainingChallengeTime!)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFB85C38),
+              color: context.paper.accent,
             ),
           ),
         ],
@@ -639,4 +638,3 @@ class _NewPageState extends State<NewPage> {
     );
   }
 }
-

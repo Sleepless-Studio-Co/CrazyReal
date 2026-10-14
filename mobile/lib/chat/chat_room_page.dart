@@ -67,9 +67,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       'temp_${DateTime.now().millisecondsSinceEpoch}_${_tempIdCounter++}';
 
   int? get _lastConfirmedId {
-    final ids = _messages
-        .where((m) => m['id'] != null)
-        .map((m) => m['id'] as int);
+    final ids =
+        _messages.where((m) => m['id'] != null).map((m) => m['id'] as int);
     if (ids.isEmpty) return null;
     return ids.reduce((a, b) => a > b ? a : b);
   }
@@ -133,9 +132,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       final msgs = await _chatService.getMessages(widget.conversationId);
       if (mounted) {
         setState(() {
-          _messages = msgs
-              .map((m) => _normalize(m as Map<String, dynamic>))
-              .toList();
+          _messages =
+              msgs.map((m) => _normalize(m as Map<String, dynamic>)).toList();
           _isLoading = false;
           _messagesLoaded = true;
         });
@@ -306,10 +304,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       );
       if (!mounted) return;
 
-      final pendingIdx =
-          _messages.indexWhere((m) => m['tempId'] == tempId);
-      final alreadyById = _messages
-          .any((m) => m['id'] != null && m['id'] == confirmed['id']);
+      final pendingIdx = _messages.indexWhere((m) => m['tempId'] == tempId);
+      final alreadyById =
+          _messages.any((m) => m['id'] != null && m['id'] == confirmed['id']);
 
       setState(() {
         if (pendingIdx >= 0) {
@@ -408,8 +405,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     // Conversation 1-à-1 : pas d'onglets, juste le chat.
     if (!widget.isGroup) {
       return Scaffold(
-        backgroundColor: paperBg,
+        backgroundColor: context.paper.bg,
         appBar: paperAppBar(
+          context,
           title: widget.conversationName,
           actions: appBarActions,
         ),
@@ -421,11 +419,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: paperBg,
+        backgroundColor: context.paper.bg,
         appBar: paperAppBar(
+          context,
           title: widget.conversationName,
           actions: appBarActions,
-          bottom: paperTabBar(const [
+          bottom: paperTabBar(context, const [
             Tab(icon: Icon(Icons.chat_bubble_outline), text: 'Chat'),
             Tab(icon: Icon(Icons.emoji_events_outlined), text: 'Défis'),
             Tab(icon: Icon(Icons.photo_library_outlined), text: 'Feed'),
@@ -447,8 +446,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       children: [
         Expanded(
           child: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: paperAccent),
+              ? Center(
+                  child: CircularProgressIndicator(color: context.paper.accent),
                 )
               : _messages.isEmpty
                   ? const PaperEmptyState(
@@ -474,7 +473,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 liveRegion: true,
                 child: Text(
                   _typingText(),
-                  style: paperMuted(fontSize: 12).copyWith(
+                  style: paperMuted(context, fontSize: 12).copyWith(
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -500,8 +499,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     final Color bubbleColor;
     final Color textColor;
     if (isFailed) {
-      bubbleColor = const Color(0xFFF7DAD4);
-      textColor = paperInk;
+      bubbleColor = Color.alphaBlend(
+        context.paper.danger.withValues(alpha: 0.18),
+        context.paper.card,
+      );
+      textColor = context.paper.ink;
     } else if (isMe) {
       // Accent foncé : contraste ≥ 5.5:1 avec le texte blanc.
       bubbleColor = isPending
@@ -509,8 +511,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           : paperAccentStrong;
       textColor = Colors.white;
     } else {
-      bubbleColor = paperCard;
-      textColor = paperInk;
+      bubbleColor = context.paper.card;
+      textColor = context.paper.ink;
     }
 
     final who = isMe ? 'Toi' : (senderName.isEmpty ? 'Inconnu' : senderName);
@@ -554,9 +556,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: bubbleColor,
-                    border: isMe
-                        ? null
-                        : Border.all(color: paperBorder),
+                    border:
+                        isMe ? null : Border.all(color: context.paper.border),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
@@ -576,14 +577,16 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           child: Text(
                             senderName,
                             style: paperLabel(
+                              context,
                               fontSize: 12,
-                              color: paperAccentStrong,
+                              color: context.paper.accent,
                             ),
                           ),
                         ),
                       Text(
                         content,
-                        style: paperMuted(fontSize: 15, color: textColor),
+                        style:
+                            paperMuted(context, fontSize: 15, color: textColor),
                       ),
                       const SizedBox(height: 4),
                       Row(
@@ -592,8 +595,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           Text(
                             time,
                             style: paperMuted(
+                              context,
                               fontSize: 11,
-                              color: textColor.withValues(alpha: 0.75),
+                              color: textColor.withValues(alpha: 0.9),
                             ),
                           ),
                           if (isMe) ...[
@@ -607,7 +611,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                               size: 13,
                               color: isFailed
                                   ? paperDanger
-                                  : textColor.withValues(alpha: 0.75),
+                                  : textColor.withValues(alpha: 0.9),
                             ),
                           ],
                         ],
@@ -627,9 +631,9 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Widget _buildInput() {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: const BoxDecoration(
-        color: paperCard,
-        border: Border(top: BorderSide(color: paperBorder)),
+      decoration: BoxDecoration(
+        color: context.paper.card,
+        border: Border(top: BorderSide(color: context.paper.border)),
       ),
       child: SafeArea(
         top: false,
@@ -641,26 +645,28 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 controller: _messageController,
                 maxLines: 5,
                 minLines: 1,
-                style: paperMuted(fontSize: 15, color: paperInk),
+                style:
+                    paperMuted(context, fontSize: 15, color: context.paper.ink),
                 textCapitalization: TextCapitalization.sentences,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendMessage(),
                 decoration: InputDecoration(
                   hintText: 'Message…',
-                  hintStyle: paperMuted(fontSize: 15),
+                  hintStyle: paperMuted(context, fontSize: 15),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: context.paper.field,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
+                    borderSide: BorderSide(color: context.paper.fieldBorder),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: paperAccent, width: 1.5),
+                    borderSide:
+                        BorderSide(color: context.paper.accent, width: 1.5),
                   ),
                 ),
               ),

@@ -33,7 +33,10 @@ void main() {
         {'id': 2, 'username': 'bob', 'isPrivate': false},
       ],
       requests: [
-        {'requestId': 9, 'requester': {'id': 3, 'username': 'carol'}},
+        {
+          'requestId': 9,
+          'requester': {'id': 3, 'username': 'carol'}
+        },
       ],
     ),
     (tester, api) async {
@@ -55,7 +58,9 @@ void main() {
       await tester.tap(find.byType(FeedAvatar));
       await tester.pumpAndSettle();
 
-      expect(tester.widget<UserProfilePage>(find.byType(UserProfilePage)).userId, 2);
+      expect(
+          tester.widget<UserProfilePage>(find.byType(UserProfilePage)).userId,
+          2);
       expect(api.calls.last, 'GET /users/2');
     },
   );
@@ -63,7 +68,10 @@ void main() {
   testWithApi(
     'tapping a requester avatar opens their profile before accepting',
     () => friendsApi(requests: [
-      {'requestId': 9, 'requester': {'id': 3, 'username': 'carol'}},
+      {
+        'requestId': 9,
+        'requester': {'id': 3, 'username': 'carol'}
+      },
     ]),
     (tester, api) async {
       await openFriends(tester);
@@ -73,14 +81,19 @@ void main() {
       await tester.tap(find.byType(FeedAvatar));
       await tester.pumpAndSettle();
 
-      expect(tester.widget<UserProfilePage>(find.byType(UserProfilePage)).userId, 3);
+      expect(
+          tester.widget<UserProfilePage>(find.byType(UserProfilePage)).userId,
+          3);
     },
   );
 
   testWithApi(
     'accepting a request reloads the lists',
     () => friendsApi(requests: [
-      {'requestId': 9, 'requester': {'id': 3, 'username': 'carol'}},
+      {
+        'requestId': 9,
+        'requester': {'id': 3, 'username': 'carol'}
+      },
     ]),
     (tester, api) async {
       await openFriends(tester);
@@ -103,7 +116,8 @@ void main() {
     }),
     (tester, api) async {
       var loggedOut = false;
-      await tester.pumpWidget(wrapApp(FriendPage(onUnauthorized: () => loggedOut = true)));
+      await tester.pumpWidget(
+          wrapApp(FriendPage(onUnauthorized: () => loggedOut = true)));
       // The page keeps its spinner while the app logs out, so no pumpAndSettle.
       await tester.pump();
       await tester.pump();

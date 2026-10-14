@@ -59,12 +59,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final profile = _profile;
 
     return Scaffold(
-      backgroundColor: paperBg,
-      appBar: paperAppBar(title: profile?.user.username ?? ''),
+      backgroundColor: context.paper.bg,
+      appBar: paperAppBar(context, title: profile?.user.username ?? ''),
       body: profile == null
           ? (_error == null
-              ? const Center(
-                  child: CircularProgressIndicator(color: paperAccent),
+              ? Center(
+                  child: CircularProgressIndicator(color: context.paper.accent),
                 )
               : PaperEmptyState(
                   icon: Icons.cloud_off_outlined,
@@ -78,7 +78,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 ))
           : RefreshIndicator(
               onRefresh: _load,
-              color: paperAccent,
+              color: context.paper.accent,
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
@@ -108,21 +108,21 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       ? Icons.lock_outline
                       : Icons.photo_camera_outlined,
                   size: 56,
-                  color: paperInkMuted.withValues(alpha: 0.75),
+                  color: context.paper.inkMuted.withValues(alpha: 0.75),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   profile.isLocked
                       ? l10n.profilePrivateTitle
                       : l10n.profileNoPosts,
-                  style: paperValue(fontSize: 16),
+                  style: paperValue(context, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
                 if (profile.isLocked) ...[
                   const SizedBox(height: 8),
                   Text(
                     l10n.profilePrivateMessage,
-                    style: paperMuted(fontSize: 14),
+                    style: paperMuted(context, fontSize: 14),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -179,19 +179,19 @@ class _ProfileHeader extends StatelessWidget {
           // Accent ring, the 2026 social-app way of framing a profile photo.
           Container(
             padding: const EdgeInsets.all(3),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [paperAccent, Color(0xFFE9B384)],
+                colors: [context.paper.accent, Color(0xFFE9B384)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
             ),
             child: Container(
               padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: paperBg,
+                color: context.paper.bg,
               ),
               child: FeedAvatar(
                 username: profile.user.username,
@@ -211,7 +211,7 @@ class _ProfileHeader extends StatelessWidget {
                     Flexible(
                       child: Text(
                         profile.user.username,
-                        style: paperTitle(fontSize: 24),
+                        style: paperTitle(context, fontSize: 24),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -219,10 +219,10 @@ class _ProfileHeader extends StatelessWidget {
                       const SizedBox(width: 6),
                       Semantics(
                         label: l10n.privateAccount,
-                        child: const Icon(
+                        child: Icon(
                           Icons.lock_outline,
                           size: 18,
-                          color: paperInkMuted,
+                          color: context.paper.inkMuted,
                         ),
                       ),
                     ],
@@ -265,14 +265,14 @@ class _Stat extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: paperCard,
+          color: context.paper.card,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: paperBorder),
+          border: Border.all(color: context.paper.border),
         ),
         child: Column(
           children: [
-            Text('$value', style: paperValue(fontSize: 18)),
-            Text(label, style: paperMuted(fontSize: 12)),
+            Text('$value', style: paperValue(context, fontSize: 18)),
+            Text(label, style: paperMuted(context, fontSize: 12)),
           ],
         ),
       ),
@@ -297,7 +297,7 @@ class _GridTile extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Material(
-          color: const Color(0xFFEEDCC5),
+          color: context.paper.placeholder,
           child: InkWell(
             onTap: onTap,
             child: Stack(
@@ -314,9 +314,9 @@ class _GridTile extends StatelessWidget {
                       url,
                       fit: BoxFit.cover,
                       cacheWidth: 400,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, __, ___) => Icon(
                         Icons.broken_image_outlined,
-                        color: paperInkMuted,
+                        color: context.paper.inkMuted,
                       ),
                     ),
                   ),
@@ -404,8 +404,9 @@ class _ProfilePostsPageState extends State<_ProfilePostsPage> {
     final start = widget.initialIndex;
 
     return Scaffold(
-      backgroundColor: paperBg,
+      backgroundColor: context.paper.bg,
       appBar: paperAppBar(
+        context,
         title: l10n.profilePosts,
         subtitle: widget.username,
       ),

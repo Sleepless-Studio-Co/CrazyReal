@@ -38,13 +38,17 @@ void main() {
           ]),
     });
 
-    final requests = await withApi(api, () => FriendService().getPendingRequests());
+    final requests =
+        await withApi(api, () => FriendService().getPendingRequests());
 
     expect(requests.single['requestId'], 4);
   });
 
-  test('sendRequest posts to /friends/request/:username and accepts 201', () async {
-    final api = FakeApi({'POST /friends/request/bob': (_) => json({'id': 1}, 201)});
+  test('sendRequest posts to /friends/request/:username and accepts 201',
+      () async {
+    final api = FakeApi({
+      'POST /friends/request/bob': (_) => json({'id': 1}, 201)
+    });
 
     await withApi(api, () => FriendService().sendRequest('bob'));
 
@@ -80,7 +84,9 @@ void main() {
   });
 
   test('blockUser posts to /friends/block/:username', () async {
-    final api = FakeApi({'POST /friends/block/bob': (_) => json({'status': 'BLOCKED'}, 201)});
+    final api = FakeApi({
+      'POST /friends/block/bob': (_) => json({'status': 'BLOCKED'}, 201)
+    });
 
     await withApi(api, () => FriendService().blockUser('bob'));
 
@@ -96,7 +102,9 @@ void main() {
   });
 
   test('a 401 becomes UnauthorizedException so the app can log out', () async {
-    final api = FakeApi({'GET /friends': (_) => json({'message': 'Unauthorized'}, 401)});
+    final api = FakeApi({
+      'GET /friends': (_) => json({'message': 'Unauthorized'}, 401)
+    });
 
     await expectLater(
       withApi(api, () => FriendService().getFriends()),

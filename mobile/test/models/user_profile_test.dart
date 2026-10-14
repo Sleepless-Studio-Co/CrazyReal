@@ -58,8 +58,10 @@ void main() {
   });
 
   group('UserProfile.isLocked', () {
-    UserProfile make({required bool private, bool friend = false, bool self = false}) =>
-        UserProfile.fromJson(profileJson(isPrivate: private, isFriend: friend, isSelf: self));
+    UserProfile make(
+            {required bool private, bool friend = false, bool self = false}) =>
+        UserProfile.fromJson(
+            profileJson(isPrivate: private, isFriend: friend, isSelf: self));
 
     test('public profiles are never locked', () {
       expect(make(private: false).isLocked, isFalse);
