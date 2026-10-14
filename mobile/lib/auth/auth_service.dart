@@ -18,10 +18,7 @@ class AuthService {
 
   AuthService({http.Client? client, FlutterSecureStorage? secureStorage})
       : _client = client ?? http.Client(),
-        _secureStorage = secureStorage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            );
+        _secureStorage = secureStorage ?? const FlutterSecureStorage();
 
   String get baseUrl {
     try {

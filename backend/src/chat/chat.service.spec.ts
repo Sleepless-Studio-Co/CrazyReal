@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('ChatService', () => {
   let service: ChatService;
@@ -75,6 +76,12 @@ describe('ChatService', () => {
         {
           provide: PrismaService,
           useValue: prismaService,
+        },
+        {
+          provide: NotificationGateway,
+          useValue: {
+            sendToUsers: jest.fn(),
+          },
         },
       ],
     }).compile();

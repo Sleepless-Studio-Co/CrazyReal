@@ -15,9 +15,7 @@ void main() {
     test('restores a session using the refresh token', () async {
       SharedPreferences.setMockInitialValues({});
 
-      final secureStorage = FlutterSecureStorage(
-        aOptions: const AndroidOptions(encryptedSharedPreferences: true),
-      );
+      const secureStorage = FlutterSecureStorage();
       await secureStorage.write(key: 'refresh_token', value: 'refresh-token');
 
       final client = MockClient((request) async {

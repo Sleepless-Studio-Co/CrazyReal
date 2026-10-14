@@ -41,6 +41,47 @@ class FeedChallenge {
   }
 }
 
+enum PostMediaType { photo, video }
+
+PostMediaType parsePostMediaType(String? value) {
+  switch (value?.toUpperCase()) {
+    case 'VIDEO':
+      return PostMediaType.video;
+    default:
+      return PostMediaType.photo;
+  }
+}
+
+class AvailableChallenge {
+  const AvailableChallenge({
+    required this.id,
+    required this.title,
+    required this.isGlobal,
+    this.groupName,
+  });
+
+  final int id;
+  final String title;
+  final bool isGlobal;
+  final String? groupName;
+
+  factory AvailableChallenge.fromJson(Map<String, dynamic> json) {
+    final group = json['group'];
+    return AvailableChallenge(
+      id: json['id'] as int,
+      title: json['title']?.toString() ?? '',
+      isGlobal: group == null,
+      groupName: group is Map ? group['name']?.toString() : null,
+    );
+  }
+
+  String label(String globalLabel, String friendLabel) {
+    final scope = isGlobal ? globalLabel : friendLabel;
+    final prefix = groupName == null ? scope : '$scope · $groupName';
+    return '$prefix · $title';
+  }
+}
+
 class FeedPost {
   const FeedPost({
     required this.id,
@@ -50,6 +91,7 @@ class FeedPost {
     this.challenge,
     this.upvoteCount = 0,
     this.hasUpvoted = false,
+    this.mediaType = PostMediaType.photo,
   });
 
   final int id;
@@ -59,6 +101,9 @@ class FeedPost {
   final FeedChallenge? challenge;
   final int upvoteCount;
   final bool hasUpvoted;
+  final PostMediaType mediaType;
+
+  bool get isVideo => mediaType == PostMediaType.video;
 
   FeedPost copyWith({
     int? upvoteCount,
@@ -72,6 +117,7 @@ class FeedPost {
       challenge: challenge,
       upvoteCount: upvoteCount ?? this.upvoteCount,
       hasUpvoted: hasUpvoted ?? this.hasUpvoted,
+      mediaType: mediaType,
     );
   }
 
@@ -97,6 +143,7 @@ class FeedPost {
           : null,
       upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
       hasUpvoted: json['hasUpvoted'] == true,
+      mediaType: parsePostMediaType(json['mediaType']?.toString()),
     );
   }
 
