@@ -23,11 +23,15 @@ class PostCard extends StatelessWidget {
     required this.post,
     required this.unknownUserLabel,
     this.onUpvote,
+    this.linkAvatarToProfile = true,
   });
 
   final FeedPost post;
   final String unknownUserLabel;
   final VoidCallback? onUpvote;
+
+  /// False on the profile's own post list, to avoid stacking the same profile.
+  final bool linkAvatarToProfile;
   static final ShareService _shareService = ShareService();
 
   Future<void> _share(BuildContext context) async {
@@ -79,6 +83,7 @@ class PostCard extends StatelessWidget {
                   username: post.user.username,
                   avatarUrl: post.user.avatarUrl,
                   avatarKey: post.user.avatarKey,
+                  userId: linkAvatarToProfile ? post.user.id : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
