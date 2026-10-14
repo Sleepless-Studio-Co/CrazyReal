@@ -158,13 +158,12 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                     decoration: paperCardDecoration(),
                     child: Row(
                       children: [
-                        ExcludeSemantics(
-                          child: FeedAvatar(
-                            username: username,
-                            avatarUrl: user['avatarUrl']?.toString(),
-                            avatarKey: user['avatarKey']?.toString(),
-                            size: 46,
-                          ),
+                        FeedAvatar(
+                          username: username,
+                          avatarUrl: user['avatarUrl']?.toString(),
+                          avatarKey: user['avatarKey']?.toString(),
+                          size: 46,
+                          userId: user['id'] as int?,
                         ),
                         const SizedBox(width: 14),
                         Expanded(

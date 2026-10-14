@@ -245,13 +245,12 @@ class _FriendCard extends StatelessWidget {
         decoration: paperCardDecoration(),
         child: Row(
           children: [
-            ExcludeSemantics(
-              child: FeedAvatar(
-                username: username,
-                avatarUrl: friend['avatarUrl']?.toString(),
-                avatarKey: friend['avatarKey']?.toString(),
-                size: 48,
-              ),
+            FeedAvatar(
+              username: username,
+              avatarUrl: friend['avatarUrl']?.toString(),
+              avatarKey: friend['avatarKey']?.toString(),
+              size: 48,
+              userId: friend['id'] as int?,
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -306,13 +305,12 @@ class _RequestCard extends StatelessWidget {
           MergeSemantics(
             child: Row(
               children: [
-                ExcludeSemantics(
-                  child: FeedAvatar(
-                    username: username,
-                    avatarUrl: requester['avatarUrl']?.toString(),
-                    avatarKey: requester['avatarKey']?.toString(),
-                    size: 48,
-                  ),
+                FeedAvatar(
+                  username: username,
+                  avatarUrl: requester['avatarUrl']?.toString(),
+                  avatarKey: requester['avatarKey']?.toString(),
+                  size: 48,
+                  userId: requester['id'] as int?,
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -561,13 +559,12 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
           ),
           child: Row(
             children: [
-              ExcludeSemantics(
-                child: FeedAvatar(
-                  username: username,
-                  avatarUrl: user['avatarUrl']?.toString(),
-                  avatarKey: user['avatarKey']?.toString(),
-                  size: 42,
-                ),
+              FeedAvatar(
+                username: username,
+                avatarUrl: user['avatarUrl']?.toString(),
+                avatarKey: user['avatarKey']?.toString(),
+                size: 42,
+                userId: user['id'] as int?,
               ),
               const SizedBox(width: 12),
               Expanded(
