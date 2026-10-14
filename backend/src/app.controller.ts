@@ -387,7 +387,7 @@ export class AppController {
   }
 
   @Get('posts')
-  @ApiOperation({ summary: 'Récupérer les posts du feed (amis + soi)' })
+  @ApiOperation({ summary: 'Récupérer les posts publics, des amis et les siens' })
   @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
   async getPosts(
     @CurrentUser() user: ValidatedUser,
@@ -429,7 +429,10 @@ export class AppController {
 
     const posts = await this.prisma.post.findMany({
       where: {
-        userId: { in: feedUserIds },
+        OR: [
+          { userId: { in: [...new Set([...friendIds, user.userId])] } },
+          { user: { isPrivate: false } },
+        ],
         challengeId: { in: challengeIds },
       },
       orderBy: {

@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
+import 'theme_notifier.dart';
 import 'home_page.dart';
 import 'friend_page.dart';
 import 'new_post_page.dart';
@@ -23,6 +24,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final savedLang = prefs.getString('app_locale') ?? 'en';
   appLocale.value = Locale(savedLang, '');
+  appThemeMode.value = themeModeFromString(prefs.getString('theme_mode'));
   await NotificationService().init(navKey: navigatorKey);
   runApp(const MyApp());
 }
@@ -35,13 +37,23 @@ class MyApp extends StatelessWidget {
     return ValueListenableBuilder<Locale>(
       valueListenable: appLocale,
       builder: (context, locale, _) {
-        return MaterialApp(
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: appThemeMode,
+          builder: (context, themeMode, _) => MaterialApp(
           navigatorKey: navigatorKey,
-      title: 'CrazyReal',
+          title: 'CrazyReal',
           locale: locale,
+          themeMode: themeMode,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
             scaffoldBackgroundColor: const Color(0xFFF7EBD1),
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple,
+              brightness: Brightness.dark,
+            ),
+            scaffoldBackgroundColor: const Color(0xFF171311),
           ),
           localizationsDelegates: const [
             AppLocalizations.delegate,
@@ -54,6 +66,7 @@ class MyApp extends StatelessWidget {
             Locale('fr', ''),
           ],
           home: const AuthGate(),
+          ),
         );
       },
     );
@@ -231,9 +244,9 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey[500],
-        backgroundColor: const Color(0xFFF7EBD1),
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         type: BottomNavigationBarType.fixed,
         onTap: _onItemTapped,
       ),

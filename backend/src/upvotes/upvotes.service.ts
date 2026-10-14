@@ -29,14 +29,14 @@ export class UpVotesService {
   private async assertPostInFeed(userId: number, postId: number) {
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, user: { select: { isPrivate: true } } },
     });
 
     if (!post) {
       throw new NotFoundException('Post introuvable.');
     }
 
-    if (post.userId === userId) {
+    if (post.userId === userId || !post.user.isPrivate) {
       return post;
     }
 
