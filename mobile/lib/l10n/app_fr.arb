@@ -816,5 +816,29 @@
   },
 
   "adminLoadError": "Impossible de charger les défis",
-  "@adminLoadError": { "description": "Erreur au chargement de la liste" }
+  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
+
+  "viewProfile": "Voir le profil de {username}",
+  "@viewProfile": {"description": "Libellé lecteur d'écran de l'avatar cliquable", "placeholders": {"username": {"type": "String"}}},
+
+  "profilePostsCount": "{count, plural, =0{défi} =1{défi} other{défis}}",
+  "@profilePostsCount": {"description": "Libellé sous le nombre de défis réalisés", "placeholders": {"count": {"type": "int"}}},
+
+  "profileFriendsCount": "{count, plural, =0{abonné} =1{abonné} other{abonnés}}",
+  "@profileFriendsCount": {"description": "Libellé sous le nombre d'abonnés (amis)", "placeholders": {"count": {"type": "int"}}},
+
+  "profileNoPosts": "Aucun défi réalisé pour le moment",
+  "@profileNoPosts": {"description": "Profil sans post"},
+
+  "profilePrivateTitle": "Ce compte est privé",
+  "@profilePrivateTitle": {"description": "Profil privé non accessible"},
+
+  "profilePrivateMessage": "Deviens ami avec cette personne pour voir ses défis.",
+  "@profilePrivateMessage": {"description": "Explication profil privé"},
+
+  "profileLoadError": "Impossible de charger le profil",
+  "@profileLoadError": {"description": "Erreur de chargement du profil"},
+
+  "profilePosts": "Défis",
+  "@profilePosts": {"description": "Titre de la liste des posts d'un profil"}
 }
