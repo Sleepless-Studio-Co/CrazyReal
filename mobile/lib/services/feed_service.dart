@@ -43,6 +43,11 @@ class FeedService {
     return FeedPost.listFromJson(data);
   }
 
+  Future<UserProfile> fetchUserProfile(int userId) async {
+    final data = await _authedRequest('GET', '/users/$userId');
+    return UserProfile.fromJson(data as Map<String, dynamic>);
+  }
+
   Future<FeedChallengeSummary?> fetchCurrentChallenge() async {
     try {
       final token = await _authService.getAccessToken();
