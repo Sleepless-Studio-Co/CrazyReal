@@ -1195,6 +1195,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load challenges'**
   String get adminLoadError;
+
+  /// Title of the page listing the most upvoted posts of completed challenges
+  ///
+  /// In en, this message translates to:
+  /// **'Best challenges'**
+  String get topPostsTitle;
+
+  /// Tooltip of the trophy button in the home app bar
+  ///
+  /// In en, this message translates to:
+  /// **'Best challenges'**
+  String get topPostsTooltip;
+
+  /// Period filter: last 7 days
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get topPeriodWeek;
+
+  /// Period filter: last 30 days
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get topPeriodMonth;
+
+  /// Period filter: no limit
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get topPeriodAll;
+
+  /// Shown when the best challenges page is empty
+  ///
+  /// In en, this message translates to:
+  /// **'No completed challenge has been upvoted yet.'**
+  String get topPostsEmpty;
 }
 
 class _AppLocalizationsDelegate

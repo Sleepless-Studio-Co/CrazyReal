@@ -615,4 +615,22 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
+
+  @override
+  String get topPostsTitle => 'Meilleurs défis';
+
+  @override
+  String get topPostsTooltip => 'Meilleurs défis';
+
+  @override
+  String get topPeriodWeek => 'Semaine';
+
+  @override
+  String get topPeriodMonth => 'Mois';
+
+  @override
+  String get topPeriodAll => 'Tout';
+
+  @override
+  String get topPostsEmpty => 'Aucun défi terminé n\'a encore reçu de vote.';
 }

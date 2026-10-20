@@ -26,6 +26,13 @@ class FeedService {
     return FeedPost.listFromJson(data);
   }
 
+  /// Posts les plus upvotés des défis globaux terminés.
+  /// [period] : `week`, `month` ou `all`.
+  Future<List<FeedPost>> fetchTopPosts(String period) async {
+    final data = await _authedRequest('GET', '/posts/top?period=$period');
+    return FeedPost.listFromJson(data);
+  }
+
   Future<List<AvailableChallenge>> fetchAvailableChallenges() async {
     final data = await _authedRequest('GET', '/challenges/available');
     if (data is! List) return [];
