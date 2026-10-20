@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -438,6 +438,62 @@ export class AppController {
       orderBy: {
         createdAt: 'desc',
       },
+      include: postIncludeWithUpvotes(user.userId),
+    });
+
+    return posts.map(formatPostWithUpvotes);
+  }
+
+  @Get('posts/top')
+  @ApiOperation({
+    summary: 'Meilleurs posts (les plus upvotés) des défis globaux terminés',
+  })
+  @ApiQuery({ name: 'period', required: false, enum: ['week', 'month', 'all'] })
+  @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
+  async getTopPosts(
+    @CurrentUser() user: ValidatedUser,
+    @Query('period') period = 'all',
+  ) {
+    const periodDays: Record<string, number | null> = {
+      week: 7,
+      month: 30,
+      all: null,
+    };
+    if (!(period in periodDays)) {
+      throw new BadRequestException('period invalide (week, month ou all).');
+    }
+
+    const now = new Date();
+    const days = periodDays[period];
+    const since =
+      days == null
+        ? null
+        : new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    // Défi global terminé = déjà commencé mais plus dans sa fenêtre active.
+    // Les défis de groupe restent privés à leur groupe et ne sont pas classés ici.
+    const startedChallenges = await this.prisma.challenge.findMany({
+      where: { isActive: true, conversationId: null, date: { lte: now } },
+    });
+    const completedChallengeIds = startedChallenges
+      .filter((challenge) => !this.isChallengeActiveNow(challenge, now))
+      .map((challenge) => challenge.id);
+
+    const friendIds = await this.getAcceptedFriendIds(user.userId);
+
+    const posts = await this.prisma.post.findMany({
+      where: {
+        // Même règle de visibilité que le feed : publics, amis et soi-même.
+        OR: [
+          { userId: { in: [...new Set([...friendIds, user.userId])] } },
+          { user: { isPrivate: false } },
+        ],
+        challengeId: { in: completedChallengeIds },
+        upVotes: { some: {} },
+        ...(since ? { createdAt: { gte: since } } : {}),
+      },
+      orderBy: [{ upVotes: { _count: 'desc' } }, { createdAt: 'desc' }],
+      take: 50,
       include: postIncludeWithUpvotes(user.userId),
     });
 
