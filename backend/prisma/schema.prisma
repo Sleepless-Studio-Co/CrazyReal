@@ -48,6 +48,9 @@ model Challenge {
   conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   // Fin explicite pour les défis de groupe ; null => durée dérivée du `type` (global).
   endsAt         DateTime?
+  // Auteur d'un défi de groupe (null pour les défis globaux ou si le compte a été supprimé).
+  creatorId      Int?
+  creator        User?         @relation(fields: [creatorId], references: [id], onDelete: SetNull)
 
   @@unique([date, type, conversationId])
 }
@@ -96,6 +99,7 @@ model User {
   receivedRequests Friendship[] @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
+  createdChallenges Challenge[]
 }
 
 model EmailVerificationToken {
