@@ -350,6 +350,7 @@ export class ChatService {
         description,
         conversationId,
         endsAt,
+        creatorId: userId,
         // date = now : le défi démarre à sa création (fenêtre [date, endsAt]).
       },
     });
@@ -371,15 +372,52 @@ export class ChatService {
   }
 
   async getGroupChallenges(conversationId: number, userId: number) {
-    const isParticipant = await this.isParticipant(conversationId, userId);
-    if (!isParticipant) {
+    const participant = await this.prisma.participant.findUnique({
+      where: { userId_conversationId: { userId, conversationId } },
+    });
+    if (!participant) {
       throw new ForbiddenException("Tu n'as pas accès à ce groupe.");
     }
 
-    return this.prisma.challenge.findMany({
+    const challenges = await this.prisma.challenge.findMany({
       where: { conversationId },
       orderBy: { date: 'desc' },
     });
+
+    // `canDelete` évite au client de recalculer les droits (auteur ou admin).
+    return challenges.map((challenge) => ({
+      ...challenge,
+      canDelete: participant.role === 'ADMIN' || challenge.creatorId === userId,
+    }));
+  }
+
+  async deleteGroupChallenge(conversationId: number, challengeId: number, userId: number) {
+    const participant = await this.prisma.participant.findUnique({
+      where: { userId_conversationId: { userId, conversationId } },
+    });
+    if (!participant) {
+      throw new ForbiddenException("Tu n'as pas accès à ce groupe.");
+    }
+
+    const challenge = await this.prisma.challenge.findUnique({
+      where: { id: challengeId },
+    });
+    if (!challenge || challenge.conversationId !== conversationId) {
+      throw new NotFoundException('Défi introuvable.');
+    }
+
+    if (participant.role !== 'ADMIN' && challenge.creatorId !== userId) {
+      throw new ForbiddenException("Seul l'auteur du défi ou un admin du groupe peut le supprimer.");
+    }
+
+    // Post -> Challenge n'a pas de cascade : on retire les publications du défi
+    // avec lui (les upvotes suivent par cascade).
+    await this.prisma.$transaction(async (tx) => {
+      await tx.post.deleteMany({ where: { challengeId } });
+      await tx.challenge.delete({ where: { id: challengeId } });
+    });
+
+    return { success: true };
   }
 
   async getGroupFeed(conversationId: number, userId: number) {

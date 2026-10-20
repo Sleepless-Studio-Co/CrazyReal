@@ -6,6 +6,7 @@ import '../widgets/paper.dart';
 
 /// Onglet « Défis » d'un groupe : liste les défis du groupe et permet à
 /// n'importe quel membre d'en créer un (fenêtre maintenant → endsAt).
+/// L'auteur d'un défi et les admins du groupe peuvent le supprimer.
 class GroupChallengesTab extends StatefulWidget {
   final int conversationId;
 
@@ -64,6 +65,32 @@ class _GroupChallengesTabState extends State<GroupChallengesTab> {
     if (created == true) _load();
   }
 
+  Future<void> _deleteChallenge(Map<String, dynamic> challenge) async {
+    final confirmed = await paperConfirm(
+      context,
+      title: 'Supprimer le défi',
+      message:
+          'Le défi « ${challenge['title']} » et toutes ses publications seront supprimés. Continuer ?',
+      confirmLabel: 'Supprimer',
+      cancelLabel: 'Annuler',
+      danger: true,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await _chatService.deleteGroupChallenge(
+        widget.conversationId,
+        challenge['id'] as int,
+      );
+      _load();
+    } catch (e) {
+      if (mounted) {
+        _showError(e is ApiException ? e.message : 'Erreur lors de la suppression');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,6 +116,9 @@ class _GroupChallengesTabState extends State<GroupChallengesTab> {
                         return _ChallengeCard(
                           challenge: c,
                           isActive: _isActive(c),
+                          onDelete: c['canDelete'] == true
+                              ? () => _deleteChallenge(c)
+                              : null,
                         );
                       },
                     ),
@@ -106,10 +136,15 @@ class _GroupChallengesTabState extends State<GroupChallengesTab> {
 }
 
 class _ChallengeCard extends StatelessWidget {
-  const _ChallengeCard({required this.challenge, required this.isActive});
+  const _ChallengeCard({
+    required this.challenge,
+    required this.isActive,
+    this.onDelete,
+  });
 
   final Map<String, dynamic> challenge;
   final bool isActive;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -120,52 +155,66 @@ class _ChallengeCard extends StatelessWidget {
         ? 'Se termine le ${DateFormat('dd/MM à HH:mm').format(endsAt)}'
         : 'Terminé';
 
-    return MergeSemantics(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: paperCardDecoration(),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ExcludeSemantics(
-              child: PaperIconChip(
-                icon: isActive ? Icons.emoji_events : Icons.history,
-                color: isActive ? paperAccentStrong : paperInkMuted,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
+    final title = challenge['title']?.toString() ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: paperCardDecoration(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Le bouton de suppression reste hors du MergeSemantics pour rester
+          // une action distincte au lecteur d'écran.
+          Expanded(
+            child: MergeSemantics(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    challenge['title']?.toString() ?? '',
-                    style: paperValue(fontSize: 16),
-                  ),
-                  if (description.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(description, style: paperMuted(fontSize: 14)),
-                  ],
-                  const SizedBox(height: 8),
-                  // Statut en texte : l'état ne repose jamais sur la seule couleur.
-                  Text(
-                    status,
-                    style: paperLabel(
-                      fontSize: 12,
+                  ExcludeSemantics(
+                    child: PaperIconChip(
+                      icon: isActive ? Icons.emoji_events : Icons.history,
                       color: isActive ? paperAccentStrong : paperInkMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: paperValue(fontSize: 16)),
+                        if (description.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(description, style: paperMuted(fontSize: 14)),
+                        ],
+                        const SizedBox(height: 8),
+                        // Statut en texte : l'état ne repose jamais sur la seule couleur.
+                        Text(
+                          status,
+                          style: paperLabel(
+                            fontSize: 12,
+                            color: isActive ? paperAccentStrong : paperInkMuted,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          if (onDelete != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              color: paperDanger,
+              tooltip: 'Supprimer le défi $title',
+              onPressed: onDelete,
+            ),
+        ],
       ),
     );
   }
 }
 
-/// Stateful : les contrôleurs de texte vivent exactement le temps du dialogue.
 class _CreateChallengeDialog extends StatefulWidget {
   const _CreateChallengeDialog({required this.conversationId});
 
