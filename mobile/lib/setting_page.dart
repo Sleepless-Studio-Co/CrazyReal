@@ -6,11 +6,9 @@ import 'admin/admin_page.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
+import 'theme_notifier.dart';
 import 'services/api_exception.dart';
 
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
-const Color _cardColor = Color(0xFFFFF7E6);
 const Color _accentColor = Color(0xFFB85C38);
 const Color _dangerColor = Color(0xFFB54132);
 
@@ -116,6 +114,35 @@ class _SettingPageState extends State<SettingPage> {
         ],
       ),
     );
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _showThemePicker() async {
+    final l10n = AppLocalizations.of(context)!;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.theme),
+        children: [
+          _ThemeOption(
+            mode: ThemeMode.system,
+            label: l10n.themeSystem,
+            current: appThemeMode.value,
+          ),
+          _ThemeOption(
+            mode: ThemeMode.light,
+            label: l10n.themeLight,
+            current: appThemeMode.value,
+          ),
+          _ThemeOption(
+            mode: ThemeMode.dark,
+            label: l10n.themeDark,
+            current: appThemeMode.value,
+          ),
+        ],
+      ),
+    );
+    if (mounted) setState(() {});
   }
 
   void _showHelp() {
@@ -158,9 +185,12 @@ class _SettingPageState extends State<SettingPage> {
       appBar: AppBar(
         title: Text(
           l10n.settings,
-          style: GoogleFonts.dmSerifDisplay(color: _inkColor, fontSize: 22),
+          style: GoogleFonts.dmSerifDisplay(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 22,
+          ),
         ),
-        backgroundColor: const Color(0xFFF7EBD1),
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
       ),
       body: ListView(
@@ -207,6 +237,12 @@ class _SettingPageState extends State<SettingPage> {
               subtitle: langLabel,
               onTap: _showLanguagePicker,
             ),
+            _NavTile(
+              icon: Icons.brightness_6_outlined,
+              title: l10n.theme,
+              subtitle: _themeLabel(l10n, appThemeMode.value),
+              onTap: _showThemePicker,
+            ),
           ]),
           const SizedBox(height: 16),
           _SectionHeader(l10n.helpCenter),
@@ -231,6 +267,17 @@ class _SettingPageState extends State<SettingPage> {
         ],
       ),
     );
+  }
+}
+
+String _themeLabel(AppLocalizations l10n, ThemeMode mode) {
+  switch (mode) {
+    case ThemeMode.light:
+      return l10n.themeLight;
+    case ThemeMode.dark:
+      return l10n.themeDark;
+    case ThemeMode.system:
+      return l10n.themeSystem;
   }
 }
 
@@ -263,7 +310,55 @@ class _LangOption extends StatelessWidget {
                 : null,
           ),
           const SizedBox(width: 8),
-          Text(label, style: GoogleFonts.karla(fontSize: 15, color: _inkColor)),
+          Text(
+            label,
+            style: GoogleFonts.karla(
+              fontSize: 15,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeOption extends StatelessWidget {
+  const _ThemeOption({
+    required this.mode,
+    required this.label,
+    required this.current,
+  });
+
+  final ThemeMode mode;
+  final String label;
+  final ThemeMode current;
+
+  @override
+  Widget build(BuildContext context) {
+    return SimpleDialogOption(
+      onPressed: () async {
+        Navigator.pop(context);
+        appThemeMode.value = mode;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('theme_mode', themeModeToString(mode));
+      },
+      child: Row(
+        children: [
+          SizedBox(
+            width: 18,
+            child: current == mode
+                ? const Icon(Icons.check, size: 18, color: _accentColor)
+                : null,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: GoogleFonts.karla(
+              fontSize: 15,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
         ],
       ),
     );
@@ -281,7 +376,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: GoogleFonts.karla(
-          color: _inkMuted,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
@@ -299,9 +394,11 @@ class _SettingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0DFC2)),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1F2E1B0F),
@@ -344,7 +441,11 @@ class _NavTile extends StatelessWidget {
         child: CircularProgressIndicator(strokeWidth: 2),
       );
     } else {
-      trailing = const Icon(Icons.chevron_right, color: _inkMuted, size: 20);
+      trailing = Icon(
+        Icons.chevron_right,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        size: 20,
+      );
     }
 
     return ListTile(
@@ -352,7 +453,7 @@ class _NavTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0DFC2),
+          color: Theme.of(context).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: iconColor ?? _accentColor, size: 20),
@@ -360,7 +461,7 @@ class _NavTile extends StatelessWidget {
       title: Text(
         title,
         style: GoogleFonts.karla(
-          color: titleColor ?? _inkColor,
+          color: Theme.of(context).colorScheme.onSurface,
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),
@@ -368,7 +469,10 @@ class _NavTile extends StatelessWidget {
       subtitle: subtitle != null
           ? Text(
               subtitle!,
-              style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+              style: GoogleFonts.karla(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
             )
           : null,
       trailing: trailing,
@@ -400,7 +504,7 @@ class _SwitchTile extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0DFC2),
+          color: Theme.of(context).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: _accentColor, size: 20),
@@ -408,7 +512,7 @@ class _SwitchTile extends StatelessWidget {
       title: Text(
         title,
         style: GoogleFonts.karla(
-          color: _inkColor,
+          color: Theme.of(context).colorScheme.onSurface,
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),
@@ -416,7 +520,10 @@ class _SwitchTile extends StatelessWidget {
       subtitle: subtitle != null
           ? Text(
               subtitle!,
-              style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+              style: GoogleFonts.karla(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
             )
           : null,
       trailing: loading
@@ -469,13 +576,16 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
     final word = l10n.deleteAccountConfirmWord;
 
     return AlertDialog(
-      backgroundColor: _cardColor,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
       title: Text(
         l10n.deleteAccountConfirmTitle,
-        style: GoogleFonts.dmSerifDisplay(color: _inkColor, fontSize: 21),
+        style: GoogleFonts.dmSerifDisplay(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 21,
+        ),
       ),
       // Scrollable so the dialog survives large text scales and the keyboard.
       content: SingleChildScrollView(
@@ -485,13 +595,16 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           children: [
             Text(
               l10n.deleteAccountConfirmBody,
-              style: GoogleFonts.karla(color: _inkMuted, fontSize: 14),
+              style: GoogleFonts.karla(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               l10n.deleteAccountConfirmPrompt(word),
               style: GoogleFonts.karla(
-                color: _inkColor,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
               ),
@@ -504,16 +617,19 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               enableSuggestions: false,
               textCapitalization: TextCapitalization.characters,
               style: GoogleFonts.karla(
-                color: _inkColor,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
               ),
               decoration: InputDecoration(
                 labelText: l10n.deleteAccountConfirmHint,
                 hintText: word,
-                labelStyle: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+                labelStyle: GoogleFonts.karla(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).colorScheme.surface,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
@@ -530,7 +646,9 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          style: TextButton.styleFrom(foregroundColor: _inkColor),
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+          ),
           child: Text(l10n.cancel),
         ),
         // Stays disabled — and announced as such — until the word matches.

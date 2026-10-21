@@ -3,6 +3,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emoji_picker;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
@@ -184,6 +185,36 @@ class _PostCardState extends State<PostCard> {
               children: [
                 Expanded(child: _buildReactions(context)),
                 const SizedBox(width: 8),
+                InkWell(
+                  onTap: photoUrl.isEmpty
+                      ? null
+                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Icon(
+                      Icons.share_outlined,
+                      color: _inkMuted,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: photoUrl.isEmpty
+                      ? null
+                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Icon(
+                      Icons.share_outlined,
+                      color: _inkMuted,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
                 InkWell(
                   onTap: widget.onUpvote,
                   borderRadius: BorderRadius.circular(20),
