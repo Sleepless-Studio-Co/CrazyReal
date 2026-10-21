@@ -1,0 +1,1 @@
+ALTER TABLE "PostReaction" ALTER COLUMN "emoji" TYPE VARCHAR(255);
