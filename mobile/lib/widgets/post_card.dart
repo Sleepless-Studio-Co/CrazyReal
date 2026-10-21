@@ -128,7 +128,7 @@ class _PostCardState extends State<PostCard> {
             onTap: photoUrl.isEmpty
                 ? null
                 : () {
-                    if (post.isVideo) {
+                    if (_post.isVideo) {
                       _VideoPreview.pauseActiveVideo();
                       FullScreenVideoPage.open(
                         context,
@@ -146,7 +146,7 @@ class _PostCardState extends State<PostCard> {
                   },
             child: AspectRatio(
               aspectRatio: 4 / 5,
-              child: post.isVideo
+              child: _post.isVideo
                   ? _VideoPreview(mediaUrl: photoUrl)
                   : Hero(
                       tag: 'post-photo-${_post.id}',
