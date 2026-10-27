@@ -12,7 +12,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -137,14 +144,18 @@ export class AppController {
     const currentChallenge = await this.getCurrentChallengeForDate(now);
 
     if (!currentChallenge) {
-      throw new NotFoundException('Aucun challenge global actif n\'a été trouvé pour la date et l\'heure actuelles.');
+      throw new NotFoundException(
+        "Aucun challenge global actif n'a été trouvé pour la date et l'heure actuelles.",
+      );
     }
 
     return currentChallenge;
   }
 
   @Get('challenges/available')
-  @ApiOperation({ summary: 'Défis réalisables : global courant + défis de mes groupes actifs' })
+  @ApiOperation({
+    summary: 'Défis réalisables : global courant + défis de mes groupes actifs',
+  })
   async getAvailableChallenges(@CurrentUser() user: ValidatedUser) {
     const now = new Date();
 
@@ -152,7 +163,9 @@ export class AppController {
 
     const groupChallenges = await this.prisma.challenge.findMany({
       where: {
-        conversation: { is: { participants: { some: { userId: user.userId } } } },
+        conversation: {
+          is: { participants: { some: { userId: user.userId } } },
+        },
         date: { lte: now },
         endsAt: { gt: now },
       },
@@ -162,19 +175,18 @@ export class AppController {
 
     return [
       ...globalChallenges.map((global) => ({
-            ...global,
-            endsAt:
-              global.endsAt ??
-              new Date(
-                global.date.getTime() +
-                  (global.durationHours ??
-                    (global.type === 'SPECIAL' ? 24 : 84)) *
-                    60 *
-                    60 *
-                    1000,
-              ),
-            group: null,
-          })),
+        ...global,
+        endsAt:
+          global.endsAt ??
+          new Date(
+            global.date.getTime() +
+              (global.durationHours ?? (global.type === 'SPECIAL' ? 24 : 84)) *
+                60 *
+                60 *
+                1000,
+          ),
+        group: null,
+      })),
       ...groupChallenges.map(({ conversation, ...c }) => ({
         ...c,
         group: conversation,
@@ -190,7 +202,9 @@ export class AppController {
     if (challengeId == null) {
       const current = await this.getCurrentChallengeForDate(now);
       if (!current) {
-        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
+        throw new BadRequestException(
+          "Aucun challenge actif n'est disponible pour poster en ce moment.",
+        );
       }
       return current;
     }
@@ -205,7 +219,7 @@ export class AppController {
     if (challenge.conversationId == null) {
       // Challenge global : doit être dans sa fenêtre active.
       if (!this.isChallengeActiveNow(challenge, now)) {
-        throw new BadRequestException('Ce challenge global n\'est plus actif.');
+        throw new BadRequestException("Ce challenge global n'est plus actif.");
       }
       return challenge;
     }
@@ -213,14 +227,17 @@ export class AppController {
     // Défi de groupe : membre du groupe + fenêtre [date, endsAt] active.
     const isMember = await this.prisma.participant.findUnique({
       where: {
-        userId_conversationId: { userId, conversationId: challenge.conversationId },
+        userId_conversationId: {
+          userId,
+          conversationId: challenge.conversationId,
+        },
       },
     });
     if (!isMember) {
       throw new ForbiddenException('Tu ne fais pas partie de ce groupe.');
     }
     if (!challenge.endsAt || challenge.date > now || challenge.endsAt <= now) {
-      throw new BadRequestException('Ce défi n\'est plus actif.');
+      throw new BadRequestException("Ce défi n'est plus actif.");
     }
     return challenge;
   }
@@ -284,7 +301,8 @@ export class AppController {
         },
         challengeId: {
           type: 'string',
-          description: 'Challenge visé (global ou défi de groupe). Absent = global courant.',
+          description:
+            'Challenge visé (global ou défi de groupe). Absent = global courant.',
         },
       },
     },
@@ -370,7 +388,7 @@ export class AppController {
         include: postIncludeWithUpvotes(user.userId),
       });
 
-      const formattedPost = formatPostWithUpvotes(post);
+      const formattedPost = formatPostWithUpvotes(post, user.userId);
       // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
     // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
       if (currentChallenge.conversationId == null) {
@@ -392,6 +410,7 @@ export class AppController {
   async getPosts(
     @CurrentUser() user: ValidatedUser,
     @Query('challengeId') challengeIdRaw?: string,
+    @Query('scope') scope?: string,
   ) {
     const friendIds = await this.getAcceptedFriendIds(user.userId);
     const feedUserIds = [...new Set([...friendIds, user.userId])];
@@ -400,7 +419,9 @@ export class AppController {
     const globalChallenges = await this.getActiveGlobalChallenges(now);
     const groupChallenges = await this.prisma.challenge.findMany({
       where: {
-        conversation: { is: { participants: { some: { userId: user.userId } } } },
+        conversation: {
+          is: { participants: { some: { userId: user.userId } } },
+        },
         date: { lte: now },
         endsAt: { gt: now },
       },
@@ -416,13 +437,20 @@ export class AppController {
     ];
 
     let challengeIds = allModeChallengeIds;
+    if (scope === 'global') {
+      challengeIds = globalChallenges.map((challenge) => challenge.id);
+    } else if (scope === 'friends') {
+      challengeIds = groupChallenges.map((challenge) => challenge.id);
+    }
     if (challengeIdRaw != null && challengeIdRaw !== 'all') {
       const challengeId = Number(challengeIdRaw);
       if (!Number.isInteger(challengeId)) {
         throw new BadRequestException('challengeId invalide.');
       }
       if (!selectableChallengeIds.includes(challengeId)) {
-        throw new BadRequestException('Ce défi n\'est pas visible dans le feed.');
+        throw new BadRequestException(
+          "Ce défi n'est pas visible dans le feed.",
+        );
       }
       challengeIds = [challengeId];
     }
@@ -441,6 +469,6 @@ export class AppController {
       include: postIncludeWithUpvotes(user.userId),
     });
 
-    return posts.map(formatPostWithUpvotes);
+    return posts.map((post) => formatPostWithUpvotes(post, user.userId));
   }
 }
