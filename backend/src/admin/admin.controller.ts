@@ -62,6 +62,24 @@ export class AdminController {
     return this.adminService.listChallengeIdeas();
   }
 
+  @Get('reported-posts')
+  @ApiOperation({ summary: 'Lister les posts signalés' })
+  async listReportedPosts() {
+    return this.adminService.listReportedPosts();
+  }
+
+  @Patch('reported-posts/:id/restore')
+  @ApiOperation({ summary: 'Remettre un post signalé en ligne' })
+  async restorePost(@Param('id', ParseIntPipe) id: number) {
+    return this.adminService.restorePost(id);
+  }
+
+  @Delete('reported-posts/:id')
+  @ApiOperation({ summary: 'Supprimer définitivement un post signalé' })
+  async deletePost(@Param('id', ParseIntPipe) id: number) {
+    return this.adminService.deletePost(id);
+  }
+
   @Patch('challenge-ideas/:id/status')
   @ApiOperation({ summary: 'Modifier le statut d’une idée de défi' })
   async updateChallengeIdeaStatus(

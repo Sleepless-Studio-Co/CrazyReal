@@ -24,11 +24,25 @@
   "@settings": {
     "description": "Label de l'onglet paramètres"
   },
+  "reportPostTitle": "Signaler ce post ?",
+  "reportPostBody": "Ce signalement sera examiné par l'équipe de modération.",
+  "reportPostAction": "Signaler",
+  "reportPostSuccess": "Post signalé",
   
   "account": "Compte",
   "@account": {
     "description": "Label de l'onglet compte"
   },
+  "adminReportedPostsTitle": "Posts signalés",
+  "adminReportedPostsDesc": "Examiner et modérer les posts signalés",
+  "adminReportedPostsLoadError": "Impossible de charger les posts signalés.",
+  "adminNoReportedPosts": "Aucun post signalé",
+  "adminReportCount": "{count} signalement(s)",
+  "@adminReportCount": {"placeholders": {"count": {"type": "int"}}},
+  "adminGhosted": "Masqué",
+  "adminRestorePost": "Remettre en ligne",
+  "adminDeletePostTitle": "Supprimer ce post ?",
+  "adminDeletePostBody": "Cette action est irréversible.",
   
   "currentChallenge": "Challenge Actuel",
   "@currentChallenge": {

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'admin/admin_page.dart';
 import 'admin/challenge_ideas_page.dart';
+import 'admin/reported_posts_page.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
@@ -74,6 +75,15 @@ class _SettingPageState extends State<SettingPage> {
         builder: (_) => ChallengeIdeasPage(
           onUnauthorized: widget.onUnauthorized,
         ),
+      ),
+    );
+  }
+
+  void _openReportedPosts() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            ReportedPostsPage(onUnauthorized: widget.onUnauthorized),
       ),
     );
   }
@@ -222,6 +232,12 @@ class _SettingPageState extends State<SettingPage> {
                 title: l10n.adminChallengeIdeasTitle,
                 subtitle: l10n.adminChallengeIdeasDesc,
                 onTap: _openChallengeIdeas,
+              ),
+              _NavTile(
+                icon: Icons.flag_outlined,
+                title: l10n.adminReportedPostsTitle,
+                subtitle: l10n.adminReportedPostsDesc,
+                onTap: _openReportedPosts,
               ),
             ]),
             const SizedBox(height: 16),

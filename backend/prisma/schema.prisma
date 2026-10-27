@@ -37,6 +37,13 @@ enum ChallengeIdeaStatus {
   REJECTED
 }
 
+enum PostModerationStatus {
+  PENDING
+  GHOSTED
+  APPROVED
+  REMOVED
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -67,8 +74,24 @@ model Post {
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId Int
   createdAt   DateTime  @default(now())
+  isGhosted   Boolean   @default(false)
+  moderationStatus PostModerationStatus @default(PENDING)
   upVotes     UpVote[]
   reactions   PostReaction[]
+  reports     PostReport[]
+}
+
+model PostReport {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId, createdAt])
 }
 
 model UpVote {
@@ -113,6 +136,7 @@ model User {
   challengeIdeas ChallengeIdea[]
   upVotes       UpVote[]
   reactions     PostReaction[]
+  postReports   PostReport[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")

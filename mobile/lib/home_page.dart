@@ -143,6 +143,39 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _reportPost(int postId) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.reportPostTitle),
+        content: Text(l10n.reportPostBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.reportPostAction)),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _feedService.reportPost(postId);
+      await refreshFeed(showLoading: false);
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.reportPostSuccess)));
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
   Future<void> _loadAvailableChallenges() async {
     try {
       final challenges = await _feedService.fetchAvailableChallenges();
@@ -543,6 +576,7 @@ class HomePageState extends State<HomePage> {
             unknownUserLabel: l10n.unknownUser,
             onUpvote: () => _toggleUpvote(post.id),
             onReaction: (emoji) => _toggleReaction(post.id, emoji),
+            onReport: () => _reportPost(post.id),
           );
         },
       ),

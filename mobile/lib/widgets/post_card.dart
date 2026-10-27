@@ -23,12 +23,14 @@ class PostCard extends StatefulWidget {
     required this.unknownUserLabel,
     this.onUpvote,
     this.onReaction,
+    this.onReport,
   });
 
   final FeedPost post;
   final String unknownUserLabel;
   final VoidCallback? onUpvote;
   final Future<FeedPost> Function(String emoji)? onReaction;
+  final Future<void> Function()? onReport;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -187,7 +189,8 @@ class _PostCardState extends State<PostCard> {
                 InkWell(
                   onTap: photoUrl.isEmpty
                       ? null
-                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                      : () => SharePlus.instance
+                          .share(ShareParams(uri: Uri.parse(photoUrl))),
                   borderRadius: BorderRadius.circular(20),
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -198,21 +201,29 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: photoUrl.isEmpty
-                      ? null
-                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
-                  borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Icon(
-                      Icons.share_outlined,
-                      color: _inkMuted,
-                      size: 22,
+                if (widget.onReport != null) ...[
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () async {
+                      await widget.onReport!();
+                      if (mounted) {
+                        setState(
+                            () => _post = _post.copyWith(hasReported: true));
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: Icon(
+                        _post.hasReported ? Icons.flag : Icons.flag_outlined,
+                        color: _post.hasReported
+                            ? const Color(0xFFB85C38)
+                            : _inkMuted,
+                        size: 21,
+                      ),
                     ),
                   ),
-                ),
+                ],
                 const SizedBox(width: 4),
                 InkWell(
                   onTap: widget.onUpvote,

@@ -111,6 +111,7 @@ class FeedPost {
     this.challenge,
     this.upvoteCount = 0,
     this.hasUpvoted = false,
+    this.hasReported = false,
     this.reactions = const [],
     this.mediaType = PostMediaType.photo,
   });
@@ -122,6 +123,7 @@ class FeedPost {
   final FeedChallenge? challenge;
   final int upvoteCount;
   final bool hasUpvoted;
+  final bool hasReported;
   final List<FeedReaction> reactions;
   final PostMediaType mediaType;
 
@@ -130,6 +132,7 @@ class FeedPost {
   FeedPost copyWith({
     int? upvoteCount,
     bool? hasUpvoted,
+    bool? hasReported,
   }) {
     return FeedPost(
       id: id,
@@ -139,6 +142,7 @@ class FeedPost {
       challenge: challenge,
       upvoteCount: upvoteCount ?? this.upvoteCount,
       hasUpvoted: hasUpvoted ?? this.hasUpvoted,
+      hasReported: hasReported ?? this.hasReported,
       reactions: reactions,
       mediaType: mediaType,
     );
@@ -166,6 +170,7 @@ class FeedPost {
           : null,
       upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
       hasUpvoted: json['hasUpvoted'] == true,
+      hasReported: json['hasReported'] == true,
       reactions: (json['reactions'] is List ? json['reactions'] as List : [])
           .whereType<Map>()
           .map((item) => FeedReaction.fromJson(Map<String, dynamic>.from(item)))

@@ -24,7 +24,50 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settings => 'Paramètres';
 
   @override
+  String get reportPostTitle => 'Signaler ce post ?';
+
+  @override
+  String get reportPostBody =>
+      'Ce signalement sera examiné par l\'équipe de modération.';
+
+  @override
+  String get reportPostAction => 'Signaler';
+
+  @override
+  String get reportPostSuccess => 'Post signalé';
+
+  @override
   String get account => 'Compte';
+
+  @override
+  String get adminReportedPostsTitle => 'Posts signalés';
+
+  @override
+  String get adminReportedPostsDesc => 'Examiner et modérer les posts signalés';
+
+  @override
+  String get adminReportedPostsLoadError =>
+      'Impossible de charger les posts signalés.';
+
+  @override
+  String get adminNoReportedPosts => 'Aucun post signalé';
+
+  @override
+  String adminReportCount(int count) {
+    return '$count signalement(s)';
+  }
+
+  @override
+  String get adminGhosted => 'Masqué';
+
+  @override
+  String get adminRestorePost => 'Remettre en ligne';
+
+  @override
+  String get adminDeletePostTitle => 'Supprimer ce post ?';
+
+  @override
+  String get adminDeletePostBody => 'Cette action est irréversible.';
 
   @override
   String get currentChallenge => 'Challenge Actuel';

@@ -72,4 +72,13 @@ export class UpVotesController {
     }
     return this.upVotesService.removeReaction(user.userId, postId, emoji);
   }
+
+  @Post(':id/report')
+  @ApiOperation({ summary: 'Signaler un post' })
+  reportPost(
+    @CurrentUser() user: ValidatedUser,
+    @Param('id', ParseIntPipe) postId: number,
+  ) {
+    return this.upVotesService.reportPost(user.userId, postId);
+  }
 }

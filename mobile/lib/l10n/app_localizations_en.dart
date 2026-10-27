@@ -24,7 +24,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
+  String get reportPostTitle => 'Report this post?';
+
+  @override
+  String get reportPostBody =>
+      'This report will be reviewed by the moderation team.';
+
+  @override
+  String get reportPostAction => 'Report';
+
+  @override
+  String get reportPostSuccess => 'Post reported';
+
+  @override
   String get account => 'Account';
+
+  @override
+  String get adminReportedPostsTitle => 'Reported posts';
+
+  @override
+  String get adminReportedPostsDesc => 'Review and moderate reported posts';
+
+  @override
+  String get adminReportedPostsLoadError => 'Could not load reported posts.';
+
+  @override
+  String get adminNoReportedPosts => 'No reported posts';
+
+  @override
+  String adminReportCount(int count) {
+    return '$count report(s)';
+  }
+
+  @override
+  String get adminGhosted => 'Hidden';
+
+  @override
+  String get adminRestorePost => 'Restore post';
+
+  @override
+  String get adminDeletePostTitle => 'Delete this post?';
+
+  @override
+  String get adminDeletePostBody => 'This action is irreversible.';
 
   @override
   String get currentChallenge => 'Current Challenge';

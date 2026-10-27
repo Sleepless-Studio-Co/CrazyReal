@@ -1,16 +1,21 @@
 import {
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { ChallengeIdeaStatus, ChallengeType, Prisma } from '@prisma/client';
+  ChallengeIdeaStatus,
+  ChallengeType,
+  PostModerationStatus,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 
 @Injectable()
 export class AdminService {
@@ -134,13 +139,55 @@ export class AdminService {
     }
 
     await this.prisma.challenge.delete({ where: { id } });
-    return { deleted: true };
+    return this.prisma.post.update({
+      where: { id },
+      data: {
+        isGhosted: true,
+        moderationStatus: PostModerationStatus.REMOVED,
+      },
+    });
   }
 
   async listChallengeIdeas() {
     return this.prisma.challengeIdea.findMany({
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { username: true } } },
+    });
+  }
+
+  async listReportedPosts() {
+    return this.prisma.post.findMany({
+      where: { reports: { some: {} } },
+      orderBy: [{ reports: { _count: 'desc' } }, { createdAt: 'desc' }],
+      include: {
+        user: { select: { id: true, username: true, avatarUrl: true, avatarKey: true } },
+        challenge: { select: { id: true, title: true, type: true } },
+        _count: { select: { reports: true, upVotes: true } },
+      },
+    });
+  }
+
+  async restorePost(id: number) {
+    const post = await this.prisma.post.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException('Post introuvable.');
+    return this.prisma.post.update({
+      where: { id },
+      data: {
+        isGhosted: false,
+        moderationStatus: PostModerationStatus.APPROVED,
+      },
+    });
+  }
+
+  async deletePost(id: number) {
+    const post = await this.prisma.post.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException('Post introuvable.');
+    return this.prisma.post.update({
+      where: { id },
+      data: {
+        isGhosted: true,
+        moderationStatus: PostModerationStatus.REMOVED,
+      },
     });
   }
 

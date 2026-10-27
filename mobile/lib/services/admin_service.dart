@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import '../auth/auth_service.dart';
+import '../models/feed_post.dart';
 import '../utils/media_url.dart';
 import 'api_exception.dart';
 
@@ -129,6 +130,29 @@ class AdminChallenge {
   bool get isUpcoming => isActive && DateTime.now().isBefore(date);
 }
 
+class AdminReportedPost {
+  const AdminReportedPost({
+    required this.post,
+    required this.reportCount,
+    required this.isGhosted,
+    required this.status,
+  });
+
+  final FeedPost post;
+  final int reportCount;
+  final bool isGhosted;
+  final String status;
+
+  factory AdminReportedPost.fromJson(Map<String, dynamic> json) {
+    return AdminReportedPost(
+      post: FeedPost.fromJson(json),
+      reportCount: (json['_count']?['reports'] as int?) ?? 0,
+      isGhosted: json['isGhosted'] == true,
+      status: json['moderationStatus']?.toString() ?? 'PENDING',
+    );
+  }
+}
+
 class AdminService {
   final String baseUrl = '$apiBaseUrl/admin';
   final AuthService _authService = AuthService();
@@ -156,6 +180,32 @@ class AdminService {
     return decoded
         .map((e) => AdminChallenge.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<List<AdminReportedPost>> getReportedPosts() async {
+    final response = await _send(
+      (headers) =>
+          http.get(Uri.parse('$baseUrl/reported-posts'), headers: headers),
+    );
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) throw ApiException('Unexpected response format');
+    return decoded
+        .map((item) => AdminReportedPost.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> restorePost(int id) async {
+    await _send((headers) => http.patch(
+          Uri.parse('$baseUrl/reported-posts/$id/restore'),
+          headers: headers,
+        ));
+  }
+
+  Future<void> deleteReportedPost(int id) async {
+    await _send((headers) => http.delete(
+          Uri.parse('$baseUrl/reported-posts/$id'),
+          headers: headers,
+        ));
   }
 
   Future<AdminChallenge> createChallenge({

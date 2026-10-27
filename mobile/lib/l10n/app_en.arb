@@ -24,11 +24,25 @@
   "@settings": {
     "description": "Settings tab label"
   },
+  "reportPostTitle": "Report this post?",
+  "reportPostBody": "This report will be reviewed by the moderation team.",
+  "reportPostAction": "Report",
+  "reportPostSuccess": "Post reported",
   
   "account": "Account",
   "@account": {
     "description": "Account tab label"
   },
+  "adminReportedPostsTitle": "Reported posts",
+  "adminReportedPostsDesc": "Review and moderate reported posts",
+  "adminReportedPostsLoadError": "Could not load reported posts.",
+  "adminNoReportedPosts": "No reported posts",
+  "adminReportCount": "{count} report(s)",
+  "@adminReportCount": {"placeholders": {"count": {"type": "int"}}},
+  "adminGhosted": "Hidden",
+  "adminRestorePost": "Restore post",
+  "adminDeletePostTitle": "Delete this post?",
+  "adminDeletePostBody": "This action is irreversible.",
   
   "currentChallenge": "Current Challenge",
   "@currentChallenge": {

@@ -442,7 +442,11 @@ export class ChatService {
     }
 
     const posts = await this.prisma.post.findMany({
-      where: { challenge: { is: { conversationId } } },
+      where: {
+        isGhosted: false,
+        moderationStatus: { not: 'REMOVED' },
+        challenge: { is: { conversationId } },
+      },
       orderBy: { createdAt: 'desc' },
       include: postIncludeWithUpvotes(userId),
     });

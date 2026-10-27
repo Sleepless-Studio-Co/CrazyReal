@@ -457,6 +457,8 @@ export class AppController {
 
     const posts = await this.prisma.post.findMany({
       where: {
+        isGhosted: false,
+        moderationStatus: { not: 'REMOVED' },
         OR: [
           { userId: { in: [...new Set([...friendIds, user.userId])] } },
           { user: { isPrivate: false } },

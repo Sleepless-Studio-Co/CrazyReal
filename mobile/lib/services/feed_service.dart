@@ -102,6 +102,10 @@ class FeedService {
     );
   }
 
+  Future<void> reportPost(int postId) async {
+    await _authedRequest('POST', '/posts/$postId/report');
+  }
+
   Future<FeedPost> _vote(int postId, {required bool remove}) async {
     final data = await _authedRequest(
       remove ? 'DELETE' : 'POST',

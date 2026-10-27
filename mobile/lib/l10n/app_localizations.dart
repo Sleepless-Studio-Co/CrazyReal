@@ -128,11 +128,89 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settings;
 
+  /// No description provided for @reportPostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this post?'**
+  String get reportPostTitle;
+
+  /// No description provided for @reportPostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This report will be reviewed by the moderation team.'**
+  String get reportPostBody;
+
+  /// No description provided for @reportPostAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get reportPostAction;
+
+  /// No description provided for @reportPostSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Post reported'**
+  String get reportPostSuccess;
+
   /// Account tab label
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get account;
+
+  /// No description provided for @adminReportedPostsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported posts'**
+  String get adminReportedPostsTitle;
+
+  /// No description provided for @adminReportedPostsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and moderate reported posts'**
+  String get adminReportedPostsDesc;
+
+  /// No description provided for @adminReportedPostsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reported posts.'**
+  String get adminReportedPostsLoadError;
+
+  /// No description provided for @adminNoReportedPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'No reported posts'**
+  String get adminNoReportedPosts;
+
+  /// No description provided for @adminReportCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} report(s)'**
+  String adminReportCount(int count);
+
+  /// No description provided for @adminGhosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get adminGhosted;
+
+  /// No description provided for @adminRestorePost.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore post'**
+  String get adminRestorePost;
+
+  /// No description provided for @adminDeletePostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this post?'**
+  String get adminDeletePostTitle;
+
+  /// No description provided for @adminDeletePostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is irreversible.'**
+  String get adminDeletePostBody;
 
   /// Title for current challenge section
   ///
