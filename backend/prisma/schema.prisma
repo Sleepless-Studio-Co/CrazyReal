@@ -125,24 +125,12 @@ model User {
   challengeIdeas ChallengeIdea[]
   upVotes       UpVote[]
   reactions     PostReaction[]
-  challengeIdeas ChallengeIdea[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")
   receivedRequests Friendship[] @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
-}
-
-model ChallengeIdea {
-  id        Int      @id @default(autoincrement())
-  content   String   @db.VarChar(500)
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status    ChallengeIdeaStatus @default(PENDING)
-  createdAt DateTime @default(now())
-
-  @@index([status, createdAt])
 }
 
 model EmailVerificationToken {
