@@ -13,6 +13,10 @@ describe('AppController', () => {
     };
     post: {
       create: jest.Mock<any>;
+      findMany: jest.Mock<any>;
+    };
+    friendship: {
+      findMany: jest.Mock<any>;
     };
   };
   let feedGateway: {
@@ -26,6 +30,10 @@ describe('AppController', () => {
       },
       post: {
         create: jest.fn(),
+        findMany: jest.fn(),
+      },
+      friendship: {
+        findMany: jest.fn(),
       },
     };
     feedGateway = {
@@ -125,6 +133,30 @@ describe('AppController', () => {
       prismaService.challenge.findMany.mockResolvedValue([]);
 
       await expect(appController.uploadPhoto(file, user)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('getPosts', () => {
+    it('uses public, accepted-friend, and own authors in the feed filter', async () => {
+      prismaService.friendship.findMany.mockResolvedValue([
+        { userId: 10, friendId: 20, status: 'ACCEPTED' },
+      ]);
+      prismaService.post.findMany.mockResolvedValue([]);
+
+      await appController.getPosts({
+        userId: 10,
+        email: 'user@example.com',
+        username: 'user',
+      });
+
+      expect(prismaService.post.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          OR: [
+            { userId: { in: [20, 10] } },
+            { user: { isPrivate: false } },
+          ],
+        }),
+      }));
     });
   });
 });

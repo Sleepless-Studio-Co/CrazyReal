@@ -87,7 +87,7 @@ model PostReaction {
   id        Int      @id @default(autoincrement())
   userId    Int
   postId    Int
-  emoji     String   @db.VarChar(16)
+  emoji     String   @db.VarChar(255)
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -95,6 +95,18 @@ model PostReaction {
 
   @@unique([userId, postId, emoji])
   @@index([postId, emoji])
+}
+
+model ChallengeIdea {
+  id        Int                @id @default(autoincrement())
+  content   String             @db.VarChar(500)
+  userId    Int
+  createdAt DateTime           @default(now())
+  status    ChallengeIdeaStatus @default(PENDING)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
 }
 
 model User {
@@ -113,6 +125,7 @@ model User {
   challengeIdeas ChallengeIdea[]
   upVotes       UpVote[]
   reactions     PostReaction[]
+  challengeIdeas ChallengeIdea[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")

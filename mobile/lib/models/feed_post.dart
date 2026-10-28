@@ -43,6 +43,15 @@ class FeedChallenge {
 
 enum PostMediaType { photo, video }
 
+PostMediaType parsePostMediaType(String? value) {
+  switch (value?.toUpperCase()) {
+    case 'VIDEO':
+      return PostMediaType.video;
+    default:
+      return PostMediaType.photo;
+  }
+}
+
 class FeedReaction {
   const FeedReaction({
     required this.emoji,
@@ -60,15 +69,6 @@ class FeedReaction {
       count: json['count'] is int ? json['count'] as int : 0,
       reactedByMe: json['reactedByMe'] == true,
     );
-  }
-}
-
-PostMediaType parsePostMediaType(String? value) {
-  switch (value?.toUpperCase()) {
-    case 'VIDEO':
-      return PostMediaType.video;
-    default:
-      return PostMediaType.photo;
   }
 }
 
@@ -111,8 +111,8 @@ class FeedPost {
     this.challenge,
     this.upvoteCount = 0,
     this.hasUpvoted = false,
-    this.reactions = const [],
     this.mediaType = PostMediaType.photo,
+    this.reactions = const [],
   });
 
   final int id;
@@ -122,10 +122,10 @@ class FeedPost {
   final FeedChallenge? challenge;
   final int upvoteCount;
   final bool hasUpvoted;
-  final List<FeedReaction> reactions;
   final PostMediaType mediaType;
 
   bool get isVideo => mediaType == PostMediaType.video;
+  final List<FeedReaction> reactions;
 
   FeedPost copyWith({
     int? upvoteCount,
@@ -139,8 +139,8 @@ class FeedPost {
       challenge: challenge,
       upvoteCount: upvoteCount ?? this.upvoteCount,
       hasUpvoted: hasUpvoted ?? this.hasUpvoted,
-      reactions: reactions,
       mediaType: mediaType,
+      reactions: reactions,
     );
   }
 
@@ -166,11 +166,11 @@ class FeedPost {
           : null,
       upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
       hasUpvoted: json['hasUpvoted'] == true,
+      mediaType: parsePostMediaType(json['mediaType']?.toString()),
       reactions: (json['reactions'] is List ? json['reactions'] as List : [])
           .whereType<Map>()
           .map((item) => FeedReaction.fromJson(Map<String, dynamic>.from(item)))
           .toList(),
-      mediaType: parsePostMediaType(json['mediaType']?.toString()),
     );
   }
 

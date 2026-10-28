@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart' as emoji_picker;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
@@ -184,6 +186,36 @@ class _PostCardState extends State<PostCard> {
                 Expanded(child: _buildReactions(context)),
                 const SizedBox(width: 8),
                 InkWell(
+                  onTap: photoUrl.isEmpty
+                      ? null
+                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Icon(
+                      Icons.share_outlined,
+                      color: _inkMuted,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: photoUrl.isEmpty
+                      ? null
+                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Icon(
+                      Icons.share_outlined,
+                      color: _inkMuted,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                InkWell(
                   onTap: widget.onUpvote,
                   borderRadius: BorderRadius.circular(20),
                   child: Padding(
@@ -260,23 +292,42 @@ class _PostCardState extends State<PostCard> {
   }
 
   Future<void> _chooseReaction(BuildContext context) async {
-    const emojis = ['❤️', '😂', '🔥', '👏', '😍', '😮', '😢', '💪', '💀'];
     final emoji = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: const Color(0xFFF3D7B2),
+      isScrollControlled: true,
       builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 12,
-            runSpacing: 8,
-            children: emojis
-                .map((value) => TextButton(
-                      onPressed: () => Navigator.pop(context, value),
-                      child: Text(value, style: const TextStyle(fontSize: 28)),
-                    ))
-                .toList(),
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.55,
+          child: emoji_picker.EmojiPicker(
+            onEmojiSelected: (category, emoji) {
+              Navigator.pop(context, emoji.emoji);
+            },
+            config: const emoji_picker.Config(
+              height: double.infinity,
+              checkPlatformCompatibility: true,
+              emojiViewConfig: emoji_picker.EmojiViewConfig(
+                backgroundColor: Color(0xFFF3D7B2),
+                columns: 8,
+                emojiSizeMax: 28,
+              ),
+              categoryViewConfig: emoji_picker.CategoryViewConfig(
+                backgroundColor: Color(0xFFF3D7B2),
+                indicatorColor: _inkColor,
+                iconColorSelected: _inkColor,
+                iconColor: _inkMuted,
+              ),
+              bottomActionBarConfig: emoji_picker.BottomActionBarConfig(
+                backgroundColor: Color(0xFFF3D7B2),
+                buttonColor: Color(0xFFF3D7B2),
+                buttonIconColor: _inkMuted,
+              ),
+              searchViewConfig: emoji_picker.SearchViewConfig(
+                backgroundColor: Color(0xFFF3D7B2),
+                buttonIconColor: _inkMuted,
+                hintText: 'Rechercher un emoji',
+              ),
+            ),
           ),
         ),
       ),

@@ -6,7 +6,7 @@ export class FeedGateway {
   @WebSocketServer()
   server: Server;
 
-  broadcastNewPost(post: unknown) {
+  broadcastNewPost(post: object) {
     this.server.emit('newPost', post);
   }
 }
