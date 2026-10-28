@@ -170,6 +170,66 @@ abstract class AppLocalizations {
   /// **'Review and moderate reported posts'**
   String get adminReportedPostsDesc;
 
+  /// No description provided for @adminModerationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderation'**
+  String get adminModerationTitle;
+
+  /// No description provided for @adminReportedUsersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported users'**
+  String get adminReportedUsersTitle;
+
+  /// No description provided for @adminReportedUsersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review users by total reports'**
+  String get adminReportedUsersDesc;
+
+  /// No description provided for @adminReportedUsersLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reported users.'**
+  String get adminReportedUsersLoadError;
+
+  /// No description provided for @adminNoReportedUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'No reported users'**
+  String get adminNoReportedUsers;
+
+  /// No description provided for @adminTotalReports.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} total report(s)'**
+  String adminTotalReports(int count);
+
+  /// No description provided for @adminBanUserTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ban this user'**
+  String get adminBanUserTitle;
+
+  /// No description provided for @adminBanReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get adminBanReasonLabel;
+
+  /// No description provided for @adminBanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ban'**
+  String get adminBanAction;
+
+  /// No description provided for @adminUnbanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Unban'**
+  String get adminUnbanAction;
+
   /// No description provided for @adminReportedPostsLoadError.
   ///
   /// In en, this message translates to:
@@ -187,6 +247,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} report(s)'**
   String adminReportCount(int count);
+
+  /// No description provided for @accountBannedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account banned'**
+  String get accountBannedTitle;
+
+  /// No description provided for @accountBannedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot access CrazyReal because your account has been banned.'**
+  String get accountBannedMessage;
+
+  /// No description provided for @accountBannedReason.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot access CrazyReal.\n\nReason: {reason}'**
+  String accountBannedReason(String reason);
 
   /// No description provided for @adminGhosted.
   ///

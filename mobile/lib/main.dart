@@ -10,6 +10,7 @@ import 'friend_page.dart';
 import 'new_post_page.dart';
 import 'setting_page.dart';
 import 'account_page.dart';
+import 'banned_page.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
 import 'services/chat_socket_service.dart';
@@ -40,32 +41,32 @@ class MyApp extends StatelessWidget {
         return ValueListenableBuilder<ThemeMode>(
           valueListenable: appThemeMode,
           builder: (context, themeMode, _) => MaterialApp(
-          navigatorKey: navigatorKey,
-          title: 'CrazyReal',
-          locale: locale,
-          themeMode: themeMode,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            scaffoldBackgroundColor: const Color(0xFFF7EBD1),
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple,
-              brightness: Brightness.dark,
+            navigatorKey: navigatorKey,
+            title: 'CrazyReal',
+            locale: locale,
+            themeMode: themeMode,
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              scaffoldBackgroundColor: const Color(0xFFF7EBD1),
             ),
-            scaffoldBackgroundColor: const Color(0xFF171311),
-          ),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', ''),
-            Locale('fr', ''),
-          ],
-          home: const AuthGate(),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.deepPurple,
+                brightness: Brightness.dark,
+              ),
+              scaffoldBackgroundColor: const Color(0xFF171311),
+            ),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', ''),
+              Locale('fr', ''),
+            ],
+            home: const AuthGate(),
           ),
         );
       },
@@ -85,10 +86,13 @@ class _AuthGateState extends State<AuthGate> {
   final ChatSocketService _chatSocket = ChatSocketService();
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  bool _isBanned = false;
+  String? _banReason;
 
   @override
   void initState() {
     super.initState();
+    GlobalNotificationService().setUserBannedHandler(_handleUserBanned);
     _checkAuth();
     NotificationService().requestPermissions();
   }
@@ -98,6 +102,10 @@ class _AuthGateState extends State<AuthGate> {
     if (!mounted) return;
 
     if (isLoggedIn) {
+      final profile = await _authService.fetchProfile();
+      final user = profile ?? await _authService.getUser();
+      _isBanned = user?['isBanned'] == true;
+      _banReason = user?['banReason']?.toString();
       _chatSocket.connect();
       GlobalNotificationService().connect();
     }
@@ -110,10 +118,30 @@ class _AuthGateState extends State<AuthGate> {
 
   void _handleAuthSuccess() {
     if (!mounted) return;
+    _loadBanState();
     _chatSocket.connect();
     GlobalNotificationService().connect();
     setState(() {
       _isAuthenticated = true;
+    });
+  }
+
+  void _handleUserBanned(String? reason) {
+    if (!mounted) return;
+    _chatSocket.disconnect();
+    GlobalNotificationService().disconnect();
+    setState(() {
+      _isBanned = true;
+      _banReason = reason;
+    });
+  }
+
+  Future<void> _loadBanState() async {
+    final user = await _authService.getUser();
+    if (!mounted) return;
+    setState(() {
+      _isBanned = user?['isBanned'] == true;
+      _banReason = user?['banReason']?.toString();
     });
   }
 
@@ -140,6 +168,8 @@ class _AuthGateState extends State<AuthGate> {
 
     setState(() {
       _isAuthenticated = false;
+      _isBanned = false;
+      _banReason = null;
     });
   }
 
@@ -155,6 +185,13 @@ class _AuthGateState extends State<AuthGate> {
 
     if (!_isAuthenticated) {
       return LoginPage(onAuthSuccess: _handleAuthSuccess);
+    }
+
+    if (_isBanned) {
+      return BannedPage(
+        reason: _banReason,
+        onLoggedOut: _handleLogout,
+      );
     }
 
     return MainScreen(
@@ -232,7 +269,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(

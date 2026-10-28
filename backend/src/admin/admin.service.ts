@@ -139,13 +139,7 @@ export class AdminService {
     }
 
     await this.prisma.challenge.delete({ where: { id } });
-    return this.prisma.post.update({
-      where: { id },
-      data: {
-        isGhosted: true,
-        moderationStatus: PostModerationStatus.REMOVED,
-      },
-    });
+    return { deleted: true };
   }
 
   async listChallengeIdeas() {
@@ -187,6 +181,81 @@ export class AdminService {
       data: {
         isGhosted: true,
         moderationStatus: PostModerationStatus.REMOVED,
+      },
+    });
+  }
+
+  async listReportedUsers() {
+    const users = await this.prisma.user.findMany({
+      where: {
+        role: 'USER',
+        posts: { some: { reports: { some: {} } } },
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+        avatarKey: true,
+        isBanned: true,
+        banReason: true,
+        bannedAt: true,
+        posts: { select: { _count: { select: { reports: true } } } },
+      },
+    });
+
+    return users
+      .map(({ posts, ...user }) => ({
+        ...user,
+        reportCount: posts.reduce((total, post) => total + post._count.reports, 0),
+      }))
+      .sort((a, b) => b.reportCount - a.reportCount);
+  }
+
+  async banUser(id: number, reason?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+    if (user.role === 'ADMIN') {
+      throw new ConflictException('Un administrateur ne peut pas être banni.');
+    }
+
+    const bannedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        isBanned: true,
+        banReason: reason?.trim() || null,
+        bannedAt: new Date(),
+      },
+      select: {
+        id: true,
+        username: true,
+        isBanned: true,
+        banReason: true,
+        bannedAt: true,
+      },
+    });
+
+    this.notificationGateway.sendToUser(id, 'userBanned', {
+      reason: bannedUser.banReason,
+    });
+
+    return bannedUser;
+  }
+
+  async unbanUser(id: number) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+    return this.prisma.user.update({
+      where: { id },
+      data: { isBanned: false, banReason: null, bannedAt: null },
+      select: {
+        id: true,
+        username: true,
+        isBanned: true,
+        banReason: true,
+        bannedAt: true,
       },
     });
   }

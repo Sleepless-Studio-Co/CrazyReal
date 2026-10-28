@@ -14,6 +14,11 @@ class GlobalNotificationService {
 
   final AuthService _authService = AuthService();
   IO.Socket? _socket;
+  void Function(String? reason)? _onUserBanned;
+
+  void setUserBannedHandler(void Function(String? reason) handler) {
+    _onUserBanned = handler;
+  }
 
   Future<void> connect() async {
     if (_socket != null) return;
@@ -33,6 +38,13 @@ class GlobalNotificationService {
     );
 
     _socket!.onConnect((_) => debugPrint('[notif-socket] connected'));
+
+    _socket!.on('userBanned', (data) {
+      final map = data is Map
+          ? Map<String, dynamic>.from(data)
+          : const <String, dynamic>{};
+      _onUserBanned?.call(map['reason']?.toString());
+    });
 
     _socket!.on('friendRequestReceived', (data) {
       try {

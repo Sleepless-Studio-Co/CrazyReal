@@ -5,6 +5,9 @@ export interface AuthUser {
   avatarUrl?: string | null;
   avatarKey?: string | null;
   isPrivate: boolean;
+  isBanned?: boolean;
+  banReason?: string | null;
+  bannedAt?: Date | null;
   emailVerified?: boolean;
   createdAt: Date;
 }

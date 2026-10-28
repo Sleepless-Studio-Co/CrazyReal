@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'admin/admin_page.dart';
 import 'admin/challenge_ideas_page.dart';
 import 'admin/reported_posts_page.dart';
+import 'admin/reported_moderation_page.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
@@ -82,8 +83,9 @@ class _SettingPageState extends State<SettingPage> {
   void _openReportedPosts() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            ReportedPostsPage(onUnauthorized: widget.onUnauthorized),
+        builder: (_) => ReportedModerationPage(
+          onUnauthorized: widget.onUnauthorized,
+        ),
       ),
     );
   }

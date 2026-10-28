@@ -46,6 +46,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminReportedPostsDesc => 'Review and moderate reported posts';
 
   @override
+  String get adminModerationTitle => 'Moderation';
+
+  @override
+  String get adminReportedUsersTitle => 'Reported users';
+
+  @override
+  String get adminReportedUsersDesc => 'Review users by total reports';
+
+  @override
+  String get adminReportedUsersLoadError => 'Could not load reported users.';
+
+  @override
+  String get adminNoReportedUsers => 'No reported users';
+
+  @override
+  String adminTotalReports(int count) {
+    return '$count total report(s)';
+  }
+
+  @override
+  String get adminBanUserTitle => 'Ban this user';
+
+  @override
+  String get adminBanReasonLabel => 'Reason (optional)';
+
+  @override
+  String get adminBanAction => 'Ban';
+
+  @override
+  String get adminUnbanAction => 'Unban';
+
+  @override
   String get adminReportedPostsLoadError => 'Could not load reported posts.';
 
   @override
@@ -54,6 +86,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String adminReportCount(int count) {
     return '$count report(s)';
+  }
+
+  @override
+  String get accountBannedTitle => 'Account banned';
+
+  @override
+  String get accountBannedMessage =>
+      'You cannot access CrazyReal because your account has been banned.';
+
+  @override
+  String accountBannedReason(String reason) {
+    return 'You cannot access CrazyReal.\n\nReason: $reason';
   }
 
   @override

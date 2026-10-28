@@ -132,6 +132,9 @@ model User {
   emailVerifiedAt DateTime?
   createdAt     DateTime       @default(now())
   role          Role           @default(USER)
+  isBanned      Boolean       @default(false)
+  banReason     String?
+  bannedAt      DateTime?
   posts         Post[]
   challengeIdeas ChallengeIdea[]
   upVotes       UpVote[]
