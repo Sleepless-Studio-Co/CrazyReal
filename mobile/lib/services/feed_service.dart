@@ -94,6 +94,14 @@ class FeedService {
     return FeedPost.fromJson(data as Map<String, dynamic>);
   }
 
+  Future<void> submitChallengeIdea(String content) async {
+    await _authedRequest(
+      'POST',
+      '/challenge-ideas',
+      body: {'content': content},
+    );
+  }
+
   Future<FeedPost> _vote(int postId, {required bool remove}) async {
     final data = await _authedRequest(
       remove ? 'DELETE' : 'POST',

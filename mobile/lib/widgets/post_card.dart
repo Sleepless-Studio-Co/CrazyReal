@@ -416,7 +416,9 @@ class _VideoPreviewState extends State<_VideoPreview> {
   }
 
   void _playIfVisible() {
-    if (!mounted || !_controller.value.isInitialized || _visibleFraction < 0.6) {
+    if (!mounted ||
+        !_controller.value.isInitialized ||
+        _visibleFraction < 0.6) {
       return;
     }
 

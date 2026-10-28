@@ -44,6 +44,7 @@ class HomePageState extends State<HomePage> {
 
   IO.Socket? _socket;
   Timer? _pollTimer;
+  bool _isSubmittingIdea = false;
 
   static const Duration _pollInterval = Duration(seconds: 25);
 
@@ -63,6 +64,34 @@ class HomePageState extends State<HomePage> {
     _socket?.disconnect();
     _socket?.dispose();
     super.dispose();
+  }
+
+  Future<void> _openIdeaBox(AppLocalizations l10n) async {
+    final idea = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFFF7EBD1),
+      builder: (_) => _ChallengeIdeaSheet(l10n: l10n),
+    );
+    if (idea == null || !mounted || _isSubmittingIdea) return;
+
+    setState(() => _isSubmittingIdea = true);
+    try {
+      await _feedService.submitChallengeIdea(idea);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.challengeIdeaSuccess)),
+      );
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.challengeIdeaError)),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmittingIdea = false);
+    }
   }
 
   void setActive(bool active) {
@@ -355,6 +384,20 @@ class HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
+          IconButton(
+            onPressed: _isSubmittingIdea ? null : () => _openIdeaBox(l10n),
+            tooltip: l10n.challengeIdeaOpen,
+            icon: _isSubmittingIdea
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(
+                    Icons.lightbulb_outline,
+                    color: Color(0xFFF2B705),
+                  ),
+          ),
           if (_isRefreshing)
             const Padding(
               padding: EdgeInsets.only(right: 16),
@@ -518,6 +561,93 @@ class HomePageState extends State<HomePage> {
     return GoogleFonts.karla(
       color: _inkMuted,
       fontSize: fontSize,
+    );
+  }
+}
+
+class _ChallengeIdeaSheet extends StatefulWidget {
+  const _ChallengeIdeaSheet({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  State<_ChallengeIdeaSheet> createState() => _ChallengeIdeaSheetState();
+}
+
+class _ChallengeIdeaSheetState extends State<_ChallengeIdeaSheet> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = widget.l10n;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.challengeIdeaTitle,
+            style: GoogleFonts.dmSerifDisplay(
+              color: _inkColor,
+              fontSize: 24,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.challengeIdeaDescription,
+            style: GoogleFonts.karla(color: _inkMuted, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            keyboardType: TextInputType.multiline,
+            textCapitalization: TextCapitalization.sentences,
+            autocorrect: true,
+            enableSuggestions: true,
+            maxLength: 500,
+            maxLines: 5,
+            textInputAction: TextInputAction.newline,
+            decoration: InputDecoration(
+              hintText: l10n.challengeIdeaHint,
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.65),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () {
+              final idea = _controller.text.trim();
+              if (idea.length < 3) return;
+              Navigator.of(context).pop(idea);
+            },
+            icon: const Icon(Icons.send_outlined),
+            label: Text(l10n.challengeIdeaSend),
+            style: FilledButton.styleFrom(
+              backgroundColor: _inkColor,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
