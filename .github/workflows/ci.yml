@@ -100,6 +100,11 @@ jobs:
         working-directory: mobile
         run: flutter pub get
 
+      - name: Create .env file
+        working-directory: mobile
+        run: |
+          echo "API_BASE_URL=http://localhost:3000" > .env
+
       - name: Analyze
         working-directory: mobile
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
