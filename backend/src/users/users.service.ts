@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -26,7 +27,9 @@ export class UsersService {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         const target = error.meta?.target;
-        const fields = Array.isArray(target) ? target.join(',') : String(target ?? '');
+        const fields = Array.isArray(target)
+          ? target.join(',')
+          : String(target ?? '');
 
         if (fields.includes('email')) {
           throw new ConflictException('mail already in use');
@@ -42,6 +45,12 @@ export class UsersService {
       if (error.code === 'P2025') {
         throw new NotFoundException('user not found');
       }
+    }
+
+    // Domain exceptions (e.g. NotFoundException from findPublicProfile) must
+    // propagate as-is instead of being remapped to a 500.
+    if (error instanceof HttpException) {
+      throw error;
     }
 
     throw new InternalServerErrorException('Database operation failed');

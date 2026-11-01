@@ -1,8 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { FriendsService } from './friends.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotificationGateway } from '../bootstrap/notification.gateway';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('FriendsService', () => {
@@ -47,9 +50,7 @@ describe('FriendsService', () => {
         },
         {
           provide: NotificationGateway,
-          useValue: {
-            sendToUser: jest.fn(),
-          },
+          useValue: notificationGateway,
         },
       ],
     }).compile();
@@ -65,24 +66,30 @@ describe('FriendsService', () => {
     it('should throw NotFoundException when target user does not exist', async () => {
       prismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.sendFriendRequest(1, 'unknown')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.sendFriendRequest(1, 'unknown'),
+      ).rejects.toBeInstanceOf(NotFoundException);
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { username: 'unknown' },
       });
     });
 
     it('should throw BadRequestException when sending request to self', async () => {
-      prismaService.user.findUnique.mockResolvedValue({ id: 1, username: 'alice' });
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 1,
+        username: 'alice',
+      });
 
-      await expect(service.sendFriendRequest(1, 'alice')).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        service.sendFriendRequest(1, 'alice'),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
 
     it('should create a pending request when target is valid and no relation exists', async () => {
-      prismaService.user.findUnique.mockResolvedValue({ id: 2, username: 'bob' });
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 2,
+        username: 'bob',
+      });
       prismaService.friendship.findFirst.mockResolvedValue(null);
       prismaService.friendship.create.mockResolvedValue({
         id: 10,
@@ -104,9 +111,13 @@ describe('FriendsService', () => {
           requester: { select: { username: true } },
         },
       });
-      expect(notificationGateway.sendToUser).toHaveBeenCalledWith(2, 'friendRequestReceived', {
-        requesterUsername: 'alice',
-      });
+      expect(notificationGateway.sendToUser).toHaveBeenCalledWith(
+        2,
+        'friendRequestReceived',
+        {
+          requesterUsername: 'alice',
+        },
+      );
       expect(result).toEqual({
         id: 10,
         userId: 1,
@@ -117,7 +128,10 @@ describe('FriendsService', () => {
     });
 
     it('should throw ForbiddenException when the target has blocked the user', async () => {
-      prismaService.user.findUnique.mockResolvedValue({ id: 2, username: 'bob' });
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 2,
+        username: 'bob',
+      });
       prismaService.friendship.findFirst.mockResolvedValue({
         id: 5,
         userId: 2,
@@ -150,7 +164,10 @@ describe('FriendsService', () => {
         friendId: 1,
         status: 'PENDING',
       });
-      prismaService.friendship.update.mockResolvedValue({ id: 1, status: 'ACCEPTED' });
+      prismaService.friendship.update.mockResolvedValue({
+        id: 1,
+        status: 'ACCEPTED',
+      });
 
       const result = await service.acceptFriendRequest(1, 1);
 
@@ -168,22 +185,36 @@ describe('FriendsService', () => {
 
       const result = await service.rejectFriendRequest(1, 1);
 
-      expect(prismaService.friendship.delete).toHaveBeenCalledWith({ where: { id: 1 } });
+      expect(prismaService.friendship.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
       expect(result).toEqual({ success: true });
     });
 
     it('should throw NotFoundException when not authorized', async () => {
-      prismaService.friendship.findUnique.mockResolvedValue({ id: 1, friendId: 99, status: 'PENDING' });
+      prismaService.friendship.findUnique.mockResolvedValue({
+        id: 1,
+        friendId: 99,
+        status: 'PENDING',
+      });
 
-      await expect(service.rejectFriendRequest(1, 1)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.rejectFriendRequest(1, 1)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
   });
 
   describe('blockUser', () => {
     it('should create a BLOCKED relation when none exists', async () => {
-      prismaService.user.findUnique.mockResolvedValue({ id: 2, username: 'bob' });
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 2,
+        username: 'bob',
+      });
       prismaService.friendship.findFirst.mockResolvedValue(null);
-      prismaService.friendship.create.mockResolvedValue({ id: 1, status: 'BLOCKED' });
+      prismaService.friendship.create.mockResolvedValue({
+        id: 1,
+        status: 'BLOCKED',
+      });
 
       const result = await service.blockUser(1, 'bob');
 
@@ -194,9 +225,20 @@ describe('FriendsService', () => {
     });
 
     it('should update an existing relation to BLOCKED', async () => {
-      prismaService.user.findUnique.mockResolvedValue({ id: 2, username: 'bob' });
-      prismaService.friendship.findFirst.mockResolvedValue({ id: 7, userId: 2, friendId: 1, status: 'ACCEPTED' });
-      prismaService.friendship.update.mockResolvedValue({ id: 7, status: 'BLOCKED' });
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 2,
+        username: 'bob',
+      });
+      prismaService.friendship.findFirst.mockResolvedValue({
+        id: 7,
+        userId: 2,
+        friendId: 1,
+        status: 'ACCEPTED',
+      });
+      prismaService.friendship.update.mockResolvedValue({
+        id: 7,
+        status: 'BLOCKED',
+      });
 
       const result = await service.blockUser(1, 'bob');
 
