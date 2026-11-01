@@ -1,6 +1,8 @@
 # Utiliser une image Node.js légère
 FROM node:20-alpine
 
+RUN apk add --no-cache ffmpeg
+
 # Créer et définir le dossier de travail dans le conteneur
 WORKDIR /app
 

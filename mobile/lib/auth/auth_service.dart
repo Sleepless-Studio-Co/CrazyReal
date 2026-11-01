@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_exception.dart';
-import '../utils/media_url.dart';
 
 class AuthService {
   static const String _accessTokenKey = 'access_token';
@@ -17,7 +17,20 @@ class AuthService {
   /// Google Sign-In must be initialized exactly once per process.
   static bool _googleInitialized = false;
 
-  final String baseUrl = apiBaseUrl;
+  final http.Client _client;
+  final FlutterSecureStorage _secureStorage;
+
+  AuthService({http.Client? client, FlutterSecureStorage? secureStorage})
+      : _client = client ?? http.Client(),
+        _secureStorage = secureStorage ?? const FlutterSecureStorage();
+
+  String get baseUrl {
+    try {
+      return dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000';
+    } catch (_) {
+      return 'http://localhost:3000';
+    }
+  }
 
   Future<Map<String, dynamic>?> login(String email, String password) async {
     final response = await _unauthedPost('/auth/login', {
@@ -111,12 +124,9 @@ class AuthService {
   }
 
   Future<void> _persistSession(Map<String, dynamic> data) async {
-    final accessToken = data['access_token'];
-    final refreshToken = data['refresh_token'];
-    if (accessToken is! String ||
-        accessToken.isEmpty ||
-        refreshToken is! String ||
-        refreshToken.isEmpty) {
+    final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+    final refreshToken = _extractToken(data, ['refresh_token', 'refreshToken']);
+    if (accessToken == null || refreshToken == null) {
       throw ApiException('Auth response missing tokens');
     }
     await _saveTokens(accessToken, refreshToken);
@@ -128,7 +138,7 @@ class AuthService {
     final accessToken = await getAccessToken();
     if (refreshToken != null) {
       try {
-        await http.post(
+        await _client.post(
           Uri.parse('$baseUrl/auth/logout'),
           headers: {
             'Content-Type': 'application/json',
@@ -144,9 +154,18 @@ class AuthService {
     await _signOutGoogleIfNeeded();
   }
 
-  Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_accessTokenKey);
+  Future<String?> getAccessToken({bool refreshIfNeeded = false}) async {
+    final currentToken = await _secureStorage.read(key: _accessTokenKey);
+    if (!refreshIfNeeded || (currentToken != null && currentToken.isNotEmpty)) {
+      return currentToken;
+    }
+
+    final refreshToken = await _secureStorage.read(key: _refreshTokenKey);
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return currentToken;
+    }
+
+    return _refreshAccessToken(refreshToken);
   }
 
   /// Signs the current Google account out of the SDK, if it was initialized.
@@ -160,8 +179,7 @@ class AuthService {
   }
 
   Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_refreshTokenKey);
+    return _secureStorage.read(key: _refreshTokenKey);
   }
 
   Future<Map<String, dynamic>?> getUser() async {
@@ -174,8 +192,28 @@ class AuthService {
   }
 
   Future<bool> isLoggedIn() async {
+    final restored = await restoreSession();
+    if (restored) {
+      return true;
+    }
+
     final token = await getAccessToken();
-    return token != null;
+    return token != null && token.isNotEmpty;
+  }
+
+  Future<bool> restoreSession() async {
+    final refreshToken = await _secureStorage.read(key: _refreshTokenKey);
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return false;
+    }
+
+    final token = await _refreshAccessToken(refreshToken);
+    if (token == null || token.isEmpty) {
+      await _clearTokens();
+      return false;
+    }
+
+    return true;
   }
 
   /// Fetches the current profile from the API and refreshes the cached user.
@@ -187,7 +225,7 @@ class AuthService {
     }
 
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse('$baseUrl/auth/me'),
         headers: {'Authorization': 'Bearer $token'},
       );
@@ -218,7 +256,7 @@ class AuthService {
     }
 
     try {
-      final response = await http.post(
+      final response = await _client.post(
         Uri.parse('$baseUrl/auth/resend-verification'),
         headers: {
           'Authorization': 'Bearer $token',
@@ -241,9 +279,8 @@ class AuthService {
   }
 
   Future<void> _saveTokens(String accessToken, String refreshToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, accessToken);
-    await prefs.setString(_refreshTokenKey, refreshToken);
+    await _secureStorage.write(key: _accessTokenKey, value: accessToken);
+    await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
   }
 
   Future<void> _updateAccessToken(String accessToken) async {
@@ -253,8 +290,7 @@ class AuthService {
       return;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accessTokenKey, accessToken);
+    await _secureStorage.write(key: _accessTokenKey, value: accessToken);
   }
 
   Future<void> _saveUser(Map<String, dynamic> user) async {
@@ -285,8 +321,8 @@ class AuthService {
     }
 
     final data = await _authedJson('PATCH', '/auth/me', body: payload);
-    final accessToken = data['access_token'];
-    if (accessToken is String && accessToken.isNotEmpty) {
+    final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+    if (accessToken != null) {
       await _updateAccessToken(accessToken);
     }
     await _saveUserIfPresent(data['user']);
@@ -379,17 +415,16 @@ class AuthService {
     try {
       switch (method) {
         case 'POST':
-          response = await http.post(uri, headers: headers, body: encodedBody);
+          response = await _client.post(uri, headers: headers, body: encodedBody);
           break;
         case 'PATCH':
-          response = await http.patch(uri, headers: headers, body: encodedBody);
+          response = await _client.patch(uri, headers: headers, body: encodedBody);
           break;
         case 'DELETE':
-          response =
-              await http.delete(uri, headers: headers, body: encodedBody);
+          response = await _client.delete(uri, headers: headers, body: encodedBody);
           break;
         default:
-          response = await http.get(uri, headers: headers);
+          response = await _client.get(uri, headers: headers);
       }
     } on SocketException catch (e) {
       throw ApiException('Network error: $e');
@@ -412,7 +447,7 @@ class AuthService {
   ) async {
     http.Response response;
     try {
-      response = await http.post(
+      response = await _client.post(
         Uri.parse('$baseUrl$path'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
@@ -430,10 +465,35 @@ class AuthService {
   }
 
   Future<void> _clearTokens() async {
+    await _secureStorage.delete(key: _accessTokenKey);
+    await _secureStorage.delete(key: _refreshTokenKey);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_accessTokenKey);
-    await prefs.remove(_refreshTokenKey);
     await prefs.remove(_userKey);
+  }
+
+  Future<String?> _refreshAccessToken(String refreshToken) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/auth/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh_token': refreshToken}),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return null;
+      }
+
+      final data = _decodeResponseMap(response.body);
+      final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+      if (accessToken == null || accessToken.isEmpty) {
+        return null;
+      }
+
+      await _saveTokens(accessToken, refreshToken);
+      return accessToken;
+    } catch (_) {
+      return null;
+    }
   }
 
   Map<String, dynamic> _decodeResponseMap(String body) {
@@ -442,5 +502,15 @@ class AuthService {
       return decoded;
     }
     throw ApiException('Unexpected response format');
+  }
+
+  String? _extractToken(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key];
+      if (value is String && value.isNotEmpty) {
+        return value;
+      }
+    }
+    return null;
   }
 }

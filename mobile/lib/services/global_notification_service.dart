@@ -61,7 +61,66 @@ class GlobalNotificationService {
       }
     });
 
+    _socket!.on('challengeCreated', (data) {
+      try {
+        final map = Map<String, dynamic>.from(data as Map);
+        final title = map['challengeTitle']?.toString() ?? '';
+        final context = navigatorKey.currentContext;
+        var notificationTitle = 'Nouveau défi';
+        var body = title;
+        if (context != null) {
+          final l10n = AppLocalizations.of(context);
+          if (l10n != null) {
+            notificationTitle = l10n.notificationChallengeCreatedTitle;
+            body = l10n.notificationChallengeCreatedBody(title);
+          }
+        }
+        NotificationService().showNotification(
+          id: _notificationId(map['challengeId'], 100000),
+          title: notificationTitle,
+          body: body,
+          channelId: 'challenges',
+        );
+      } catch (e) {
+        debugPrint('[notif-socket] error parsing challengeCreated: $e');
+      }
+    });
+
+    _socket!.on('challengeReminder', (data) {
+      try {
+        final map = Map<String, dynamic>.from(data as Map);
+        final title = map['challengeTitle']?.toString() ?? '';
+        final hours = map['hoursRemaining'] as int? ?? 0;
+        final context = navigatorKey.currentContext;
+        var notificationTitle = 'Défi bientôt terminé';
+        var body = '$title : plus que $hours h restantes';
+        if (context != null) {
+          final l10n = AppLocalizations.of(context);
+          if (l10n != null) {
+            notificationTitle = l10n.notificationChallengeReminderTitle;
+            body = l10n.notificationChallengeReminderBody(hours, title);
+          }
+        }
+        NotificationService().showNotification(
+          id: _notificationId(
+              map['challengeId'], hours == 24 ? 200000 : 300000),
+          title: notificationTitle,
+          body: body,
+          channelId: 'challenges',
+        );
+      } catch (e) {
+        debugPrint('[notif-socket] error parsing challengeReminder: $e');
+      }
+    });
+
     _socket!.connect();
+  }
+
+  int _notificationId(dynamic challengeId, int offset) {
+    return offset +
+        (challengeId is int
+            ? challengeId
+            : challengeId.hashCode.abs() % 100000);
   }
 
   void disconnect() {

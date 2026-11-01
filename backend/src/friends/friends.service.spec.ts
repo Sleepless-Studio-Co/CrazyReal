@@ -3,6 +3,7 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { FriendsService } from './friends.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 describe('FriendsService', () => {
   let notificationGateway: { sendToUser: jest.Mock };
@@ -46,7 +47,9 @@ describe('FriendsService', () => {
         },
         {
           provide: NotificationGateway,
-          useValue: notificationGateway,
+          useValue: {
+            sendToUser: jest.fn(),
+          },
         },
       ],
     }).compile();

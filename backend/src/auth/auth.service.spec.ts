@@ -16,6 +16,7 @@ describe('AuthService', () => {
     findByEmail: jest.fn(),
     create: jest.fn(),
     findByEmailWithPassword: jest.fn(),
+    findById: jest.fn(),
     findByGoogleId: jest.fn(),
     linkGoogleAccount: jest.fn(),
     createGoogleUser: jest.fn(),
@@ -100,6 +101,7 @@ describe('AuthService', () => {
         id: 1,
         email: 'john@example.com',
         username: 'john',
+        isPrivate: false,
       });
 
       const result = await service.register('john@example.com', 'StrongPassword123!', 'john');
@@ -111,6 +113,7 @@ describe('AuthService', () => {
           id: 1,
           email: 'john@example.com',
           username: 'john',
+          isPrivate: false,
         },
       });
       expect(usersServiceMock.create).toHaveBeenCalledWith(
@@ -153,6 +156,7 @@ describe('AuthService', () => {
         email: 'jane@example.com',
         username: 'jane',
         password: hashedPassword,
+        isPrivate: false,
       });
 
       const result = await service.login('jane@example.com', 'StrongPassword123!');
@@ -164,6 +168,7 @@ describe('AuthService', () => {
           id: 2,
           email: 'jane@example.com',
           username: 'jane',
+          isPrivate: false,
         },
       });
       expect(jwtServiceMock.sign).toHaveBeenCalledWith({
@@ -185,6 +190,22 @@ describe('AuthService', () => {
       await expect(service.login('jane@example.com', 'wrong-password')).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+
+    it('includes the privacy setting in the current profile', async () => {
+      usersServiceMock.findById.mockResolvedValue({
+        id: 3,
+        email: 'private@example.com',
+        username: 'private-user',
+        isPrivate: true,
+        emailVerified: true,
+        createdAt: new Date('2026-01-01'),
+      });
+
+      await expect(service.getMe(3)).resolves.toEqual(expect.objectContaining({
+        id: 3,
+        isPrivate: true,
+      }));
     });
   });
 

@@ -251,6 +251,7 @@ export class UsersService {
           isPrivate: true,
           emailVerified: true,
           createdAt: true,
+          role: true,
         },
       });
     } catch (error) {

@@ -1,0 +1,1 @@
+ALTER TABLE "Challenge" ADD COLUMN "durationHours" INTEGER;

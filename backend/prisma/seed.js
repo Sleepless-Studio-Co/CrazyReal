@@ -11,6 +11,25 @@ function getWeekStart(date = new Date()) {
   return d;
 }
 
+function getRecurringChallengeDates(items, weekStart) {
+  const dates = items
+    .map((item) => new Date(item.date))
+    .filter((date) => !Number.isNaN(date.getTime()));
+  const firstDate = dates.length > 0
+    ? Math.min(...dates.map((date) => date.getTime()))
+    : weekStart.getTime();
+
+  return items.map((item) => {
+    const configuredDate = new Date(item.date);
+    const offset = Number.isNaN(configuredDate.getTime())
+      ? 0
+      : Math.floor((configuredDate.getTime() - firstDate) / (24 * 60 * 60 * 1000));
+    const date = new Date(weekStart);
+    date.setUTCDate(date.getUTCDate() + offset);
+    return date;
+  });
+}
+
 async function main() {
   const weekStart = getWeekStart(new Date());
 
@@ -31,12 +50,13 @@ async function main() {
 
   const raw = fs.readFileSync(file, 'utf-8');
   const items = JSON.parse(raw);
+  const recurringDates = getRecurringChallengeDates(items, weekStart);
 
   // Normalize dates if provided as ISO strings
-  const data = items.map((c) => ({
+  const data = items.map((c, index) => ({
     title: c.title,
     description: c.description || '',
-    date: c.date ? new Date(c.date) : weekStart,
+    date: recurringDates[index],
     type: c.type || ChallengeType.WEEKLY_A,
     isActive: c.isActive !== undefined ? c.isActive : true,
   }));

@@ -42,7 +42,8 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e is ApiException ? e.message : 'Erreur de chargement'),
+            content:
+                Text(e is ApiException ? e.message : 'Erreur de chargement'),
             backgroundColor: paperDanger,
           ),
         );
@@ -76,6 +77,25 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
     }
   }
 
+  Future<FeedPost> _toggleReaction(int postId, String emoji) async {
+    final post = _posts.firstWhere((item) => item.id == postId);
+    final reaction = post.reactions.firstWhere(
+      (item) => item.emoji == emoji,
+      orElse: () => const FeedReaction(
+        emoji: '',
+        count: 0,
+        reactedByMe: false,
+      ),
+    );
+    final updated = reaction.reactedByMe
+        ? await _feedService.removeReaction(postId, emoji)
+        : await _feedService.addReaction(postId, emoji);
+    if (!mounted) return updated;
+    final index = _posts.indexWhere((item) => item.id == postId);
+    if (index != -1) setState(() => _posts[index] = updated);
+    return updated;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -91,7 +111,8 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
         child: const PaperEmptyState(
           icon: Icons.photo_library_outlined,
           title: 'Aucune photo',
-          message: 'Relève un défi depuis l\'appareil photo pour remplir ce feed !',
+          message:
+              'Relève un défi depuis l\'appareil photo pour remplir ce feed !',
         ),
       );
     }
@@ -110,6 +131,7 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
             post: post,
             unknownUserLabel: l10n.unknownUser,
             onUpvote: () => _toggleUpvote(post.id),
+            onReaction: (emoji) => _toggleReaction(post.id, emoji),
           );
         },
       ),

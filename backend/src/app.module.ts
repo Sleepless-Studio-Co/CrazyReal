@@ -12,6 +12,7 @@ import { ChatModule } from './chat/chat.module';
 import { AdminModule } from './admin/admin.module';
 import { FeedModule } from './feed/feed.module';
 import { UpVotesModule } from './upvotes/upvotes.module';
+import { NotificationsModule } from './bootstrap/notifications.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { UpVotesModule } from './upvotes/upvotes.module';
     ChatModule,
     FeedModule,
     UpVotesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [
