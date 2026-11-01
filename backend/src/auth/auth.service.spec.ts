@@ -228,6 +228,7 @@ describe('AuthService', () => {
         username: 'newuser',
         avatarUrl: 'https://example.com/pic.png',
         avatarKey: null,
+        isPrivate: false,
         emailVerified: true,
       });
 
@@ -241,6 +242,7 @@ describe('AuthService', () => {
         username: 'newuser',
         avatarUrl: 'https://example.com/pic.png',
         avatarKey: null,
+        isPrivate: false,
         emailVerified: true,
       });
       expect(usersServiceMock.createGoogleUser).toHaveBeenCalledWith({
@@ -264,12 +266,14 @@ describe('AuthService', () => {
         username: 'existing',
         avatarUrl: null,
         avatarKey: null,
+        isPrivate: false,
         emailVerified: true,
       });
 
       const result = await service.googleLogin('id-token');
 
       expect(result.user.id).toBe(7);
+      expect(result.user.isPrivate).toBe(false);
       expect(usersServiceMock.linkGoogleAccount).toHaveBeenCalledWith(7, {
         googleId: 'google-123',
         avatarUrl: 'https://example.com/pic.png',
@@ -285,12 +289,14 @@ describe('AuthService', () => {
         username: 'linked',
         avatarUrl: null,
         avatarKey: null,
+        isPrivate: true,
         emailVerified: true,
       });
 
       const result = await service.googleLogin('id-token');
 
       expect(result.user.id).toBe(9);
+      expect(result.user.isPrivate).toBe(true);
       expect(usersServiceMock.findByEmail).not.toHaveBeenCalled();
     });
 

@@ -75,8 +75,12 @@ export class UsersService {
 
   async findByEmail(email: string) {
     try {
-      return await this.prisma.user.findUnique({
-        where: { email },
+      // Emails are case-insensitive, so a Google account can be linked to an
+      // existing password account even when the stored casing differs.
+      return await this.prisma.user.findFirst({
+        where: {
+          email: { equals: email.trim(), mode: 'insensitive' },
+        },
         select: {
           id: true,
           email: true,

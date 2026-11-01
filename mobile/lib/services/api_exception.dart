@@ -12,7 +12,8 @@ class ApiException implements Exception {
 }
 
 class UnauthorizedException extends ApiException {
-  UnauthorizedException() : super('Unauthorized', statusCode: 401);
+  UnauthorizedException([String? message])
+      : super(message ?? 'Unauthorized', statusCode: 401);
 }
 
 /// Thrown when the user dismisses the native Google sign-in sheet. Callers
@@ -23,21 +24,29 @@ class GoogleSignInCancelledException implements Exception {
 }
 
 ApiException buildApiException(http.Response response) {
+  final message = _extractMessage(response.body);
+
+  // Keep the UnauthorizedException type so callers can trigger a re-auth,
+  // while preserving the server message (e.g. "Invalid Google token").
   if (response.statusCode == 401) {
-    return UnauthorizedException();
+    return UnauthorizedException(message);
   }
 
+  return ApiException(
+    message ?? 'Erreur serveur (${response.statusCode})',
+    statusCode: response.statusCode,
+  );
+}
+
+String? _extractMessage(String body) {
   try {
-    final body = jsonDecode(response.body);
-    final rawMessage = body['message'];
+    final decoded = jsonDecode(body);
+    if (decoded is! Map<String, dynamic>) return null;
+    final rawMessage = decoded['message'];
     final message =
         rawMessage is List ? rawMessage.join('\n') : rawMessage?.toString();
-    return ApiException(
-      message ?? 'Erreur serveur (${response.statusCode})',
-      statusCode: response.statusCode,
-    );
+    return message == null || message.isEmpty ? null : message;
   } catch (_) {
-    return ApiException('Erreur serveur (${response.statusCode})',
-        statusCode: response.statusCode);
+    return null;
   }
 }

@@ -124,7 +124,8 @@ class AuthService {
   }
 
   Future<void> _persistSession(Map<String, dynamic> data) async {
-    final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+    final accessToken =
+        _extractToken(data, ['access_token', 'accessToken', 'token']);
     final refreshToken = _extractToken(data, ['refresh_token', 'refreshToken']);
     if (accessToken == null || refreshToken == null) {
       throw ApiException('Auth response missing tokens');
@@ -321,7 +322,8 @@ class AuthService {
     }
 
     final data = await _authedJson('PATCH', '/auth/me', body: payload);
-    final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+    final accessToken =
+        _extractToken(data, ['access_token', 'accessToken', 'token']);
     if (accessToken != null) {
       await _updateAccessToken(accessToken);
     }
@@ -388,6 +390,7 @@ class AuthService {
   Future<void> deleteAccount() async {
     await _authedJson('DELETE', '/users/me');
     await _clearTokens();
+    await _signOutGoogleIfNeeded();
   }
 
   // ─── Shared request helpers ────────────────────────────────────────────────
@@ -415,13 +418,16 @@ class AuthService {
     try {
       switch (method) {
         case 'POST':
-          response = await _client.post(uri, headers: headers, body: encodedBody);
+          response =
+              await _client.post(uri, headers: headers, body: encodedBody);
           break;
         case 'PATCH':
-          response = await _client.patch(uri, headers: headers, body: encodedBody);
+          response =
+              await _client.patch(uri, headers: headers, body: encodedBody);
           break;
         case 'DELETE':
-          response = await _client.delete(uri, headers: headers, body: encodedBody);
+          response =
+              await _client.delete(uri, headers: headers, body: encodedBody);
           break;
         default:
           response = await _client.get(uri, headers: headers);
@@ -484,7 +490,8 @@ class AuthService {
       }
 
       final data = _decodeResponseMap(response.body);
-      final accessToken = _extractToken(data, ['access_token', 'accessToken', 'token']);
+      final accessToken =
+          _extractToken(data, ['access_token', 'accessToken', 'token']);
       if (accessToken == null || accessToken.isEmpty) {
         return null;
       }
