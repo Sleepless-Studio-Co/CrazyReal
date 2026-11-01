@@ -141,6 +141,7 @@ describe('AppController', () => {
       prismaService.friendship.findMany.mockResolvedValue([
         { userId: 10, friendId: 20, status: 'ACCEPTED' },
       ]);
+      prismaService.challenge.findMany.mockResolvedValue([]);
       prismaService.post.findMany.mockResolvedValue([]);
 
       await appController.getPosts({
