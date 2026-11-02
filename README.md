@@ -396,6 +396,8 @@ Workflow GitHub Actions : `.github/workflows/ci.yml`
 
 | Job | Déclencheur | Action |
 |-----|-------------|--------|
+| **Test Backend** | Modifications dans `backend/` | `npm ci` + `npm run test` |
+| **Test Mobile** | Modifications dans `mobile/` | `flutter analyze` + `flutter test` |
 | **Build Backend** | Modifications dans `backend/` | `npm ci` + `npm run build` |
 | **Build Mobile (Android)** | Modifications dans `mobile/` | APK release en artifact |
 | **Semantic Release** | Push sur `main` | Versioning automatique |

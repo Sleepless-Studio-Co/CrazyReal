@@ -70,14 +70,18 @@ describe('AppController', () => {
       };
       prismaService.challenge.findMany.mockResolvedValue([challenge]);
 
-      await expect(appController.getCurrentChallenge()).resolves.toEqual(challenge);
+      await expect(appController.getCurrentChallenge()).resolves.toEqual(
+        challenge,
+      );
       expect(prismaService.challenge.findMany).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when no active challenge exists', async () => {
       prismaService.challenge.findMany.mockResolvedValue([]);
 
-      await expect(appController.getCurrentChallenge()).rejects.toThrow(NotFoundException);
+      await expect(appController.getCurrentChallenge()).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -132,7 +136,9 @@ describe('AppController', () => {
 
       prismaService.challenge.findMany.mockResolvedValue([]);
 
-      await expect(appController.uploadPhoto(file, user)).rejects.toThrow(BadRequestException);
+      await expect(appController.uploadPhoto(file, user)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -141,6 +147,7 @@ describe('AppController', () => {
       prismaService.friendship.findMany.mockResolvedValue([
         { userId: 10, friendId: 20, status: 'ACCEPTED' },
       ]);
+      prismaService.challenge.findMany.mockResolvedValue([]);
       prismaService.post.findMany.mockResolvedValue([]);
 
       await appController.getPosts({
@@ -149,14 +156,13 @@ describe('AppController', () => {
         username: 'user',
       });
 
-      expect(prismaService.post.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({
-          OR: [
-            { userId: { in: [20, 10] } },
-            { user: { isPrivate: false } },
-          ],
+      expect(prismaService.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [{ userId: { in: [20, 10] } }, { user: { isPrivate: false } }],
+          }),
         }),
-      }));
+      );
     });
   });
 });
