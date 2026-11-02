@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -45,10 +46,10 @@ http.Response json(Object body, [int status = 200]) => http.Response(
 /// no font downloads from the test runner.
 void setUpTestEnv({String? token = 'tok'}) {
   dotenv.testLoad(fileInput: 'API_BASE_URL=http://api.test');
-  SharedPreferences.setMockInitialValues({
+  FlutterSecureStorage.setMockInitialValues({
     if (token != null) 'access_token': token,
-    'user': jsonEncode(meJson),
   });
+  SharedPreferences.setMockInitialValues({'user': jsonEncode(meJson)});
   GoogleFonts.config.allowRuntimeFetching = false;
 }
 

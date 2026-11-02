@@ -68,7 +68,7 @@ class HomePageState extends State<HomePage> {
     final idea = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFF7EBD1),
+      backgroundColor: context.paper.bg,
       builder: (_) => _ChallengeIdeaSheet(l10n: l10n),
     );
     if (idea == null || !mounted || _isSubmittingIdea) return;
@@ -187,7 +187,7 @@ class HomePageState extends State<HomePage> {
     final offset = renderBox.localToGlobal(Offset.zero);
     final selectedId = await showMenu<int>(
       context: context,
-      color: const Color(0xFFF3D7B2),
+      color: context.paper.card,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -203,7 +203,7 @@ class HomePageState extends State<HomePage> {
           value: -1,
           child: Text(
             l10n.feedAllChallenges,
-            style: const TextStyle(color: _inkColor),
+            style: TextStyle(color: context.paper.ink),
           ),
         ),
         ..._availableChallenges
@@ -216,7 +216,7 @@ class HomePageState extends State<HomePage> {
                     l10n.feedGlobalChallenge,
                     l10n.feedFriendChallenge,
                   ),
-                  style: const TextStyle(color: _inkColor),
+                  style: TextStyle(color: context.paper.ink),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -391,9 +391,9 @@ class HomePageState extends State<HomePage> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(
+                : Icon(
                     Icons.lightbulb_outline,
-                    color: Color(0xFFF2B705),
+                    color: context.paper.accent,
                   ),
           ),
           if (_isRefreshing)
@@ -427,24 +427,6 @@ class HomePageState extends State<HomePage> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       color: context.paper.bg,
-      child: DropdownButton<int>(
-        value: _selectedChallengeId,
-        isExpanded: true,
-        underline: const SizedBox.shrink(),
-        items: [
-          DropdownMenuItem<int>(
-            value: -1,
-            child: Text(l10n.feedAllChallenges),
-          ),
-          ..._availableChallenges.map(
-            (challenge) => DropdownMenuItem<int>(
-              value: challenge.id,
-              child: Text(
-                challenge.label(
-                    l10n.feedGlobalChallenge, l10n.feedFriendChallenge),
-                overflow: TextOverflow.ellipsis,
-              ),
-      color: const Color(0xFFF7EBD1),
       child: Column(
         children: [
           Builder(
@@ -453,9 +435,9 @@ class HomePageState extends State<HomePage> {
               onPressed: (index) =>
                   _selectFeedScope(filterContext, l10n, index == 0),
               borderRadius: BorderRadius.circular(8),
-              selectedColor: Colors.white,
-              fillColor: _inkColor,
-              color: _inkColor,
+              selectedColor: context.paper.bg,
+              fillColor: context.paper.ink,
+              color: context.paper.ink,
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -624,7 +606,7 @@ class _ChallengeIdeaSheetState extends State<_ChallengeIdeaSheet> {
           Text(
             l10n.challengeIdeaTitle,
             style: GoogleFonts.dmSerifDisplay(
-              color: _inkColor,
+              color: context.paper.ink,
               fontSize: 24,
               letterSpacing: 0.2,
             ),
@@ -632,7 +614,8 @@ class _ChallengeIdeaSheetState extends State<_ChallengeIdeaSheet> {
           const SizedBox(height: 8),
           Text(
             l10n.challengeIdeaDescription,
-            style: GoogleFonts.karla(color: _inkMuted, fontSize: 14),
+            style:
+                GoogleFonts.karla(color: context.paper.inkMuted, fontSize: 14),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -665,8 +648,8 @@ class _ChallengeIdeaSheetState extends State<_ChallengeIdeaSheet> {
             icon: const Icon(Icons.send_outlined),
             label: Text(l10n.challengeIdeaSend),
             style: FilledButton.styleFrom(
-              backgroundColor: _inkColor,
-              foregroundColor: Colors.white,
+              backgroundColor: context.paper.ink,
+              foregroundColor: context.paper.bg,
             ),
           ),
         ],

@@ -33,17 +33,6 @@ class PostCard extends StatefulWidget {
   final bool linkAvatarToProfile;
   static final ShareService _shareService = ShareService();
 
-  Future<void> _share(BuildContext context) async {
-    try {
-      final link = await _shareService.createShareLink(post.id);
-      await SharePlus.instance.share(ShareParams(uri: Uri.parse(link)));
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Impossible de créer le lien : $error')),
-      );
-    }
-  }
   final Future<FeedPost> Function(String emoji)? onReaction;
 
   @override
@@ -52,6 +41,18 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   late FeedPost _post;
+
+  Future<void> _share(BuildContext context) async {
+    try {
+      final link = await PostCard._shareService.createShareLink(_post.id);
+      await SharePlus.instance.share(ShareParams(uri: Uri.parse(link)));
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible de créer le lien : $error')),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -103,7 +104,7 @@ class _PostCardState extends State<PostCard> {
                   username: _post.user.username,
                   avatarUrl: _post.user.avatarUrl,
                   avatarKey: _post.user.avatarKey,
-                  userId: linkAvatarToProfile ? post.user.id : null,
+                  userId: widget.linkAvatarToProfile ? _post.user.id : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -130,7 +131,7 @@ class _PostCardState extends State<PostCard> {
                     alignment: Alignment.topRight,
                     child: Text(
                       challengeLabel,
-                      style: _labelStyle(),
+                      style: _labelStyle(context),
                       textAlign: TextAlign.right,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -202,21 +203,6 @@ class _PostCardState extends State<PostCard> {
                 Expanded(child: _buildReactions(context)),
                 const SizedBox(width: 8),
                 InkWell(
-                  onTap: photoUrl.isEmpty
-                      ? null
-                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
-                  borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Icon(
-                      Icons.share_outlined,
-                      color: _inkMuted,
-                      size: 22,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                InkWell(
                   onTap: photoUrl.isEmpty ? null : () => _share(context),
                   borderRadius: BorderRadius.circular(20),
                   child: Padding(
@@ -251,7 +237,7 @@ class _PostCardState extends State<PostCard> {
                           const SizedBox(width: 4),
                           Text(
                             '${_post.upvoteCount}',
-                            style: _labelStyle().copyWith(
+                            style: _labelStyle(context).copyWith(
                               color: _post.hasUpvoted
                                   ? const Color(0xFFE05252)
                                   : context.paper.inkMuted,
@@ -279,7 +265,8 @@ class _PostCardState extends State<PostCard> {
         IconButton(
           onPressed:
               widget.onReaction == null ? null : () => _chooseReaction(context),
-          icon: const Icon(Icons.add_reaction_outlined, color: _inkMuted),
+          icon:
+              Icon(Icons.add_reaction_outlined, color: context.paper.inkMuted),
           tooltip: 'Ajouter une réaction',
           visualDensity: VisualDensity.compact,
         ),
@@ -293,14 +280,16 @@ class _PostCardState extends State<PostCard> {
               padding: const EdgeInsets.symmetric(horizontal: 3),
               child: Text(
                 '${reaction.emoji} ${reaction.count}',
-                style: _labelStyle().copyWith(
-                  color: reaction.reactedByMe ? _inkColor : _inkMuted,
+                style: _labelStyle(context).copyWith(
+                  color: reaction.reactedByMe
+                      ? context.paper.ink
+                      : context.paper.inkMuted,
                 ),
               ),
             ),
           ),
         ),
-        if (extraCount > 0) Text('+$extraCount', style: _labelStyle()),
+        if (extraCount > 0) Text('+$extraCount', style: _labelStyle(context)),
       ],
     );
   }
@@ -308,7 +297,7 @@ class _PostCardState extends State<PostCard> {
   Future<void> _chooseReaction(BuildContext context) async {
     final emoji = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFFF3D7B2),
+      backgroundColor: context.paper.card,
       isScrollControlled: true,
       builder: (context) => SafeArea(
         child: SizedBox(
@@ -317,118 +306,28 @@ class _PostCardState extends State<PostCard> {
             onEmojiSelected: (category, emoji) {
               Navigator.pop(context, emoji.emoji);
             },
-            config: const emoji_picker.Config(
+            config: emoji_picker.Config(
               height: double.infinity,
               checkPlatformCompatibility: true,
               emojiViewConfig: emoji_picker.EmojiViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
+                backgroundColor: context.paper.card,
                 columns: 8,
                 emojiSizeMax: 28,
               ),
               categoryViewConfig: emoji_picker.CategoryViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                indicatorColor: _inkColor,
-                iconColorSelected: _inkColor,
-                iconColor: _inkMuted,
+                backgroundColor: context.paper.card,
+                indicatorColor: context.paper.ink,
+                iconColorSelected: context.paper.ink,
+                iconColor: context.paper.inkMuted,
               ),
               bottomActionBarConfig: emoji_picker.BottomActionBarConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                buttonColor: Color(0xFFF3D7B2),
-                buttonIconColor: _inkMuted,
+                backgroundColor: context.paper.card,
+                buttonColor: context.paper.card,
+                buttonIconColor: context.paper.inkMuted,
               ),
               searchViewConfig: emoji_picker.SearchViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                buttonIconColor: _inkMuted,
-                hintText: 'Rechercher un emoji',
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    if (emoji != null) _toggleReaction(emoji);
-  }
-
-  Future<void> _toggleReaction(String emoji) async {
-    final current = _post.reactions.firstWhere(
-      (reaction) => reaction.emoji == emoji,
-      orElse: () => const FeedReaction(emoji: '', count: 0, reactedByMe: false),
-    );
-    final updated = current.reactedByMe
-        ? await widget.onReaction!(emoji)
-        : await widget.onReaction!(emoji);
-    if (mounted) setState(() => _post = updated);
-  }
-
-  Widget _buildReactions(BuildContext context) {
-    final visible = _post.reactions.take(3).toList();
-    final extraCount = _post.reactions.length - visible.length;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          onPressed:
-              widget.onReaction == null ? null : () => _chooseReaction(context),
-          icon: const Icon(Icons.add_reaction_outlined, color: _inkMuted),
-          tooltip: 'Ajouter une réaction',
-          visualDensity: VisualDensity.compact,
-        ),
-        ...visible.map(
-          (reaction) => InkWell(
-            onTap: widget.onReaction == null
-                ? null
-                : () => _toggleReaction(reaction.emoji),
-            borderRadius: BorderRadius.circular(14),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: Text(
-                '${reaction.emoji} ${reaction.count}',
-                style: _labelStyle().copyWith(
-                  color: reaction.reactedByMe ? _inkColor : _inkMuted,
-                ),
-              ),
-            ),
-          ),
-        ),
-        if (extraCount > 0) Text('+$extraCount', style: _labelStyle()),
-      ],
-    );
-  }
-
-  Future<void> _chooseReaction(BuildContext context) async {
-    final emoji = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: const Color(0xFFF3D7B2),
-      isScrollControlled: true,
-      builder: (context) => SafeArea(
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.55,
-          child: emoji_picker.EmojiPicker(
-            onEmojiSelected: (category, emoji) {
-              Navigator.pop(context, emoji.emoji);
-            },
-            config: const emoji_picker.Config(
-              height: double.infinity,
-              checkPlatformCompatibility: true,
-              emojiViewConfig: emoji_picker.EmojiViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                columns: 8,
-                emojiSizeMax: 28,
-              ),
-              categoryViewConfig: emoji_picker.CategoryViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                indicatorColor: _inkColor,
-                iconColorSelected: _inkColor,
-                iconColor: _inkMuted,
-              ),
-              bottomActionBarConfig: emoji_picker.BottomActionBarConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                buttonColor: Color(0xFFF3D7B2),
-                buttonIconColor: _inkMuted,
-              ),
-              searchViewConfig: emoji_picker.SearchViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                buttonIconColor: _inkMuted,
+                backgroundColor: context.paper.card,
+                buttonIconColor: context.paper.inkMuted,
                 hintText: 'Rechercher un emoji',
               ),
             ),
