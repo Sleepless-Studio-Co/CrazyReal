@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { PrismaService } from './prisma/prisma.service';
 import { FeedGateway } from './feed/feed.gateway';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 describe('AppController', () => {
@@ -13,6 +17,7 @@ describe('AppController', () => {
     };
     post: {
       create: jest.Mock<any>;
+      findUnique: jest.Mock<any>;
       findMany: jest.Mock<any>;
     };
     friendship: {
@@ -30,6 +35,7 @@ describe('AppController', () => {
       },
       post: {
         create: jest.fn(),
+        findUnique: jest.fn(),
         findMany: jest.fn(),
       },
       friendship: {
@@ -109,6 +115,7 @@ describe('AppController', () => {
         challengeId: 42,
         userId: 123,
       });
+      prismaService.post.findUnique.mockResolvedValue(null);
 
       await appController.uploadPhoto(file, user);
 
@@ -120,6 +127,26 @@ describe('AppController', () => {
           }),
         }),
       );
+    });
+
+    it('should reject a second post for the same challenge and user', async () => {
+      const now = new Date();
+      const challenge = {
+        id: 42,
+        date: new Date(now.getTime() - 60 * 60 * 1000),
+        type: 'WEEKLY_A',
+        isActive: true,
+      };
+      const file = { filename: 'test.jpg', originalname: 'test.jpg' } as Express.Multer.File;
+      const user = { userId: 123, email: 'user@example.com', username: 'test-user' };
+
+      prismaService.challenge.findMany.mockResolvedValue([challenge]);
+      prismaService.post.findUnique.mockResolvedValue({ id: 1 });
+
+      await expect(appController.uploadPhoto(file, user)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(prismaService.post.create).not.toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when no active challenge exists', async () => {

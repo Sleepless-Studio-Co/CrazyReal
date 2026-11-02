@@ -259,6 +259,26 @@
   "@cameraNotAvailable": {
     "description": "Message de caméra non disponible"
   },
+
+  "previewMedia": "Vérifier ta capture",
+  "@previewMedia": {
+    "description": "Titre de la fenêtre d'aperçu avant publication"
+  },
+
+  "publishMedia": "Publier",
+  "@publishMedia": {
+    "description": "Bouton pour publier la capture"
+  },
+
+  "retakeMedia": "Refaire",
+  "@retakeMedia": {
+    "description": "Bouton pour refaire la capture"
+  },
+
+  "challengeAlreadyCompleted": "Tu as déjà réalisé ce défi.",
+  "@challengeAlreadyCompleted": {
+    "description": "Erreur quand un défi a déjà été réalisé"
+  },
   
   "photoSentToFeed": "Photo envoyée dans ton Feed !",
   "@photoSentToFeed": {

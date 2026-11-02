@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ConflictException,
   ForbiddenException,
   Get,
   NotFoundException,
@@ -29,7 +30,7 @@ import { promisify } from 'util';
 import { join } from 'path';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CurrentUser } from './auth/current-user.decorator';
-import { ChallengeType, MediaType } from '@prisma/client';
+import { ChallengeType, MediaType, Prisma } from '@prisma/client';
 import { FeedGateway } from './feed/feed.gateway';
 import type { ValidatedUser } from './auth/interfaces/auth-user.interface';
 import {
@@ -173,7 +174,7 @@ export class AppController {
       orderBy: { endsAt: 'asc' },
     });
 
-    return [
+    const availableChallenges = [
       ...globalChallenges.map((global) => ({
         ...global,
         endsAt:
@@ -192,6 +193,22 @@ export class AppController {
         group: conversation,
       })),
     ];
+
+    const completedPosts = await this.prisma.post.findMany({
+      where: {
+        userId: user.userId,
+        challengeId: { in: availableChallenges.map((challenge) => challenge.id) },
+      },
+      select: { challengeId: true },
+    });
+    const completedChallengeIds = new Set(
+      completedPosts.map((post) => post.challengeId),
+    );
+
+    return availableChallenges.map((challenge) => ({
+      ...challenge,
+      completed: completedChallengeIds.has(challenge.id),
+    }));
   }
 
   // Valide qu'un utilisateur peut poster sur un challenge, et le renvoie.
@@ -362,7 +379,11 @@ export class AppController {
       },
     }),
   }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
+  async uploadPhoto(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: any,
+    @Body('challengeId') challengeIdRaw?: string,
+  ) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -373,9 +394,30 @@ export class AppController {
         await this.normalizeVideo(file);
       }
 
-      const currentChallenge = await this.getCurrentChallengeForDate(new Date());
-      if (!currentChallenge) {
-        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
+      const challengeId = challengeIdRaw == null || challengeIdRaw === ''
+        ? undefined
+        : Number(challengeIdRaw);
+      if (
+        challengeIdRaw != null &&
+        (challengeId == null || !Number.isInteger(challengeId) || challengeId <= 0)
+      ) {
+        throw new BadRequestException('Identifiant de challenge invalide.');
+      }
+
+      const currentChallenge = await this.resolveChallengeForPost(
+        user.userId,
+        challengeId,
+      );
+      const existingPost = await this.prisma.post.findUnique({
+        where: {
+          userId_challengeId: {
+            userId: user.userId,
+            challengeId: currentChallenge.id,
+          },
+        },
+      });
+      if (existingPost) {
+        throw new ConflictException('Tu as déjà réalisé ce défi.');
       }
 
       const post = await this.prisma.post.create({
@@ -400,6 +442,12 @@ export class AppController {
     } catch (error) {
       await fs.unlink(file.path).catch(() => undefined);
       console.error('[posts] upload failed', error);
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Tu as déjà réalisé ce défi.');
+      }
       throw error;
     }
   }
