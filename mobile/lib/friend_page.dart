@@ -8,7 +8,6 @@ import 'widgets/feed_avatar.dart';
 import 'widgets/paper.dart';
 
 class FriendPage extends StatefulWidget {
-
   final VoidCallback onUnauthorized;
 
   const FriendPage({super.key, required this.onUnauthorized});
@@ -59,7 +58,9 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showError(Object error) {
-    final message = error is ApiException ? error.message : AppLocalizations.of(context)!.error;
+    final message = error is ApiException
+        ? error.message
+        : AppLocalizations.of(context)!.error;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: paperDanger),
     );
@@ -111,7 +112,13 @@ class _FriendPageState extends State<FriendPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _AddFriendSheet(friendService: _friendService),
+      builder: (_) => _AddFriendSheet(
+        friendService: _friendService,
+        existingFriendIds: _friends
+            .map((friend) => (friend as Map<String, dynamic>)['id'])
+            .whereType<int>()
+            .toSet(),
+      ),
     );
   }
 
@@ -409,8 +416,12 @@ class _PrivacyChip extends StatelessWidget {
 
 class _AddFriendSheet extends StatefulWidget {
   final FriendService friendService;
+  final Set<int> existingFriendIds;
 
-  const _AddFriendSheet({required this.friendService});
+  const _AddFriendSheet({
+    required this.friendService,
+    required this.existingFriendIds,
+  });
 
   @override
   State<_AddFriendSheet> createState() => _AddFriendSheetState();
@@ -550,6 +561,7 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
         final user = _results[index] as Map<String, dynamic>;
         final username = user['username'].toString();
         final isPrivate = user['isPrivate'] == true;
+        final alreadyFriend = widget.existingFriendIds.contains(user['id']);
         final alreadySent = _sent.contains(user['id']);
 
         return Container(
@@ -586,7 +598,9 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
                 ),
               ),
               const SizedBox(width: 8),
-              if (alreadySent)
+              if (alreadyFriend)
+                const SizedBox.shrink()
+              else if (alreadySent)
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
