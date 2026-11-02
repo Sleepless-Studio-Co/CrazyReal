@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'admin/admin_page.dart';
+import 'admin/challenge_ideas_page.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
@@ -63,6 +64,16 @@ class _SettingPageState extends State<SettingPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AdminPage(onUnauthorized: widget.onUnauthorized),
+      ),
+    );
+  }
+
+  void _openChallengeIdeas() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChallengeIdeasPage(
+          onUnauthorized: widget.onUnauthorized,
+        ),
       ),
     );
   }
@@ -179,7 +190,8 @@ class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final langLabel = appLocale.value.languageCode == 'fr' ? l10n.french : l10n.english;
+    final langLabel =
+        appLocale.value.languageCode == 'fr' ? l10n.french : l10n.english;
 
     return Scaffold(
       appBar: AppBar(
@@ -205,6 +217,12 @@ class _SettingPageState extends State<SettingPage> {
                 subtitle: l10n.administrationDesc,
                 onTap: _openAdmin,
               ),
+              _NavTile(
+                icon: Icons.lightbulb_outline,
+                title: l10n.adminChallengeIdeasTitle,
+                subtitle: l10n.adminChallengeIdeasDesc,
+                onTap: _openChallengeIdeas,
+              ),
             ]),
             const SizedBox(height: 16),
           ],
@@ -213,7 +231,8 @@ class _SettingPageState extends State<SettingPage> {
             _SwitchTile(
               icon: _isPrivate ? Icons.lock_outline : Icons.public,
               title: _isPrivate ? l10n.privateAccount : l10n.publicAccount,
-              subtitle: _isPrivate ? l10n.privateAccountDesc : l10n.publicAccountDesc,
+              subtitle:
+                  _isPrivate ? l10n.privateAccountDesc : l10n.publicAccountDesc,
               value: _isPrivate,
               loading: _isPrivacySaving,
               onChanged: _togglePrivacy,

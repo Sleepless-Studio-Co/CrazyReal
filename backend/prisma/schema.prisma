@@ -122,9 +122,9 @@ model User {
   createdAt     DateTime       @default(now())
   role          Role           @default(USER)
   posts         Post[]
+  challengeIdeas ChallengeIdea[]
   upVotes       UpVote[]
   reactions     PostReaction[]
-  challengeIdeas ChallengeIdea[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")

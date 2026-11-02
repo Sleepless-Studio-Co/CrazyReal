@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { ChallengeType, Prisma } from '@prisma/client';
+import { ChallengeIdeaStatus, ChallengeType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
@@ -135,6 +135,24 @@ export class AdminService {
 
     await this.prisma.challenge.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  async listChallengeIdeas() {
+    return this.prisma.challengeIdea.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { username: true } } },
+    });
+  }
+
+  async updateChallengeIdeaStatus(id: number, status: ChallengeIdeaStatus) {
+    const idea = await this.prisma.challengeIdea.findUnique({ where: { id } });
+    if (!idea) throw new NotFoundException('Idée de défi introuvable.');
+
+    return this.prisma.challengeIdea.update({
+      where: { id },
+      data: { status },
+      include: { user: { select: { username: true } } },
+    });
   }
 
   private async getChallengeOrThrow(id: number) {
