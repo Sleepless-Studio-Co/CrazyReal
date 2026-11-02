@@ -168,6 +168,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get cameraNotAvailable => 'Caméra non disponible !';
 
   @override
+  String get previewMedia => 'Vérifier ta capture';
+
+  @override
+  String get publishMedia => 'Publier';
+
+  @override
+  String get retakeMedia => 'Refaire';
+
+  @override
+  String get challengeAlreadyCompleted => 'Tu as déjà réalisé ce défi.';
+
+  @override
   String get photoSentToFeed => 'Photo envoyée dans ton Feed !';
 
   @override

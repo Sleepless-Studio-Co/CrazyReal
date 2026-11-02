@@ -259,6 +259,26 @@
   "@cameraNotAvailable": {
     "description": "Camera not available message"
   },
+
+  "previewMedia": "Review your capture",
+  "@previewMedia": {
+    "description": "Title of the preview dialog before publishing"
+  },
+
+  "publishMedia": "Publish",
+  "@publishMedia": {
+    "description": "Button to publish the capture"
+  },
+
+  "retakeMedia": "Retake",
+  "@retakeMedia": {
+    "description": "Button to retake the capture"
+  },
+
+  "challengeAlreadyCompleted": "You have already completed this challenge.",
+  "@challengeAlreadyCompleted": {
+    "description": "Error shown when a challenge was already completed"
+  },
   
   "photoSentToFeed": "Photo sent to your Feed!",
   "@photoSentToFeed": {

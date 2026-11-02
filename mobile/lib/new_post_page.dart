@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:video_player/video_player.dart';
 import 'l10n/app_localizations.dart';
 import 'auth/auth_service.dart';
 import 'utils/media_url.dart';
@@ -201,6 +202,13 @@ class _NewPageState extends State<NewPage> {
     return challenge['group'] == null;
   }
 
+  bool get _selectedChallengeCompleted {
+    final selected = _challenges.where(
+      (challenge) => challenge['id'] == _selectedChallengeId,
+    );
+    return selected.isNotEmpty && selected.first['completed'] == true;
+  }
+
   List<Map<String, dynamic>> _challengesForCurrentScope() {
     return _challenges
         .where((challenge) =>
@@ -337,6 +345,14 @@ class _NewPageState extends State<NewPage> {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         if (mounted) {
+          setState(() {
+            _challenges = _challenges.map((challenge) {
+              if (challenge['id'] == _selectedChallengeId) {
+                return {...challenge, 'completed': true};
+              }
+              return challenge;
+            }).toList();
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -395,6 +411,8 @@ class _NewPageState extends State<NewPage> {
   Future<void> takeAndUploadPicture() async {
     final l10n = AppLocalizations.of(context)!;
 
+    if (_selectedChallengeCompleted) return;
+
     if (_controller == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.cameraNotAvailable)),
@@ -405,7 +423,9 @@ class _NewPageState extends State<NewPage> {
     try {
       await _initializeControllerFuture;
       final image = await _controller!.takePicture();
-      await _uploadMedia(image.path, isVideo: false);
+      if (await _showMediaPreview(image.path, isVideo: false)) {
+        await _uploadMedia(image.path, isVideo: false);
+      }
     } catch (e) {
       print('Exception during photo capture: $e');
       if (mounted) {
@@ -443,7 +463,7 @@ class _NewPageState extends State<NewPage> {
   Future<void> _startVideoRecording() async {
     final l10n = AppLocalizations.of(context)!;
 
-    if (isUploading || isRecording) return;
+    if (isUploading || isRecording || _selectedChallengeCompleted) return;
 
     if (_controller == null || !_controller!.value.isInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -475,7 +495,9 @@ class _NewPageState extends State<NewPage> {
       final video = await _controller!.stopVideoRecording();
       _stopRecordingTimer();
       if (mounted) setState(() => isRecording = false);
-      await _uploadMedia(video.path, isVideo: true);
+      if (await _showMediaPreview(video.path, isVideo: true)) {
+        await _uploadMedia(video.path, isVideo: true);
+      }
     } catch (e) {
       print('Exception while stopping video recording: $e');
       _stopRecordingTimer();
@@ -489,6 +511,20 @@ class _NewPageState extends State<NewPage> {
     }
   }
 
+  Future<bool> _showMediaPreview(String filePath,
+      {required bool isVideo}) async {
+    if (!mounted) return false;
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => _MediaPreviewDialog(
+            filePath: filePath,
+            isVideo: isVideo,
+          ),
+        ) ??
+        false;
+  }
+
   @override
   void dispose() {
     _challengeTimer?.cancel();
@@ -500,8 +536,8 @@ class _NewPageState extends State<NewPage> {
   Widget _buildShutterButton() {
     if (isUploading) {
       return const SizedBox(
-        width: 80,
-        height: 80,
+        width: 88,
+        height: 88,
         child: Center(
           child: CircularProgressIndicator(
             color: Color(0xFFFFE500),
@@ -512,12 +548,10 @@ class _NewPageState extends State<NewPage> {
     }
 
     return GestureDetector(
-      onTap: isRecording ? null : takeAndUploadPicture,
-      onLongPressStart: (_) => _startVideoRecording(),
-      onLongPressEnd: (_) => _stopVideoRecording(),
+      onTap: isUploading ? null : takeAndUploadPicture,
+      onLongPressStart: isUploading ? null : (_) => _startVideoRecording(),
+      onLongPressEnd: isUploading ? null : (_) => _stopVideoRecording(),
       child: Container(
-        width: 80,
-        height: 80,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(
@@ -528,8 +562,8 @@ class _NewPageState extends State<NewPage> {
         child: Center(
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: isRecording ? 32 : 56,
-            height: isRecording ? 32 : 56,
+            width: isRecording ? 34 : 62,
+            height: isRecording ? 34 : 62,
             decoration: BoxDecoration(
               color: isRecording ? Colors.red : Colors.white,
               shape: isRecording ? BoxShape.rectangle : BoxShape.circle,
@@ -672,6 +706,18 @@ class _NewPageState extends State<NewPage> {
             ),
           ),
         ],
+        if (_selectedChallengeCompleted) ...[
+          const SizedBox(height: 8),
+          Text(
+            l10n.challengeAlreadyCompleted,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFB85C38),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ],
     );
   }
@@ -747,23 +793,54 @@ class _NewPageState extends State<NewPage> {
                           child: Icon(_getFlashIcon()),
                         ),
                         SizedBox(
-                          width: 80,
-                          height: 80,
-                          child: FloatingActionButton(
-                            heroTag: 'photo',
-                            onPressed:
-                                isUploading ? null : takeAndUploadPicture,
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.white,
-                            splashColor: Colors.grey.withOpacity(0.3),
-                            focusColor: Colors.grey.withOpacity(0.2),
-                            elevation: 0,
-                            child: isUploading
-                                ? const CircularProgressIndicator(
-                                    color: Color(0xFFFFE500),
-                                    strokeWidth: 3,
-                                  )
-                                : const Icon(Icons.circle_outlined, size: 80),
+                          width: 88,
+                          height: 88,
+                          child: GestureDetector(
+                            onTap: isUploading || _selectedChallengeCompleted
+                                ? null
+                                : takeAndUploadPicture,
+                            onLongPressStart:
+                                isUploading || _selectedChallengeCompleted
+                                    ? null
+                                    : (_) => _startVideoRecording(),
+                            onLongPressEnd:
+                                isUploading || _selectedChallengeCompleted
+                                    ? null
+                                    : (_) => _stopVideoRecording(),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color:
+                                      isRecording ? Colors.red : Colors.white,
+                                  width: 4,
+                                ),
+                              ),
+                              child: Center(
+                                child: isUploading
+                                    ? const CircularProgressIndicator(
+                                        color: Color(0xFFFFE500),
+                                        strokeWidth: 3,
+                                      )
+                                    : AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 200),
+                                        width: isRecording ? 34 : 62,
+                                        height: isRecording ? 34 : 62,
+                                        decoration: BoxDecoration(
+                                          color: isRecording
+                                              ? Colors.red
+                                              : Colors.white,
+                                          shape: isRecording
+                                              ? BoxShape.rectangle
+                                              : BoxShape.circle,
+                                          borderRadius: isRecording
+                                              ? BorderRadius.circular(8)
+                                              : null,
+                                        ),
+                                      ),
+                              ),
+                            ),
                           ),
                         ),
                         FloatingActionButton(
@@ -782,6 +859,79 @@ class _NewPageState extends State<NewPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MediaPreviewDialog extends StatefulWidget {
+  const _MediaPreviewDialog({required this.filePath, required this.isVideo});
+
+  final String filePath;
+  final bool isVideo;
+
+  @override
+  State<_MediaPreviewDialog> createState() => _MediaPreviewDialogState();
+}
+
+class _MediaPreviewDialogState extends State<_MediaPreviewDialog> {
+  VideoPlayerController? _videoController;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isVideo) {
+      _videoController = VideoPlayerController.file(File(widget.filePath))
+        ..initialize().then((_) {
+          if (!mounted) return;
+          _videoController!
+            ..setLooping(true)
+            ..play();
+          setState(() {});
+        });
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final videoController = _videoController;
+    final videoReady = videoController?.value.isInitialized == true;
+
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      title: Text(l10n.previewMedia),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 600),
+        child: widget.isVideo
+            ? videoReady
+                ? AspectRatio(
+                    aspectRatio: videoController!.value.aspectRatio,
+                    child: VideoPlayer(videoController),
+                  )
+                : const SizedBox(
+                    height: 220,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+            : Image.file(File(widget.filePath), fit: BoxFit.contain),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(l10n.retakeMedia),
+        ),
+        FilledButton(
+          onPressed: videoReady || !widget.isVideo
+              ? () => Navigator.pop(context, true)
+              : null,
+          child: Text(l10n.publishMedia),
+        ),
+      ],
     );
   }
 }

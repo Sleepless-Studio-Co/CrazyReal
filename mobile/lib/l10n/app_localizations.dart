@@ -410,6 +410,30 @@ abstract class AppLocalizations {
   /// **'Camera not available!'**
   String get cameraNotAvailable;
 
+  /// Title of the preview dialog before publishing
+  ///
+  /// In en, this message translates to:
+  /// **'Review your capture'**
+  String get previewMedia;
+
+  /// Button to publish the capture
+  ///
+  /// In en, this message translates to:
+  /// **'Publish'**
+  String get publishMedia;
+
+  /// Button to retake the capture
+  ///
+  /// In en, this message translates to:
+  /// **'Retake'**
+  String get retakeMedia;
+
+  /// Error shown when a challenge was already completed
+  ///
+  /// In en, this message translates to:
+  /// **'You have already completed this challenge.'**
+  String get challengeAlreadyCompleted;
+
   /// Success message when photo is sent
   ///
   /// In en, this message translates to:

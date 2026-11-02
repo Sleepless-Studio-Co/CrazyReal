@@ -167,6 +167,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cameraNotAvailable => 'Camera not available!';
 
   @override
+  String get previewMedia => 'Review your capture';
+
+  @override
+  String get publishMedia => 'Publish';
+
+  @override
+  String get retakeMedia => 'Retake';
+
+  @override
+  String get challengeAlreadyCompleted =>
+      'You have already completed this challenge.';
+
+  @override
   String get photoSentToFeed => 'Photo sent to your Feed!';
 
   @override
