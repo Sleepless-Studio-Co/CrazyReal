@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'admin/admin_page.dart';
+import 'admin/challenge_ideas_page.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
@@ -61,6 +62,16 @@ class _SettingPageState extends State<SettingPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AdminPage(onUnauthorized: widget.onUnauthorized),
+      ),
+    );
+  }
+
+  void _openChallengeIdeas() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChallengeIdeasPage(
+          onUnauthorized: widget.onUnauthorized,
+        ),
       ),
     );
   }
@@ -203,6 +214,12 @@ class _SettingPageState extends State<SettingPage> {
                 title: l10n.administration,
                 subtitle: l10n.administrationDesc,
                 onTap: _openAdmin,
+              ),
+              _NavTile(
+                icon: Icons.lightbulb_outline,
+                title: l10n.adminChallengeIdeasTitle,
+                subtitle: l10n.adminChallengeIdeasDesc,
+                onTap: _openChallengeIdeas,
               ),
             ]),
             const SizedBox(height: 16),

@@ -77,6 +77,25 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
     }
   }
 
+  Future<FeedPost> _toggleReaction(int postId, String emoji) async {
+    final post = _posts.firstWhere((item) => item.id == postId);
+    final reaction = post.reactions.firstWhere(
+      (item) => item.emoji == emoji,
+      orElse: () => const FeedReaction(
+        emoji: '',
+        count: 0,
+        reactedByMe: false,
+      ),
+    );
+    final updated = reaction.reactedByMe
+        ? await _feedService.removeReaction(postId, emoji)
+        : await _feedService.addReaction(postId, emoji);
+    if (!mounted) return updated;
+    final index = _posts.indexWhere((item) => item.id == postId);
+    if (index != -1) setState(() => _posts[index] = updated);
+    return updated;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -113,6 +132,7 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
             post: post,
             unknownUserLabel: l10n.unknownUser,
             onUpvote: () => _toggleUpvote(post.id),
+            onReaction: (emoji) => _toggleReaction(post.id, emoji),
           );
         },
       ),

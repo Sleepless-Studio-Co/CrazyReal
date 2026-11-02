@@ -1,6 +1,14 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { formatPostWithUpvotes, postIncludeWithUpvotes } from '../posts/post.utils';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  formatPostWithUpvotes,
+  postIncludeWithUpvotes,
+} from '../posts/post.utils';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
 
 const MAX_GROUP_MEMBERS = 50;
@@ -20,7 +28,10 @@ export class ChatService {
     return participations.map((p) => p.conversationId);
   }
 
-  async isParticipant(conversationId: number, userId: number): Promise<boolean> {
+  async isParticipant(
+    conversationId: number,
+    userId: number,
+  ): Promise<boolean> {
     const participant = await this.prisma.participant.findUnique({
       where: {
         userId_conversationId: {
@@ -62,11 +73,13 @@ export class ChatService {
     const totalMembers = uniqueParticipantIds.length + 1;
 
     if (totalMembers < 2) {
-      throw new BadRequestException("Un groupe doit avoir au moins 2 membres.");
+      throw new BadRequestException('Un groupe doit avoir au moins 2 membres.');
     }
 
     if (totalMembers > MAX_GROUP_MEMBERS) {
-      throw new BadRequestException("Un groupe ne peut pas dépasser 50 membres.");
+      throw new BadRequestException(
+        'Un groupe ne peut pas dépasser 50 membres.',
+      );
     }
 
     await this.requireFriends(creatorId, uniqueParticipantIds);
@@ -78,7 +91,10 @@ export class ChatService {
         participants: {
           create: [
             { userId: creatorId, role: 'ADMIN' },
-            ...uniqueParticipantIds.map((id) => ({ userId: id, role: 'MEMBER' as const })),
+            ...uniqueParticipantIds.map((id) => ({
+              userId: id,
+              role: 'MEMBER' as const,
+            })),
           ],
         },
       },
@@ -140,7 +156,9 @@ export class ChatService {
     }
 
     if (!conversation.isGroup) {
-      throw new BadRequestException('Tu ne peux pas quitter une conversation privée.');
+      throw new BadRequestException(
+        'Tu ne peux pas quitter une conversation privée.',
+      );
     }
 
     const participant = await this.prisma.participant.findUnique({
@@ -148,7 +166,7 @@ export class ChatService {
     });
 
     if (!participant) {
-      throw new ForbiddenException("Tu ne fais pas partie de ce groupe.");
+      throw new ForbiddenException('Tu ne fais pas partie de ce groupe.');
     }
 
     await this.prisma.participant.delete({ where: { id: participant.id } });
@@ -190,7 +208,9 @@ export class ChatService {
     });
 
     const friendIds = new Set(
-      acceptedFriendships.map((f) => (f.userId === userId ? f.friendId : f.userId)),
+      acceptedFriendships.map((f) =>
+        f.userId === userId ? f.friendId : f.userId,
+      ),
     );
 
     const invalidIds = targetIds.filter((id) => !friendIds.has(id));
@@ -201,7 +221,11 @@ export class ChatService {
     }
   }
 
-  async addMembers(conversationId: number, requesterId: number, userIds: number[]) {
+  async addMembers(
+    conversationId: number,
+    requesterId: number,
+    userIds: number[],
+  ) {
     await this.requireAdmin(conversationId, requesterId);
 
     await this.prisma.$transaction(async (tx) => {
@@ -217,11 +241,15 @@ export class ChatService {
 
       const toAdd = [...new Set(userIds)].filter((id) => !currentIds.has(id));
       if (toAdd.length === 0) {
-        throw new BadRequestException('Ces utilisateurs font déjà partie du groupe.');
+        throw new BadRequestException(
+          'Ces utilisateurs font déjà partie du groupe.',
+        );
       }
 
       if (currentIds.size + toAdd.length > MAX_GROUP_MEMBERS) {
-        throw new BadRequestException("Un groupe ne peut pas dépasser 50 membres.");
+        throw new BadRequestException(
+          'Un groupe ne peut pas dépasser 50 membres.',
+        );
       }
 
       await this.requireFriends(requesterId, toAdd);
@@ -249,7 +277,9 @@ export class ChatService {
     }
 
     if (!conversation.isGroup) {
-      throw new BadRequestException("Cette action n'est possible que sur un groupe.");
+      throw new BadRequestException(
+        "Cette action n'est possible que sur un groupe.",
+      );
     }
 
     const requester = await this.prisma.participant.findUnique({
@@ -257,17 +287,25 @@ export class ChatService {
     });
 
     if (!requester || requester.role !== 'ADMIN') {
-      throw new ForbiddenException("Seul un admin du groupe peut effectuer cette action.");
+      throw new ForbiddenException(
+        'Seul un admin du groupe peut effectuer cette action.',
+      );
     }
 
     return conversation;
   }
 
-  async removeMember(conversationId: number, requesterId: number, memberId: number) {
+  async removeMember(
+    conversationId: number,
+    requesterId: number,
+    memberId: number,
+  ) {
     await this.requireAdmin(conversationId, requesterId);
 
     if (memberId === requesterId) {
-      throw new BadRequestException('Utilise la sortie de groupe pour te retirer toi-même.');
+      throw new BadRequestException(
+        'Utilise la sortie de groupe pour te retirer toi-même.',
+      );
     }
 
     const participant = await this.prisma.participant.findUnique({
@@ -275,14 +313,20 @@ export class ChatService {
     });
 
     if (!participant) {
-      throw new NotFoundException("Cet utilisateur ne fait pas partie du groupe.");
+      throw new NotFoundException(
+        'Cet utilisateur ne fait pas partie du groupe.',
+      );
     }
 
     await this.prisma.participant.delete({ where: { id: participant.id } });
     return { success: true };
   }
 
-  async promoteMember(conversationId: number, requesterId: number, memberId: number) {
+  async promoteMember(
+    conversationId: number,
+    requesterId: number,
+    memberId: number,
+  ) {
     await this.requireAdmin(conversationId, requesterId);
 
     const participant = await this.prisma.participant.findUnique({
@@ -290,7 +334,9 @@ export class ChatService {
     });
 
     if (!participant) {
-      throw new NotFoundException("Cet utilisateur ne fait pas partie du groupe.");
+      throw new NotFoundException(
+        'Cet utilisateur ne fait pas partie du groupe.',
+      );
     }
 
     return this.prisma.participant.update({
@@ -299,7 +345,11 @@ export class ChatService {
     });
   }
 
-  async demoteMember(conversationId: number, requesterId: number, memberId: number) {
+  async demoteMember(
+    conversationId: number,
+    requesterId: number,
+    memberId: number,
+  ) {
     await this.requireAdmin(conversationId, requesterId);
 
     const participant = await this.prisma.participant.findUnique({
@@ -307,7 +357,9 @@ export class ChatService {
     });
 
     if (!participant) {
-      throw new NotFoundException("Cet utilisateur ne fait pas partie du groupe.");
+      throw new NotFoundException(
+        'Cet utilisateur ne fait pas partie du groupe.',
+      );
     }
 
     if (participant.role === 'MEMBER') {
@@ -341,7 +393,7 @@ export class ChatService {
     }
 
     if (endsAt.getTime() <= Date.now()) {
-      throw new BadRequestException("La date de fin doit être dans le futur.");
+      throw new BadRequestException('La date de fin doit être dans le futur.');
     }
 
     const challenge = await this.prisma.challenge.create({
@@ -354,10 +406,11 @@ export class ChatService {
       },
     });
 
-    const participants = (await this.prisma.participant.findMany({
-      where: { conversationId },
-      select: { userId: true },
-    })) ?? [];
+    const participants =
+      (await this.prisma.participant.findMany({
+        where: { conversationId },
+        select: { userId: true },
+      })) ?? [];
     await this.notificationGateway.sendToUsers(
       participants.map((participant) => participant.userId),
       'challengeCreated',
@@ -394,7 +447,7 @@ export class ChatService {
       include: postIncludeWithUpvotes(userId),
     });
 
-    return posts.map(formatPostWithUpvotes);
+    return posts.map((post) => formatPostWithUpvotes(post, userId));
   }
 
   async sendMessage(conversationId: number, senderId: number, content: string) {
@@ -408,7 +461,9 @@ export class ChatService {
     });
 
     if (!isParticipant) {
-      throw new ForbiddenException("Tu ne fais pas partie de cette discussion.");
+      throw new ForbiddenException(
+        'Tu ne fais pas partie de cette discussion.',
+      );
     }
 
     return this.prisma.message.create({
@@ -430,7 +485,13 @@ export class ChatService {
     });
   }
 
-  async getMessages(conversationId: number, userId: number, limit = 30, cursor?: number, after?: number) {
+  async getMessages(
+    conversationId: number,
+    userId: number,
+    limit = 30,
+    cursor?: number,
+    after?: number,
+  ) {
     const isParticipant = await this.prisma.participant.findUnique({
       where: {
         userId_conversationId: {
@@ -444,7 +505,11 @@ export class ChatService {
       throw new ForbiddenException("Tu n'as pas accès à ces messages.");
     }
 
-    const idFilter = cursor ? { lt: cursor } : after ? { gt: after } : undefined;
+    const idFilter = cursor
+      ? { lt: cursor }
+      : after
+        ? { gt: after }
+        : undefined;
 
     const messages = await this.prisma.message.findMany({
       where: {

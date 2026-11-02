@@ -1,5 +1,8 @@
 import { FriendsController } from './friends.controller';
 import { FriendsService } from './friends.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
 
 describe('FriendsController', () => {

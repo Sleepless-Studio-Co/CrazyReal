@@ -37,10 +37,12 @@ class HomePageState extends State<HomePage> {
   String? _challengeSubtitle;
   List<AvailableChallenge> _availableChallenges = [];
   int _selectedChallengeId = -1;
+  bool _showingGlobalFeed = true;
   bool _isActive = true;
 
   IO.Socket? _socket;
   Timer? _pollTimer;
+  bool _isSubmittingIdea = false;
 
   static const Duration _pollInterval = Duration(seconds: 25);
 
@@ -60,6 +62,34 @@ class HomePageState extends State<HomePage> {
     _socket?.disconnect();
     _socket?.dispose();
     super.dispose();
+  }
+
+  Future<void> _openIdeaBox(AppLocalizations l10n) async {
+    final idea = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFFF7EBD1),
+      builder: (_) => _ChallengeIdeaSheet(l10n: l10n),
+    );
+    if (idea == null || !mounted || _isSubmittingIdea) return;
+
+    setState(() => _isSubmittingIdea = true);
+    try {
+      await _feedService.submitChallengeIdea(idea);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.challengeIdeaSuccess)),
+      );
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.challengeIdeaError)),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmittingIdea = false);
+    }
   }
 
   void setActive(bool active) {
@@ -85,13 +115,15 @@ class HomePageState extends State<HomePage> {
     try {
       final posts = await _feedService.fetchPostsForChallenge(
         _selectedChallengeId == -1 ? null : _selectedChallengeId,
+        global: _selectedChallengeId == -1 ? _showingGlobalFeed : null,
       );
       if (!mounted) return;
 
-      final shouldUpdate = !FeedPost.sameVoteState(_posts, posts);
+      final visiblePosts = _filterPosts(posts);
+      final shouldUpdate = !FeedPost.sameVoteState(_posts, visiblePosts);
       setState(() {
         if (shouldUpdate) {
-          _posts = posts;
+          _posts = visiblePosts;
         }
         _isLoading = false;
         _isRefreshing = false;
@@ -114,6 +146,9 @@ class HomePageState extends State<HomePage> {
       final challenges = await _feedService.fetchAvailableChallenges();
       if (!mounted) return;
       setState(() => _availableChallenges = challenges);
+      if (_selectedChallengeId == -1) {
+        refreshFeed(showLoading: false);
+      }
     } on UnauthorizedException {
       if (mounted) widget.onUnauthorized();
     } catch (_) {
@@ -125,6 +160,89 @@ class HomePageState extends State<HomePage> {
     if (_selectedChallengeId == id) return;
     setState(() => _selectedChallengeId = id);
     refreshFeed(showLoading: true);
+  }
+
+  Future<void> _selectFeedScope(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool showGlobal,
+  ) async {
+    if (_showingGlobalFeed == showGlobal) {
+      await _openChallengeMenu(context, l10n);
+      return;
+    }
+
+    setState(() {
+      _showingGlobalFeed = showGlobal;
+      _selectedChallengeId = -1;
+    });
+    refreshFeed(showLoading: true);
+  }
+
+  Future<void> _openChallengeMenu(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final selectedId = await showMenu<int>(
+      context: context,
+      color: const Color(0xFFF3D7B2),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy + renderBox.size.height,
+        offset.dx + renderBox.size.width,
+        0,
+      ),
+      items: [
+        PopupMenuItem<int>(
+          value: -1,
+          child: Text(
+            l10n.feedAllChallenges,
+            style: const TextStyle(color: _inkColor),
+          ),
+        ),
+        ..._availableChallenges
+            .where((challenge) => challenge.isGlobal == _showingGlobalFeed)
+            .map(
+              (challenge) => PopupMenuItem<int>(
+                value: challenge.id,
+                child: Text(
+                  challenge.label(
+                    l10n.feedGlobalChallenge,
+                    l10n.feedFriendChallenge,
+                  ),
+                  style: const TextStyle(color: _inkColor),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+      ],
+    );
+
+    if (selectedId != null) {
+      _selectChallenge(selectedId);
+    }
+  }
+
+  List<FeedPost> _filterPosts(List<FeedPost> posts) {
+    if (_selectedChallengeId != -1) {
+      return posts
+          .where((post) => post.challenge?.id == _selectedChallengeId)
+          .toList();
+    }
+
+    final challengeIds = _availableChallenges
+        .where((challenge) => challenge.isGlobal == _showingGlobalFeed)
+        .map((challenge) => challenge.id)
+        .toSet();
+    return posts
+        .where((post) => challengeIds.contains(post.challenge?.id))
+        .toList();
   }
 
   Future<void> _loadChallengeSubtitle() async {
@@ -177,15 +295,11 @@ class HomePageState extends State<HomePage> {
       return challengeId == _selectedChallengeId;
     }
 
-    final globalIds = _availableChallenges
-        .where((challenge) => challenge.isGlobal)
-        .take(2)
-        .map((challenge) => challenge.id);
-    final friendIds = _availableChallenges
-        .where((challenge) => !challenge.isGlobal)
-        .take(2)
-        .map((challenge) => challenge.id);
-    return {...globalIds, ...friendIds}.contains(challengeId);
+    return _availableChallenges.any(
+      (challenge) =>
+          challenge.id == challengeId &&
+          challenge.isGlobal == _showingGlobalFeed,
+    );
   }
 
   void _startPolling() {
@@ -227,6 +341,25 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  Future<FeedPost> _toggleReaction(int postId, String emoji) async {
+    final post = _posts.firstWhere((item) => item.id == postId);
+    final reaction = post.reactions.firstWhere(
+      (item) => item.emoji == emoji,
+      orElse: () => const FeedReaction(
+        emoji: '',
+        count: 0,
+        reactedByMe: false,
+      ),
+    );
+    final updated = reaction.reactedByMe
+        ? await _feedService.removeReaction(postId, emoji)
+        : await _feedService.addReaction(postId, emoji);
+    if (!mounted) return updated;
+    final index = _posts.indexWhere((item) => item.id == postId);
+    if (index != -1) setState(() => _posts[index] = updated);
+    return updated;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -239,7 +372,7 @@ class HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.appTitle, style: _titleStyle()),
-            if (_challengeSubtitle != null)
+            if (_selectedChallengeId != -1 && _challengeSubtitle != null)
               Text(
                 _challengeSubtitle!,
                 style: _mutedStyle(fontSize: 12),
@@ -249,6 +382,20 @@ class HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
+          IconButton(
+            onPressed: _isSubmittingIdea ? null : () => _openIdeaBox(l10n),
+            tooltip: l10n.challengeIdeaOpen,
+            icon: _isSubmittingIdea
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(
+                    Icons.lightbulb_outline,
+                    color: Color(0xFFF2B705),
+                  ),
+          ),
           if (_isRefreshing)
             const Padding(
               padding: EdgeInsets.only(right: 16),
@@ -297,12 +444,31 @@ class HomePageState extends State<HomePage> {
                     l10n.feedGlobalChallenge, l10n.feedFriendChallenge),
                 overflow: TextOverflow.ellipsis,
               ),
+      color: const Color(0xFFF7EBD1),
+      child: Column(
+        children: [
+          Builder(
+            builder: (filterContext) => ToggleButtons(
+              isSelected: [_showingGlobalFeed, !_showingGlobalFeed],
+              onPressed: (index) =>
+                  _selectFeedScope(filterContext, l10n, index == 0),
+              borderRadius: BorderRadius.circular(8),
+              selectedColor: Colors.white,
+              fillColor: _inkColor,
+              color: _inkColor,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(l10n.feedGlobalChallenge),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(l10n.feedFriendChallenge),
+                ),
+              ],
             ),
           ),
         ],
-        onChanged: (id) {
-          if (id != null) _selectChallenge(id);
-        },
       ),
     );
   }
@@ -399,6 +565,7 @@ class HomePageState extends State<HomePage> {
             post: post,
             unknownUserLabel: l10n.unknownUser,
             onUpvote: () => _toggleUpvote(post.id),
+            onReaction: (emoji) => _toggleReaction(post.id, emoji),
           );
         },
       ),
@@ -417,6 +584,93 @@ class HomePageState extends State<HomePage> {
     return GoogleFonts.karla(
       color: context.paper.inkMuted,
       fontSize: fontSize,
+    );
+  }
+}
+
+class _ChallengeIdeaSheet extends StatefulWidget {
+  const _ChallengeIdeaSheet({required this.l10n});
+
+  final AppLocalizations l10n;
+
+  @override
+  State<_ChallengeIdeaSheet> createState() => _ChallengeIdeaSheetState();
+}
+
+class _ChallengeIdeaSheetState extends State<_ChallengeIdeaSheet> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = widget.l10n;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.challengeIdeaTitle,
+            style: GoogleFonts.dmSerifDisplay(
+              color: _inkColor,
+              fontSize: 24,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.challengeIdeaDescription,
+            style: GoogleFonts.karla(color: _inkMuted, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            keyboardType: TextInputType.multiline,
+            textCapitalization: TextCapitalization.sentences,
+            autocorrect: true,
+            enableSuggestions: true,
+            maxLength: 500,
+            maxLines: 5,
+            textInputAction: TextInputAction.newline,
+            decoration: InputDecoration(
+              hintText: l10n.challengeIdeaHint,
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.65),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () {
+              final idea = _controller.text.trim();
+              if (idea.length < 3) return;
+              Navigator.of(context).pop(idea);
+            },
+            icon: const Icon(Icons.send_outlined),
+            label: Text(l10n.challengeIdeaSend),
+            style: FilledButton.styleFrom(
+              backgroundColor: _inkColor,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
