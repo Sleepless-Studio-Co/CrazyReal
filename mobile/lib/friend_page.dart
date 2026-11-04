@@ -4,11 +4,11 @@ import 'l10n/app_localizations.dart';
 import 'services/friend_service.dart';
 import 'services/api_exception.dart';
 import 'chat/chat_list_page.dart';
+import 'profile_page.dart';
 import 'widgets/feed_avatar.dart';
 import 'widgets/paper.dart';
 
 class FriendPage extends StatefulWidget {
-
   final VoidCallback onUnauthorized;
 
   const FriendPage({super.key, required this.onUnauthorized});
@@ -59,7 +59,9 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showError(Object error) {
-    final message = error is ApiException ? error.message : AppLocalizations.of(context)!.error;
+    final message = error is ApiException
+        ? error.message
+        : AppLocalizations.of(context)!.error;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: paperDanger),
     );
@@ -101,6 +103,19 @@ class _FriendPageState extends State<FriendPage> {
     }
   }
 
+  void _openProfile(dynamic userId) {
+    if (userId is! int) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UserProfilePage(
+          userId: userId,
+          onUnauthorized: widget.onUnauthorized,
+        ),
+      ),
+    );
+  }
+
   void _showAddFriendDialog() {
     showModalBottomSheet(
       context: context,
@@ -111,7 +126,10 @@ class _FriendPageState extends State<FriendPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _AddFriendSheet(friendService: _friendService),
+      builder: (_) => _AddFriendSheet(
+        friendService: _friendService,
+        onUnauthorized: widget.onUnauthorized,
+      ),
     );
   }
 
@@ -192,7 +210,10 @@ class _FriendPageState extends State<FriendPage> {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final friend = _friends[index] as Map<String, dynamic>;
-                return _FriendCard(friend: friend);
+                return _FriendCard(
+                  friend: friend,
+                  onTap: () => _openProfile(friend['id']),
+                );
               },
             ),
     );
@@ -227,9 +248,10 @@ class _FriendPageState extends State<FriendPage> {
 }
 
 class _FriendCard extends StatelessWidget {
-  const _FriendCard({required this.friend});
+  const _FriendCard({required this.friend, this.onTap});
 
   final Map<String, dynamic> friend;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -240,41 +262,48 @@ class _FriendCard extends StatelessWidget {
 
     // One tile = one announcement for screen readers instead of three fragments.
     return MergeSemantics(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: paperCardDecoration(),
-        child: Row(
-          children: [
-            ExcludeSemantics(
-              child: FeedAvatar(
-                username: username,
-                avatarUrl: friend['avatarUrl']?.toString(),
-                avatarKey: friend['avatarKey']?.toString(),
-                size: 48,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(username, style: paperValue(fontSize: 16)),
-                  const SizedBox(height: 2),
-                  Text(
-                    email,
-                    style: paperMuted(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: paperCardDecoration(),
+            child: Row(
+              children: [
+                ExcludeSemantics(
+                  child: FeedAvatar(
+                    username: username,
+                    avatarUrl: friend['avatarUrl']?.toString(),
+                    avatarKey: friend['avatarKey']?.toString(),
+                    size: 48,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(username, style: paperValue(fontSize: 16)),
+                      const SizedBox(height: 2),
+                      Text(
+                        email,
+                        style: paperMuted(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _PrivacyChip(
+                  isPrivate: isPrivate,
+                  label: isPrivate ? l10n.accountPrivate : l10n.accountPublic,
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            _PrivacyChip(
-              isPrivate: isPrivate,
-              label: isPrivate ? l10n.accountPrivate : l10n.accountPublic,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -409,8 +438,12 @@ class _PrivacyChip extends StatelessWidget {
 
 class _AddFriendSheet extends StatefulWidget {
   final FriendService friendService;
+  final VoidCallback? onUnauthorized;
 
-  const _AddFriendSheet({required this.friendService});
+  const _AddFriendSheet({
+    required this.friendService,
+    this.onUnauthorized,
+  });
 
   @override
   State<_AddFriendSheet> createState() => _AddFriendSheetState();
@@ -454,6 +487,18 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
         });
       }
     }
+  }
+
+  void _openProfile(dynamic userId) {
+    if (userId is! int) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UserProfilePage(
+          userId: userId,
+          onUnauthorized: widget.onUnauthorized,
+        ),
+      ),
+    );
   }
 
   Future<void> _send(Map<String, dynamic> user) async {
@@ -561,25 +606,37 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
           ),
           child: Row(
             children: [
-              ExcludeSemantics(
-                child: FeedAvatar(
-                  username: username,
-                  avatarUrl: user['avatarUrl']?.toString(),
-                  avatarKey: user['avatarKey']?.toString(),
-                  size: 42,
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
-                child: MergeSemantics(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _openProfile(user['id']),
+                  child: Row(
                     children: [
-                      Text(username, style: paperValue()),
-                      const SizedBox(height: 2),
-                      Text(
-                        isPrivate ? l10n.accountPrivate : l10n.accountPublic,
-                        style: paperMuted(fontSize: 12),
+                      ExcludeSemantics(
+                        child: FeedAvatar(
+                          username: username,
+                          avatarUrl: user['avatarUrl']?.toString(),
+                          avatarKey: user['avatarKey']?.toString(),
+                          size: 42,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: MergeSemantics(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(username, style: paperValue()),
+                              const SizedBox(height: 2),
+                              Text(
+                                isPrivate
+                                    ? l10n.accountPrivate
+                                    : l10n.accountPublic,
+                                style: paperMuted(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),

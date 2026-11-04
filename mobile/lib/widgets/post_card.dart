@@ -24,12 +24,14 @@ class PostCard extends StatefulWidget {
     required this.unknownUserLabel,
     this.onUpvote,
     this.onReaction,
+    this.onAuthorTap,
   });
 
   final FeedPost post;
   final String unknownUserLabel;
   final VoidCallback? onUpvote;
   final Future<FeedPost> Function(String emoji)? onReaction;
+  final VoidCallback? onAuthorTap;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -84,20 +86,27 @@ class _PostCardState extends State<PostCard> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                FeedAvatar(
-                  username: _post.user.username,
-                  avatarUrl: _post.user.avatarUrl,
-                  avatarKey: _post.user.avatarKey,
+                GestureDetector(
+                  onTap: widget.onAuthorTap,
+                  child: FeedAvatar(
+                    username: _post.user.username,
+                    avatarUrl: _post.user.avatarUrl,
+                    avatarKey: _post.user.avatarKey,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        username,
-                        style: _valueStyle(),
-                        overflow: TextOverflow.ellipsis,
+                      GestureDetector(
+                        onTap: widget.onAuthorTap,
+                        behavior: HitTestBehavior.opaque,
+                        child: Text(
+                          username,
+                          style: _valueStyle(),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       if (timeLabel != null) ...[
                         const SizedBox(height: 2),
@@ -188,7 +197,8 @@ class _PostCardState extends State<PostCard> {
                 InkWell(
                   onTap: photoUrl.isEmpty
                       ? null
-                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                      : () => SharePlus.instance
+                          .share(ShareParams(uri: Uri.parse(photoUrl))),
                   borderRadius: BorderRadius.circular(20),
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -203,7 +213,8 @@ class _PostCardState extends State<PostCard> {
                 InkWell(
                   onTap: photoUrl.isEmpty
                       ? null
-                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                      : () => SharePlus.instance
+                          .share(ShareParams(uri: Uri.parse(photoUrl))),
                   borderRadius: BorderRadius.circular(20),
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -416,7 +427,9 @@ class _VideoPreviewState extends State<_VideoPreview> {
   }
 
   void _playIfVisible() {
-    if (!mounted || !_controller.value.isInitialized || _visibleFraction < 0.6) {
+    if (!mounted ||
+        !_controller.value.isInitialized ||
+        _visibleFraction < 0.6) {
       return;
     }
 

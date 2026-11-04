@@ -1195,6 +1195,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load challenges'**
   String get adminLoadError;
+
+  /// Tooltip to open the public preview of one's own profile
+  ///
+  /// In en, this message translates to:
+  /// **'View my profile'**
+  String get viewMyProfile;
+
+  /// Chip shown on one's own public profile
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get profileYou;
+
+  /// Chip shown when the profile belongs to an accepted friend
+  ///
+  /// In en, this message translates to:
+  /// **'Friend'**
+  String get profileFriend;
+
+  /// Profile creation year
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {year}'**
+  String profileMemberSince(String year);
+
+  /// Title of the locked profile state
+  ///
+  /// In en, this message translates to:
+  /// **'Private account'**
+  String get profileLockedTitle;
+
+  /// Explanation shown for a private account
+  ///
+  /// In en, this message translates to:
+  /// **'Add this person as a friend to see their challenges, streak and posts.'**
+  String get profileLockedHint;
+
+  /// Profile posts section and stat label
+  ///
+  /// In en, this message translates to:
+  /// **'Posts'**
+  String get profilePublications;
+
+  /// Profile challenges stat label
+  ///
+  /// In en, this message translates to:
+  /// **'Challenges'**
+  String get profileChallenges;
+
+  /// Empty state of the public profile posts grid
+  ///
+  /// In en, this message translates to:
+  /// **'No public post yet.'**
+  String get profileNoPosts;
+
+  /// Label above the streak counter
+  ///
+  /// In en, this message translates to:
+  /// **'Current streak'**
+  String get streakCurrent;
+
+  /// Unit shown next to the streak counter
+  ///
+  /// In en, this message translates to:
+  /// **'challenges in a row'**
+  String get streakInARow;
+
+  /// Label of the best streak record
+  ///
+  /// In en, this message translates to:
+  /// **'Best'**
+  String get streakBest;
+
+  /// Warning shown during the grace period of an active streak
+  ///
+  /// In en, this message translates to:
+  /// **'Streak at risk — post before the challenge ends!'**
+  String get streakAtRisk;
+
+  /// Encouragement when the current challenge is answered
+  ///
+  /// In en, this message translates to:
+  /// **'Keep posting in the current challenge to grow your streak.'**
+  String get streakKeepGoing;
+
+  /// Shown when a streak exists but no global challenge is currently open
+  ///
+  /// In en, this message translates to:
+  /// **'No challenge running right now — your streak is safe until the next one.'**
+  String get streakNoChallenge;
+
+  /// Empty state of the streak card
+  ///
+  /// In en, this message translates to:
+  /// **'Post in a global challenge to start your streak.'**
+  String get streakStartHint;
 }
 
 class _AppLocalizationsDelegate

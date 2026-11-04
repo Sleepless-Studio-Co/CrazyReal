@@ -609,4 +609,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Could not load challenges';
+
+  @override
+  String get viewMyProfile => 'View my profile';
+
+  @override
+  String get profileYou => 'You';
+
+  @override
+  String get profileFriend => 'Friend';
+
+  @override
+  String profileMemberSince(String year) {
+    return 'Member since $year';
+  }
+
+  @override
+  String get profileLockedTitle => 'Private account';
+
+  @override
+  String get profileLockedHint =>
+      'Add this person as a friend to see their challenges, streak and posts.';
+
+  @override
+  String get profilePublications => 'Posts';
+
+  @override
+  String get profileChallenges => 'Challenges';
+
+  @override
+  String get profileNoPosts => 'No public post yet.';
+
+  @override
+  String get streakCurrent => 'Current streak';
+
+  @override
+  String get streakInARow => 'challenges in a row';
+
+  @override
+  String get streakBest => 'Best';
+
+  @override
+  String get streakAtRisk => 'Streak at risk — post before the challenge ends!';
+
+  @override
+  String get streakKeepGoing =>
+      'Keep posting in the current challenge to grow your streak.';
+
+  @override
+  String get streakNoChallenge =>
+      'No challenge running right now — your streak is safe until the next one.';
+
+  @override
+  String get streakStartHint =>
+      'Post in a global challenge to start your streak.';
 }

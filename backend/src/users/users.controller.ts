@@ -64,6 +64,39 @@ export class UsersController {
     return this.usersService.searchByUsername(query, user.userId);
   }
 
+  @Get(':id/posts')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Get a user public posts (privacy-aware)' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Global-challenge posts if the profile is public, own, or an accepted friend',
+  })
+  findPosts(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: ValidatedUser,
+    @Query('limit') limitRaw?: string,
+    @Query('cursor') cursorRaw?: string,
+  ) {
+    const limit = limitRaw === undefined ? 30 : Number(limitRaw);
+    const cursor = cursorRaw === undefined ? undefined : Number(cursorRaw);
+
+    if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
+      throw new BadRequestException(
+        'limit must be an integer between 1 and 50',
+      );
+    }
+    if (
+      cursorRaw !== undefined &&
+      (!Number.isInteger(cursor) || (cursor as number) < 1)
+    ) {
+      throw new BadRequestException('cursor must be a positive integer');
+    }
+
+    return this.usersService.findPublicPosts(id, user.userId, limit, cursor);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')

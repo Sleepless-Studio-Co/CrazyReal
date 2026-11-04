@@ -1,11 +1,18 @@
 import {
   ConflictException,
+  ForbiddenException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { StreakService } from '../streak/streak.service';
+import {
+  formatPostWithUpvotes,
+  postIncludeWithUpvotes,
+} from '../posts/post.utils';
 import * as bcrypt from 'bcrypt';
 
 const USER_SELECT = {
@@ -20,13 +27,22 @@ const USER_SELECT = {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly streakService: StreakService,
+  ) {}
 
   private handlePrismaError(error: unknown): never {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         const target = error.meta?.target;
-        const fields = Array.isArray(target) ? target.join(',') : String(target ?? '');
+        const fields = Array.isArray(target)
+          ? target.join(',')
+          : String(target ?? '');
 
         if (fields.includes('email')) {
           throw new ConflictException('mail already in use');
@@ -260,54 +276,136 @@ export class UsersService {
     }
   }
 
+  private async getProfileVisibility(targetId: number, requesterId: number) {
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+        avatarKey: true,
+        isPrivate: true,
+        createdAt: true,
+      },
+    });
+
+    if (!target) {
+      throw new NotFoundException('user not found');
+    }
+
+    const isSelf = target.id === requesterId;
+    const friendship = isSelf
+      ? null
+      : await this.prisma.friendship.findFirst({
+          where: {
+            status: 'ACCEPTED',
+            OR: [
+              { userId: requesterId, friendId: targetId },
+              { userId: targetId, friendId: requesterId },
+            ],
+          },
+        });
+    const isFriend = Boolean(friendship);
+
+    return {
+      target,
+      isSelf,
+      isFriend,
+      canViewContent: isSelf || !target.isPrivate || isFriend,
+    };
+  }
+
+  private async getProfileExtras(userId: number) {
+    const [streak, postsCount] = await Promise.all([
+      this.streakService.getStreakForUser(userId),
+      this.prisma.post.count({
+        where: {
+          userId,
+          challenge: { is: { conversationId: null } },
+        },
+      }),
+    ]);
+
+    return {
+      streak,
+      stats: {
+        postsCount,
+        challengesCount: streak.participatedEditions,
+      },
+    };
+  }
+
   async findPublicProfile(targetId: number, requesterId: number) {
     try {
-      const target = await this.prisma.user.findUnique({
-        where: { id: targetId },
-        select: {
-          id: true,
-          username: true,
-          avatarUrl: true,
-          avatarKey: true,
+      const { target, isSelf, isFriend, canViewContent } =
+        await this.getProfileVisibility(targetId, requesterId);
+
+      if (!canViewContent) {
+        return {
+          id: target.id,
+          username: target.username,
+          avatarUrl: target.avatarUrl,
+          avatarKey: target.avatarKey,
           isPrivate: true,
-          createdAt: true,
-        },
-      });
-
-      if (!target) {
-        throw new NotFoundException('user not found');
+          isFriend: false,
+          isSelf: false,
+          canViewContent: false,
+        };
       }
 
-      if (target.id === requesterId) {
-        return { ...target, isFriend: true, isSelf: true };
-      }
-
-      if (!target.isPrivate) {
-        return { ...target, isFriend: false, isSelf: false };
-      }
-
-      const friendship = await this.prisma.friendship.findFirst({
-        where: {
-          status: 'ACCEPTED',
-          OR: [
-            { userId: requesterId, friendId: targetId },
-            { userId: targetId, friendId: requesterId },
-          ],
-        },
-      });
-
-      if (friendship) {
-        return { ...target, isFriend: true, isSelf: false };
-      }
+      const extras = await this.getProfileExtras(target.id);
 
       return {
-        id: target.id,
-        username: target.username,
-        avatarUrl: target.avatarUrl,
-        avatarKey: target.avatarKey,
-        isPrivate: true,
-        isFriend: false,
-        isSelf: false,
+        ...target,
+        isFriend: isSelf ? true : isFriend,
+        isSelf,
+        canViewContent: true,
+        ...extras,
+      };
+    } catch (error) {
+      this.handlePrismaError(error);
+    }
+  }
+
+  async findPublicPosts(
+    targetId: number,
+    requesterId: number,
+    limit = 30,
+    cursor?: number,
+  ) {
+    try {
+      const { canViewContent } = await this.getProfileVisibility(
+        targetId,
+        requesterId,
+      );
+
+      if (!canViewContent) {
+        throw new ForbiddenException('This account is private.');
+      }
+
+      const take = Math.min(Math.max(limit, 1), 50);
+      const posts = await this.prisma.post.findMany({
+        where: {
+          userId: targetId,
+          // Group challenge posts stay private to their conversation.
+          challenge: { is: { conversationId: null } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: take + 1,
+        ...(cursor !== undefined && cursor > 0
+          ? { cursor: { id: cursor }, skip: 1 }
+          : {}),
+        include: postIncludeWithUpvotes(requesterId),
+      });
+
+      const hasMore = posts.length > take;
+      const visiblePosts = hasMore ? posts.slice(0, take) : posts;
+
+      return {
+        items: visiblePosts.map((post) =>
+          formatPostWithUpvotes(post, requesterId),
+        ),
+        nextCursor: hasMore ? visiblePosts[visiblePosts.length - 1].id : null,
       };
     } catch (error) {
       this.handlePrismaError(error);

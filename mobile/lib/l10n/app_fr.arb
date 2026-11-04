@@ -828,5 +828,56 @@
   },
 
   "adminLoadError": "Impossible de charger les défis",
-  "@adminLoadError": { "description": "Erreur au chargement de la liste" }
+  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
+
+  "viewMyProfile": "Voir mon profil",
+  "@viewMyProfile": { "description": "Infobulle pour ouvrir l'aperçu public de son propre profil" },
+
+  "profileYou": "Toi",
+  "@profileYou": { "description": "Badge affiché sur son propre profil public" },
+
+  "profileFriend": "Ami",
+  "@profileFriend": { "description": "Badge affiché quand le profil appartient à un ami accepté" },
+
+  "profileMemberSince": "Membre depuis {year}",
+  "@profileMemberSince": {
+    "description": "Année de création du profil",
+    "placeholders": { "year": { "type": "String" } }
+  },
+
+  "profileLockedTitle": "Compte privé",
+  "@profileLockedTitle": { "description": "Titre de l'état profil verrouillé" },
+
+  "profileLockedHint": "Ajoute cette personne en ami pour voir ses défis, sa série et ses publications.",
+  "@profileLockedHint": { "description": "Explication affichée pour un compte privé" },
+
+  "profilePublications": "Publications",
+  "@profilePublications": { "description": "Titre de la section et statistique des publications du profil" },
+
+  "profileChallenges": "Défis",
+  "@profileChallenges": { "description": "Statistique des défis du profil" },
+
+  "profileNoPosts": "Aucune publication publique pour l'instant.",
+  "@profileNoPosts": { "description": "État vide de la grille de publications du profil" },
+
+  "streakCurrent": "Série en cours",
+  "@streakCurrent": { "description": "Libellé au-dessus du compteur de série" },
+
+  "streakInARow": "défis d'affilée",
+  "@streakInARow": { "description": "Unité affichée à côté du compteur de série" },
+
+  "streakBest": "Record",
+  "@streakBest": { "description": "Libellé du record de série" },
+
+  "streakAtRisk": "Série en jeu — poste avant la fin du défi !",
+  "@streakAtRisk": { "description": "Avertissement affiché pendant la période de grâce d'une série active" },
+
+  "streakKeepGoing": "Continue sur le défi en cours pour faire grandir ta série.",
+  "@streakKeepGoing": { "description": "Encouragement quand le défi en cours est déjà relevé" },
+
+  "streakNoChallenge": "Aucun défi en cours — ta série est en sécurité jusqu'au prochain.",
+  "@streakNoChallenge": { "description": "Affiché quand une série existe mais qu'aucun défi global n'est ouvert" },
+
+  "streakStartHint": "Poste sur un défi global pour lancer ta série.",
+  "@streakStartHint": { "description": "État vide de la carte de série" }
 }

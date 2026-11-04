@@ -828,5 +828,56 @@
   },
 
   "adminLoadError": "Could not load challenges",
-  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" }
+  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" },
+
+  "viewMyProfile": "View my profile",
+  "@viewMyProfile": { "description": "Tooltip to open the public preview of one's own profile" },
+
+  "profileYou": "You",
+  "@profileYou": { "description": "Chip shown on one's own public profile" },
+
+  "profileFriend": "Friend",
+  "@profileFriend": { "description": "Chip shown when the profile belongs to an accepted friend" },
+
+  "profileMemberSince": "Member since {year}",
+  "@profileMemberSince": {
+    "description": "Profile creation year",
+    "placeholders": { "year": { "type": "String" } }
+  },
+
+  "profileLockedTitle": "Private account",
+  "@profileLockedTitle": { "description": "Title of the locked profile state" },
+
+  "profileLockedHint": "Add this person as a friend to see their challenges, streak and posts.",
+  "@profileLockedHint": { "description": "Explanation shown for a private account" },
+
+  "profilePublications": "Posts",
+  "@profilePublications": { "description": "Profile posts section and stat label" },
+
+  "profileChallenges": "Challenges",
+  "@profileChallenges": { "description": "Profile challenges stat label" },
+
+  "profileNoPosts": "No public post yet.",
+  "@profileNoPosts": { "description": "Empty state of the public profile posts grid" },
+
+  "streakCurrent": "Current streak",
+  "@streakCurrent": { "description": "Label above the streak counter" },
+
+  "streakInARow": "challenges in a row",
+  "@streakInARow": { "description": "Unit shown next to the streak counter" },
+
+  "streakBest": "Best",
+  "@streakBest": { "description": "Label of the best streak record" },
+
+  "streakAtRisk": "Streak at risk — post before the challenge ends!",
+  "@streakAtRisk": { "description": "Warning shown during the grace period of an active streak" },
+
+  "streakKeepGoing": "Keep posting in the current challenge to grow your streak.",
+  "@streakKeepGoing": { "description": "Encouragement when the current challenge is answered" },
+
+  "streakNoChallenge": "No challenge running right now — your streak is safe until the next one.",
+  "@streakNoChallenge": { "description": "Shown when a streak exists but no global challenge is currently open" },
+
+  "streakStartHint": "Post in a global challenge to start your streak.",
+  "@streakStartHint": { "description": "Empty state of the streak card" }
 }

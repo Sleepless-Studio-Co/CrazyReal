@@ -3,6 +3,7 @@ import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
 import '../services/api_exception.dart';
 import '../services/feed_service.dart';
+import '../profile_page.dart';
 import '../widgets/paper.dart';
 import '../widgets/post_card.dart';
 
@@ -132,6 +133,14 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
             unknownUserLabel: l10n.unknownUser,
             onUpvote: () => _toggleUpvote(post.id),
             onReaction: (emoji) => _toggleReaction(post.id, emoji),
+            onAuthorTap: post.user.id > 0
+                ? () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UserProfilePage(userId: post.user.id),
+                      ),
+                    )
+                : null,
           );
         },
       ),

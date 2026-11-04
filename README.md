@@ -269,7 +269,7 @@ Documentation interactive : **GET** `/api` (Swagger).
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
 | `GET` | `/challenge/current` | Oui | Challenge actif |
-| `POST` | `/posts` | Oui | Upload photo (`multipart/form-data`, champ `file`) |
+| `POST` | `/posts` | Oui | Upload photo (`multipart/form-data`, champs `file` et `challengeId` optionnel) |
 | `GET` | `/posts` | Oui | Liste des posts (avec utilisateur) |
 
 ### Amis — `/friends`
@@ -300,6 +300,19 @@ Chaque participant d'un groupe a un rôle : `ADMIN` (peut retirer un membre, pro
 ### Utilisateurs — `/users`
 
 Routes protégées pour le profil et la gestion des avatars (sélection prédéfinie ou upload).
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| `GET` | `/users/search?q=` | Rechercher un utilisateur par pseudo |
+| `GET` | `/users/:id` | Profil public (ou verrouillé si privé et non-ami), avec série et statistiques |
+| `GET` | `/users/:id/posts` | Publications publiques d'un utilisateur (paginé : `limit`, `cursor`) |
+
+Une série (« streak ») compte les **éditions globales consécutives** où l'utilisateur a publié au
+moins une fois. Une édition regroupe les défis globaux qui démarrent au même instant
+(`WEEKLY_A` + `WEEKLY_B` + `SPECIAL` publiés ensemble comptent pour une seule étape). Les défis de
+groupe, les défis futurs et les défis désactivés sont exclus. Une édition en cours non encore
+relevée ne casse pas la série : elle ne se réinitialise qu'à la fin d'une édition manquée. La série
+est visible par tous sur un profil public, et réservée aux amis acceptés sur un profil privé.
 
 ### Administration — `/admin`
 

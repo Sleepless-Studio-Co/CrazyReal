@@ -244,12 +244,9 @@ export class AppController {
 
   private resolveMediaType(mimetype: string, originalname: string): MediaType {
     const extension = extname(originalname || '').toLowerCase();
-    const isVideo = (mimetype || '').startsWith('video/') || [
-      '.mp4',
-      '.mov',
-      '.webm',
-      '.3gp',
-    ].includes(extension);
+    const isVideo =
+      (mimetype || '').startsWith('video/') ||
+      ['.mp4', '.mov', '.webm', '.3gp'].includes(extension);
 
     if (isVideo) {
       return MediaType.VIDEO;
@@ -265,17 +262,28 @@ export class AppController {
     try {
       await execFileAsync('ffmpeg', [
         '-y',
-        '-i', file.path,
-        '-c:v', 'libx264',
-        '-profile:v', 'baseline',
-        '-level', '3.1',
-        '-preset', 'veryfast',
-        '-pix_fmt', 'yuv420p',
-        '-c:a', 'aac',
-        '-b:a', '128k',
-        '-ar', '44100',
-        '-ac', '2',
-        '-movflags', '+faststart',
+        '-i',
+        file.path,
+        '-c:v',
+        'libx264',
+        '-profile:v',
+        'baseline',
+        '-level',
+        '3.1',
+        '-preset',
+        'veryfast',
+        '-pix_fmt',
+        'yuv420p',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '128k',
+        '-ar',
+        '44100',
+        '-ac',
+        '2',
+        '-movflags',
+        '+faststart',
         normalizedPath,
       ]);
       await fs.unlink(file.path);
@@ -308,61 +316,65 @@ export class AppController {
     },
   })
   @ApiResponse({ status: 201, description: 'Média uploadé avec succès' })
-  @UseInterceptors(FileInterceptor('file', {
-    // Les vidéos enregistrées en haute résolution dépassent facilement 50 Mo.
-    limits: { fileSize: 200 * 1024 * 1024 },
-    fileFilter: (_req, file, callback) => {
-      const allowedMimeTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/webp',
-        'image/heic',
-        'image/heif',
-        'video/mp4',
-        'video/quicktime',
-        'video/webm',
-        'video/3gpp',
-      ];
-      const allowedExtensions = [
-        '.jpg',
-        '.jpeg',
-        '.png',
-        '.webp',
-        '.heic',
-        '.heif',
-        '.mp4',
-        '.mov',
-        '.webm',
-        '.3gp',
-      ];
-      const extension = extname(file.originalname).toLowerCase();
-      const hasAllowedMimeType = allowedMimeTypes.includes(file.mimetype);
-      const hasAllowedExtension = allowedExtensions.includes(extension);
-
-      if (!hasAllowedMimeType && !hasAllowedExtension) {
-        callback(new Error('Unsupported media type'), false);
-        return;
-      }
-      callback(null, true);
-    },
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const originalExtension = extname(file.originalname).toLowerCase();
-        const isVideo = file.mimetype.startsWith('video/') || [
+  @UseInterceptors(
+    FileInterceptor('file', {
+      // Les vidéos enregistrées en haute résolution dépassent facilement 50 Mo.
+      limits: { fileSize: 200 * 1024 * 1024 },
+      fileFilter: (_req, file, callback) => {
+        const allowedMimeTypes = [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/heic',
+          'image/heif',
+          'video/mp4',
+          'video/quicktime',
+          'video/webm',
+          'video/3gpp',
+        ];
+        const allowedExtensions = [
+          '.jpg',
+          '.jpeg',
+          '.png',
+          '.webp',
+          '.heic',
+          '.heif',
           '.mp4',
           '.mov',
           '.webm',
           '.3gp',
-        ].includes(originalExtension);
-        const prefix = isVideo ? 'video' : 'image';
-        const extension = isVideo ? '.mp4' : '.jpg';
-        callback(null, `${prefix}-${uniqueSuffix}${extension}`);
+        ];
+        const extension = extname(file.originalname).toLowerCase();
+        const hasAllowedMimeType = allowedMimeTypes.includes(file.mimetype);
+        const hasAllowedExtension = allowedExtensions.includes(extension);
+
+        if (!hasAllowedMimeType && !hasAllowedExtension) {
+          callback(new Error('Unsupported media type'), false);
+          return;
+        }
+        callback(null, true);
       },
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const originalExtension = extname(file.originalname).toLowerCase();
+          const isVideo =
+            file.mimetype.startsWith('video/') ||
+            ['.mp4', '.mov', '.webm', '.3gp'].includes(originalExtension);
+          const prefix = isVideo ? 'video' : 'image';
+          const extension = isVideo ? '.mp4' : '.jpg';
+          callback(null, `${prefix}-${uniqueSuffix}${extension}`);
+        },
+      }),
     }),
-  }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
+  )
+  async uploadPhoto(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: ValidatedUser,
+    @Body('challengeId') challengeIdRaw?: string,
+  ) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -373,16 +385,30 @@ export class AppController {
         await this.normalizeVideo(file);
       }
 
-      const currentChallenge = await this.getCurrentChallengeForDate(new Date());
-      if (!currentChallenge) {
-        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
+      let challengeId: number | undefined;
+      if (
+        challengeIdRaw !== undefined &&
+        `${challengeIdRaw}`.trim().length > 0
+      ) {
+        const parsed = Number(challengeIdRaw);
+        if (!Number.isInteger(parsed) || parsed < 1) {
+          throw new BadRequestException('challengeId invalide.');
+        }
+        challengeId = parsed;
       }
+
+      // The client may target a group challenge; without an id we keep the
+      // historical camera behaviour and use the current global challenge.
+      const challenge = await this.resolveChallengeForPost(
+        user.userId,
+        challengeId,
+      );
 
       const post = await this.prisma.post.create({
         data: {
           photoUrl: `/uploads/${file.filename}`,
           mediaType,
-          challengeId: currentChallenge.id,
+          challengeId: challenge.id,
           userId: user.userId,
         },
         include: postIncludeWithUpvotes(user.userId),
@@ -390,10 +416,10 @@ export class AppController {
 
       const formattedPost = formatPostWithUpvotes(post, user.userId);
       // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
-    // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
-      if (currentChallenge.conversationId == null) {
-      this.feedGateway.broadcastNewPost(formattedPost);
-      console.log('[posts] created', post.id, file.filename, mediaType);
+      // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
+      if (challenge.conversationId == null) {
+        this.feedGateway.broadcastNewPost(formattedPost);
+        console.log('[posts] created', post.id, file.filename, mediaType);
       }
 
       return formattedPost;
@@ -405,7 +431,9 @@ export class AppController {
   }
 
   @Get('posts')
-  @ApiOperation({ summary: 'Récupérer les posts publics, des amis et les siens' })
+  @ApiOperation({
+    summary: 'Récupérer les posts publics, des amis et les siens',
+  })
   @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
   async getPosts(
     @CurrentUser() user: ValidatedUser,

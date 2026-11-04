@@ -6,9 +6,13 @@ import 'package:image_picker/image_picker.dart';
 
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
+import 'models/user_profile.dart';
+import 'profile_page.dart';
 import 'services/api_exception.dart';
+import 'services/user_service.dart';
 import 'utils/media_url.dart';
 import 'widgets/feed_avatar.dart';
+import 'widgets/streak_card.dart';
 
 const Color _inkColor = Color(0xFF3B2A21);
 const Color _inkMuted = Color(0xFF6A4A3B);
@@ -31,6 +35,7 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   final _authService = AuthService();
+  final _userService = UserService();
   final _imagePicker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
@@ -47,6 +52,7 @@ class _AccountPageState extends State<AccountPage> {
   String? _avatarUrl;
   String? _avatarKey;
   Uint8List? _pendingAvatarBytes;
+  UserStreak? _streak;
 
   @override
   void initState() {
@@ -105,9 +111,24 @@ class _AccountPageState extends State<AccountPage> {
           _syncAvatarFromUser(fresh);
           _isPrivate = fresh['isPrivate'] == true;
         });
+        await _loadProfileExtras(fresh['id']);
       }
     } catch (_) {
       // Non-fatal: keep showing the cached profile.
+    }
+  }
+
+  Future<void> _loadProfileExtras(dynamic userId) async {
+    if (userId is! int) return;
+
+    try {
+      final profile = await _userService.fetchProfile(userId);
+      if (!mounted) return;
+      setState(() {
+        _streak = profile.streak;
+      });
+    } catch (_) {
+      // Non-fatal: the account page still works without the streak.
     }
   }
 
@@ -164,9 +185,8 @@ class _AccountPageState extends State<AccountPage> {
       final updatedUser = result['user'];
       if (!mounted) return;
       setState(() {
-        _isPrivate = updatedUser is Map
-            ? updatedUser['isPrivate'] == true
-            : value;
+        _isPrivate =
+            updatedUser is Map ? updatedUser['isPrivate'] == true : value;
         if (updatedUser is Map<String, dynamic>) {
           _user = updatedUser;
         }
@@ -333,9 +353,8 @@ class _AccountPageState extends State<AccountPage> {
     });
 
     try {
-      final filename = image.name.isNotEmpty
-          ? image.name
-          : image.path.split('/').last;
+      final filename =
+          image.name.isNotEmpty ? image.name : image.path.split('/').last;
       final result = await _authService.uploadAvatarImage(
         bytes: bytes,
         filename: filename.isEmpty ? 'avatar.jpg' : filename,
@@ -444,7 +463,8 @@ class _AccountPageState extends State<AccountPage> {
                     await _pickCustomAvatar();
                   },
                   leading: const Icon(Icons.photo_library_outlined),
-                  title: Text(l10n.chooseFromGallery, style: _valueStyle(context)),
+                  title:
+                      Text(l10n.chooseFromGallery, style: _valueStyle(context)),
                 ),
                 if (_avatarUrl != null)
                   ListTile(
@@ -452,7 +472,8 @@ class _AccountPageState extends State<AccountPage> {
                       Navigator.pop(sheetContext);
                       await _removeCustomAvatar();
                     },
-                    leading: const Icon(Icons.delete_outline, color: Colors.red),
+                    leading:
+                        const Icon(Icons.delete_outline, color: Colors.red),
                     title: Text(l10n.removePhoto, style: _valueStyle(context)),
                   ),
               ],
@@ -486,6 +507,25 @@ class _AccountPageState extends State<AccountPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.account),
+        actions: [
+          IconButton(
+            onPressed: () {
+              final userId = _user?['id'];
+              if (userId is! int) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => UserProfilePage(
+                    userId: userId,
+                    onUnauthorized: widget.onUnauthorized,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.person_outline),
+            tooltip: l10n.viewMyProfile,
+          ),
+        ],
       ),
       body: SafeArea(
         child: _isEditing
@@ -503,6 +543,10 @@ class _AccountPageState extends State<AccountPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         _buildProfileHeader(l10n),
+        if (_streak != null) ...[
+          const SizedBox(height: 16),
+          StreakCard(streak: _streak!),
+        ],
         const SizedBox(height: 16),
         _buildPrivacyCard(l10n),
         if (!_isEmailVerified) ...[
@@ -619,8 +663,9 @@ class _AccountPageState extends State<AccountPage> {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed:
-                      _isResendingVerification ? null : _resendVerificationEmail,
+                  onPressed: _isResendingVerification
+                      ? null
+                      : _resendVerificationEmail,
                   icon: _isResendingVerification
                       ? const SizedBox(
                           width: 16,
@@ -888,7 +933,6 @@ class _AccountPageState extends State<AccountPage> {
       child: child,
     );
   }
-
 
   Widget _buildAvatar({double size = 96, bool showBadge = false}) {
     final option = _resolveAvatarOption();

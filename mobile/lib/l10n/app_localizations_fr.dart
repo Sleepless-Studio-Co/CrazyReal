@@ -615,4 +615,58 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
+
+  @override
+  String get viewMyProfile => 'Voir mon profil';
+
+  @override
+  String get profileYou => 'Toi';
+
+  @override
+  String get profileFriend => 'Ami';
+
+  @override
+  String profileMemberSince(String year) {
+    return 'Membre depuis $year';
+  }
+
+  @override
+  String get profileLockedTitle => 'Compte privé';
+
+  @override
+  String get profileLockedHint =>
+      'Ajoute cette personne en ami pour voir ses défis, sa série et ses publications.';
+
+  @override
+  String get profilePublications => 'Publications';
+
+  @override
+  String get profileChallenges => 'Défis';
+
+  @override
+  String get profileNoPosts => 'Aucune publication publique pour l\'instant.';
+
+  @override
+  String get streakCurrent => 'Série en cours';
+
+  @override
+  String get streakInARow => 'défis d\'affilée';
+
+  @override
+  String get streakBest => 'Record';
+
+  @override
+  String get streakAtRisk => 'Série en jeu — poste avant la fin du défi !';
+
+  @override
+  String get streakKeepGoing =>
+      'Continue sur le défi en cours pour faire grandir ta série.';
+
+  @override
+  String get streakNoChallenge =>
+      'Aucun défi en cours — ta série est en sécurité jusqu\'au prochain.';
+
+  @override
+  String get streakStartHint =>
+      'Poste sur un défi global pour lancer ta série.';
 }
