@@ -167,14 +167,10 @@ class FeedPost {
       upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
       hasUpvoted: json['hasUpvoted'] == true,
       mediaType: parsePostMediaType(json['mediaType']?.toString()),
-      reactions: (json['reactions'] is List)
-          ? (json['reactions'] as List)
-              .whereType<Map>()
-              .map((item) => FeedReaction.fromJson(
-                    Map<String, dynamic>.from(item),
-                  ))
-              .toList()
-          : const [],
+      reactions: (json['reactions'] is List ? json['reactions'] as List : [])
+          .whereType<Map>()
+          .map((item) => FeedReaction.fromJson(Map<String, dynamic>.from(item)))
+          .toList(),
     );
   }
 

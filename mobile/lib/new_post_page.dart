@@ -176,9 +176,7 @@ class _NewPageState extends State<NewPage> {
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           setState(() => challengeError = l10n
-              
               .serverError('${response.statusCode}')
-              
               .replaceAll('{code}', '${response.statusCode}'));
         }
       }
@@ -210,11 +208,16 @@ class _NewPageState extends State<NewPage> {
         .toList();
   }
 
+  bool get _hasFriendChallenges =>
+      _challenges.any((challenge) => !_isGlobalChallenge(challenge));
+
   Future<void> _selectChallengeScope(
     BuildContext context,
     AppLocalizations l10n,
     bool showGlobal,
   ) async {
+    if (!showGlobal && !_hasFriendChallenges) return;
+
     if (_showingGlobalChallenges == showGlobal) {
       await _openChallengeMenu(context, l10n);
       return;
@@ -316,7 +319,6 @@ class _NewPageState extends State<NewPage> {
 
       final request =
           http.MultipartRequest('POST', Uri.parse('$baseUrl/posts'));
-      final image = await _controller!.takePicture();
 
       request.headers['Authorization'] = 'Bearer $token';
       request.files.add(await http.MultipartFile.fromPath(
@@ -324,13 +326,12 @@ class _NewPageState extends State<NewPage> {
         filePath,
         filename: filePath.split(Platform.pathSeparator).last,
       ));
-      final response = await request.send().timeout(const Duration(minutes: 5));
-      final responseBody = await response.stream.bytesToString();
-
-      request.files.add(await http.MultipartFile.fromPath('file', image.path));
       if (_selectedChallengeId != null) {
         request.fields['challengeId'] = _selectedChallengeId.toString();
       }
+
+      final response = await request.send().timeout(const Duration(minutes: 5));
+      final responseBody = await response.stream.bytesToString();
 
       print('Upload response status: ${response.statusCode}');
 
@@ -568,35 +569,79 @@ class _NewPageState extends State<NewPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Builder(
-          builder: (filterContext) => ToggleButtons(
-            isSelected: [_showingGlobalChallenges, !_showingGlobalChallenges],
-            onPressed: (index) => _selectChallengeScope(
-              filterContext,
-              l10n,
-              index == 0,
-            ),
-            borderRadius: BorderRadius.circular(8),
-            constraints: const BoxConstraints(minHeight: 34),
-            selectedColor: Colors.white,
-            fillColor: const Color(0xFF3B2A21),
-            color: const Color(0xFF3B2A21),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  l10n.feedGlobalChallenge,
-                  style: const TextStyle(fontSize: 13),
+          builder: (filterContext) {
+            Widget scopeButton({
+              required String label,
+              required bool selected,
+              required bool enabled,
+              required bool isGlobal,
+            }) {
+              return OutlinedButton(
+                onPressed: enabled
+                    ? () => _selectChallengeScope(
+                          filterContext,
+                          l10n,
+                          isGlobal,
+                        )
+                    : null,
+                style: ButtonStyle(
+                  minimumSize: const WidgetStatePropertyAll(Size(0, 34)),
+                  padding: const WidgetStatePropertyAll(
+                    EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  shape: WidgetStatePropertyAll(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  foregroundColor: WidgetStateProperty.resolveWith(
+                    (states) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return Colors.grey;
+                      }
+                      return selected ? Colors.white : const Color(0xFF3B2A21);
+                    },
+                  ),
+                  backgroundColor: WidgetStateProperty.resolveWith(
+                    (states) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return Colors.grey.shade300;
+                      }
+                      return selected ? const Color(0xFF3B2A21) : null;
+                    },
+                  ),
+                  side: WidgetStateProperty.resolveWith(
+                    (states) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return BorderSide(color: Colors.grey.shade400);
+                      }
+                      return const BorderSide(color: Color(0xFF3B2A21));
+                    },
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  l10n.feedFriendChallenge,
-                  style: const TextStyle(fontSize: 13),
+                child: Text(label, style: const TextStyle(fontSize: 13)),
+              );
+            }
+
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                scopeButton(
+                  label: l10n.feedGlobalChallenge,
+                  selected: _showingGlobalChallenges,
+                  enabled: true,
+                  isGlobal: true,
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 4),
+                scopeButton(
+                  label: l10n.feedFriendChallenge,
+                  selected: !_showingGlobalChallenges,
+                  enabled: _hasFriendChallenges,
+                  isGlobal: false,
+                ),
+              ],
+            );
+          },
         ),
         if (title.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -740,4 +785,3 @@ class _NewPageState extends State<NewPage> {
     );
   }
 }
-
