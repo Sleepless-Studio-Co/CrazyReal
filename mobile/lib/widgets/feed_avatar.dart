@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/media_url.dart';
+import 'sticker_pop.dart';
 
 class AvatarOption {
   const AvatarOption({
@@ -17,41 +17,42 @@ class AvatarOption {
   final IconData icon;
 }
 
+// The ids are stored server-side: only the look of each option may change.
 const List<AvatarOption> kAvatarOptions = [
   AvatarOption(
     id: 'ember',
-    background: Color(0xFFE9B384),
-    foreground: Color(0xFF3C2A21),
+    background: popCoral,
+    foreground: popInk,
     icon: Icons.whatshot_outlined,
   ),
   AvatarOption(
     id: 'sea',
-    background: Color(0xFF9FC0B9),
-    foreground: Color(0xFF1E3D3A),
+    background: popGreen,
+    foreground: popInk,
     icon: Icons.waves_outlined,
   ),
   AvatarOption(
     id: 'citrus',
-    background: Color(0xFFF7E27C),
-    foreground: Color(0xFF5E4B0A),
+    background: popYellow,
+    foreground: popInk,
     icon: Icons.emoji_food_beverage_outlined,
   ),
   AvatarOption(
     id: 'berry',
-    background: Color(0xFFD4A5A5),
-    foreground: Color(0xFF4D2020),
+    background: Color(0xFFFFA6C9),
+    foreground: popInk,
     icon: Icons.favorite_border,
   ),
   AvatarOption(
     id: 'noon',
-    background: Color(0xFFB1C5E5),
-    foreground: Color(0xFF1F2F4A),
+    background: Color(0xFF7CC8FF),
+    foreground: popInk,
     icon: Icons.sports_tennis_outlined,
   ),
   AvatarOption(
     id: 'terra',
-    background: Color(0xFFCBB39B),
-    foreground: Color(0xFF4E3722),
+    background: popPurple,
+    foreground: Colors.white,
     icon: Icons.terrain_outlined,
   ),
 ];
@@ -73,36 +74,32 @@ class FeedAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedUrl = resolveMediaUrl(avatarUrl);
-    if (resolvedUrl != null && resolvedUrl.isNotEmpty) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Color(0xFFEEDCC5),
-        ),
-        child: ClipOval(
-          child: Image.network(
-            resolvedUrl,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return _FallbackAvatar(
-                username: username,
-                avatarKey: avatarKey,
-                size: size,
-              );
-            },
-          ),
-        ),
-      );
-    }
-
-    return _FallbackAvatar(
+    final fallback = _FallbackAvatar(
       username: username,
       avatarKey: avatarKey,
       size: size,
+    );
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(shape: BoxShape.circle, color: popBg),
+      // Drawn over the picture so photos get the same ink outline.
+      foregroundDecoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: popInk, width: size >= 40 ? popStroke : 2),
+      ),
+      child: ClipOval(
+        child: resolvedUrl == null || resolvedUrl.isEmpty
+            ? fallback
+            : Image.network(
+                resolvedUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => fallback,
+              ),
+      ),
     );
   }
 }
@@ -132,10 +129,9 @@ class _FallbackAvatar extends StatelessWidget {
           ? Icon(option.icon, color: option.foreground, size: size * 0.5)
           : Text(
               label,
-              style: GoogleFonts.karla(
+              style: popTitle(
+                fontSize: size * 0.42,
                 color: option.foreground,
-                fontSize: size * 0.44,
-                fontWeight: FontWeight.w700,
               ),
             ),
     );
