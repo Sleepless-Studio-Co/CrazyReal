@@ -6,7 +6,7 @@ import '../services/chat_service.dart';
 import '../services/chat_socket_service.dart';
 import '../services/api_exception.dart';
 import '../widgets/feed_avatar.dart';
-import '../widgets/paper.dart';
+import '../widgets/sticker_pop.dart';
 import 'chat_room_page.dart';
 import 'create_group_page.dart';
 
@@ -100,7 +100,7 @@ class _ChatListPageState extends State<ChatListPage> {
         setState(() => _isLoading = false);
         final message = e is ApiException ? e.message : 'Erreur lors du chargement des discussions';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: paperDanger),
+          SnackBar(content: Text(message), backgroundColor: popCoral),
         );
       }
     }
@@ -136,7 +136,7 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   Future<void> _leaveGroup(int conversationId) async {
-    final confirmed = await paperConfirm(
+    final confirmed = await popConfirm(
       context,
       title: 'Quitter le groupe',
       message: 'Veux-tu vraiment quitter ce groupe ?',
@@ -154,7 +154,7 @@ class _ChatListPageState extends State<ChatListPage> {
       if (mounted) {
         final message = e is ApiException ? e.message : 'Erreur lors de la sortie du groupe';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: paperDanger),
+          SnackBar(content: Text(message), backgroundColor: popCoral),
         );
       }
     }
@@ -175,16 +175,14 @@ class _ChatListPageState extends State<ChatListPage> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: paperBg,
-      appBar: paperAppBar(title: l10n.messages),
+      appBar: popAppBar(title: l10n.messages),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: paperAccent))
+          ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadConversations,
-              color: paperAccent,
               child: _conversations.isEmpty
-                  ? const PaperEmptyState(
-                      icon: Icons.forum_outlined,
+                  ? const PopEmptyState(
+                      mascot: PopMascotMood.confused,
                       title: 'Aucune discussion pour le moment.',
                       message:
                           'Crée un groupe avec le bouton ci-dessous pour lancer une conversation.',
@@ -221,12 +219,10 @@ class _ChatListPageState extends State<ChatListPage> {
                       },
                     ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: PopButton(
         onPressed: _openCreateGroup,
-        backgroundColor: paperAccentStrong,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.group_add_outlined),
-        label: Text(l10n.newGroup, style: paperValue(color: Colors.white)),
+        icon: Icons.group_add_outlined,
+        label: l10n.newGroup,
       ),
     );
   }
@@ -256,7 +252,7 @@ class _ConversationCard extends StatelessWidget {
     final hasUnread = unread > 0;
 
     return Container(
-      decoration: paperCardDecoration(),
+      decoration: popCardDecoration(shadow: 4),
       clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
@@ -271,12 +267,14 @@ class _ConversationCard extends StatelessWidget {
                       ? Container(
                           width: 48,
                           height: 48,
-                          decoration: const BoxDecoration(
-                            color: paperChip,
+                          decoration: BoxDecoration(
+                            color: popPurple,
                             shape: BoxShape.circle,
+                            border:
+                                Border.all(color: popInk, width: popStroke),
                           ),
                           child: const Icon(Icons.groups_outlined,
-                              color: paperAccentStrong),
+                              color: Colors.white),
                         )
                       : FeedAvatar(
                           username: other?['username']?.toString() ?? name,
@@ -293,7 +291,7 @@ class _ConversationCard extends StatelessWidget {
                       children: [
                         Text(
                           name,
-                          style: paperValue(fontSize: 16),
+                          style: popTitle(fontSize: 17),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -305,8 +303,8 @@ class _ConversationCard extends StatelessWidget {
                           // Unread threads are bolder *and* badged — colour is
                           // never the only signal.
                           style: hasUnread
-                              ? paperValue(fontSize: 13, color: paperInk)
-                              : paperMuted(),
+                              ? popValue(fontSize: 13)
+                              : popMuted(),
                         ),
                       ],
                     ),
@@ -321,16 +319,18 @@ class _ConversationCard extends StatelessWidget {
                         horizontal: 8,
                         vertical: 4,
                       ),
-                      constraints: const BoxConstraints(minWidth: 24),
+                      constraints: const BoxConstraints(minWidth: 26),
                       decoration: BoxDecoration(
-                        color: paperAccentStrong,
+                        color: popCoral,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: popInk, width: 2),
                       ),
                       child: ExcludeSemantics(
                         child: Text(
                           '$unread',
                           textAlign: TextAlign.center,
-                          style: paperValue(fontSize: 12, color: Colors.white),
+                          style: popValue(fontSize: 12)
+                              .copyWith(fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),
@@ -339,7 +339,7 @@ class _ConversationCard extends StatelessWidget {
                 if (onLeave != null)
                   IconButton(
                     icon: const Icon(Icons.logout),
-                    color: paperDanger,
+                    color: popDanger,
                     tooltip: 'Quitter le groupe $name',
                     onPressed: onLeave,
                   ),

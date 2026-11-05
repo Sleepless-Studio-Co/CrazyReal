@@ -6,7 +6,7 @@ import '../services/chat_service.dart';
 import '../services/chat_socket_service.dart';
 import '../services/api_exception.dart';
 import '../widgets/feed_avatar.dart';
-import '../widgets/paper.dart';
+import '../widgets/sticker_pop.dart';
 import 'group_members_page.dart';
 import 'group_challenges_tab.dart';
 import 'group_feed_tab.dart';
@@ -369,7 +369,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: paperDanger),
+      SnackBar(content: Text(message), backgroundColor: popCoral),
     );
   }
 
@@ -392,14 +392,18 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   Widget build(BuildContext context) {
     final appBarActions = [
       if (widget.isGroup)
-        IconButton(
-          icon: const Icon(Icons.groups_outlined),
-          tooltip: 'Membres du groupe',
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  GroupMembersPage(conversationId: widget.conversationId),
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: PopIconButton(
+            icon: Icons.groups_outlined,
+            tooltip: 'Membres du groupe',
+            size: 44,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    GroupMembersPage(conversationId: widget.conversationId),
+              ),
             ),
           ),
         ),
@@ -408,8 +412,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     // Conversation 1-à-1 : pas d'onglets, juste le chat.
     if (!widget.isGroup) {
       return Scaffold(
-        backgroundColor: paperBg,
-        appBar: paperAppBar(
+        appBar: popAppBar(
           title: widget.conversationName,
           actions: appBarActions,
         ),
@@ -421,11 +424,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        backgroundColor: paperBg,
-        appBar: paperAppBar(
+        appBar: popAppBar(
           title: widget.conversationName,
           actions: appBarActions,
-          bottom: paperTabBar(const [
+          bottom: popTabBar(const [
             Tab(icon: Icon(Icons.chat_bubble_outline), text: 'Chat'),
             Tab(icon: Icon(Icons.emoji_events_outlined), text: 'Défis'),
             Tab(icon: Icon(Icons.photo_library_outlined), text: 'Feed'),
@@ -447,12 +449,10 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       children: [
         Expanded(
           child: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: paperAccent),
-                )
+              ? const Center(child: CircularProgressIndicator())
               : _messages.isEmpty
-                  ? const PaperEmptyState(
-                      icon: Icons.chat_bubble_outline,
+                  ? const PopEmptyState(
+                      mascot: PopMascotMood.hello,
                       title: 'Aucun message',
                       message: 'Lance la conversation !',
                     )
@@ -474,7 +474,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 liveRegion: true,
                 child: Text(
                   _typingText(),
-                  style: paperMuted(fontSize: 12).copyWith(
+                  style: popMuted(fontSize: 12).copyWith(
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -499,18 +499,20 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
     final Color bubbleColor;
     final Color textColor;
+    final Color timeColor;
     if (isFailed) {
-      bubbleColor = const Color(0xFFF7DAD4);
-      textColor = paperInk;
+      bubbleColor = const Color(0xFFFFD9D3);
+      textColor = popInk;
+      timeColor = popInkMuted;
     } else if (isMe) {
-      // Accent foncé : contraste ≥ 5.5:1 avec le texte blanc.
-      bubbleColor = isPending
-          ? paperAccentStrong.withValues(alpha: 0.72)
-          : paperAccentStrong;
+      // Violet « Groupe » : contraste ≥ 6:1 avec le texte blanc.
+      bubbleColor = isPending ? popPurple.withValues(alpha: 0.72) : popPurple;
       textColor = Colors.white;
+      timeColor = Colors.white.withValues(alpha: 0.85);
     } else {
-      bubbleColor = paperCard;
-      textColor = paperInk;
+      bubbleColor = popCard;
+      textColor = popInk;
+      timeColor = popInkMuted;
     }
 
     final who = isMe ? 'Toi' : (senderName.isEmpty ? 'Inconnu' : senderName);
@@ -555,15 +557,12 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: bubbleColor,
-                    border: isMe
-                        ? null
-                        : Border.all(color: paperBorder),
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isMe ? 18 : 4),
-                      bottomRight: Radius.circular(isMe ? 4 : 18),
-                    ),
+                    border: Border.all(color: popInk, width: 2),
+                    borderRadius: BorderRadius.circular(16),
+                    // Only sent messages get the hard shadow, as in the mockup.
+                    boxShadow: isMe && !isPending && !isFailed
+                        ? popShadow(3)
+                        : null,
                   ),
                   child: Column(
                     crossAxisAlignment: isMe
@@ -576,15 +575,13 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           padding: const EdgeInsets.only(bottom: 3),
                           child: Text(
                             senderName,
-                            style: paperLabel(
-                              fontSize: 12,
-                              color: paperAccentStrong,
-                            ),
+                            style: popValue(fontSize: 12, color: popPurple)
+                                .copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
                       Text(
                         content,
-                        style: paperMuted(fontSize: 15, color: textColor),
+                        style: popBody(color: textColor),
                       ),
                       const SizedBox(height: 4),
                       Row(
@@ -592,10 +589,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                         children: [
                           Text(
                             time,
-                            style: paperMuted(
-                              fontSize: 11,
-                              color: textColor.withValues(alpha: 0.75),
-                            ),
+                            style: popMuted(fontSize: 11, color: timeColor),
                           ),
                           if (isMe) ...[
                             const SizedBox(width: 4),
@@ -606,9 +600,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                                       ? Icons.access_time
                                       : Icons.done,
                               size: 13,
-                              color: isFailed
-                                  ? paperDanger
-                                  : textColor.withValues(alpha: 0.75),
+                              color: isFailed ? popDanger : timeColor,
                             ),
                           ],
                         ],
@@ -619,6 +611,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               ),
             ),
           ),
+          // Leaves room for the hard shadow of sent bubbles.
           if (isMe) const SizedBox(width: 6),
         ],
       ),
@@ -629,8 +622,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: const BoxDecoration(
-        color: paperCard,
-        border: Border(top: BorderSide(color: paperBorder)),
+        color: popCard,
+        border: Border(top: BorderSide(color: popInk, width: popStroke)),
       ),
       child: SafeArea(
         top: false,
@@ -642,41 +635,36 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 controller: _messageController,
                 maxLines: 5,
                 minLines: 1,
-                style: paperMuted(fontSize: 15, color: paperInk),
+                style: popBody(),
                 textCapitalization: TextCapitalization.sentences,
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _sendMessage(),
                 decoration: InputDecoration(
                   hintText: 'Message…',
-                  hintStyle: paperMuted(fontSize: 15),
-                  filled: true,
-                  fillColor: Colors.white,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
+                    borderSide: const BorderSide(color: popInk, width: 2),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: paperAccent, width: 1.5),
+                    borderSide:
+                        const BorderSide(color: popPurple, width: popStroke),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 10),
             // 48x48 : cible tactile minimale recommandée.
-            IconButton.filled(
+            PopIconButton(
               onPressed: _sendMessage,
               tooltip: 'Envoyer',
-              icon: const Icon(Icons.send, size: 20),
-              style: IconButton.styleFrom(
-                backgroundColor: paperAccentStrong,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(48, 48),
-              ),
+              icon: Icons.send,
+              color: popPurple,
+              foreground: Colors.white,
             ),
           ],
         ),
