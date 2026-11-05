@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'auth/auth_service.dart';
@@ -9,11 +8,7 @@ import 'l10n/app_localizations.dart';
 import 'services/api_exception.dart';
 import 'utils/media_url.dart';
 import 'widgets/feed_avatar.dart';
-
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
-const Color _cardColor = Color(0xFFFFF7E6);
-const Color _accentColor = Color(0xFFB85C38);
+import 'widgets/sticker_pop.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({
@@ -178,7 +173,7 @@ class _AccountPageState extends State<AccountPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_friendlyError(e)),
-          backgroundColor: Colors.red,
+          backgroundColor: popCoral,
         ),
       );
     } finally {
@@ -377,7 +372,7 @@ class _AccountPageState extends State<AccountPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(error.toString()),
-        backgroundColor: Colors.red,
+        backgroundColor: popCoral,
       ),
     );
   }
@@ -397,10 +392,6 @@ class _AccountPageState extends State<AccountPage> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: _cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
@@ -409,15 +400,9 @@ class _AccountPageState extends State<AccountPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.chooseAvatar,
-                  style: _titleStyle(context).copyWith(fontSize: 22),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.baseAvatars,
-                  style: _labelStyle(context),
-                ),
+                Text(l10n.chooseAvatar, style: popTitle()),
+                const SizedBox(height: 12),
+                Text(l10n.baseAvatars.toUpperCase(), style: popLabel()),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 12,
@@ -443,8 +428,8 @@ class _AccountPageState extends State<AccountPage> {
                     Navigator.pop(sheetContext);
                     await _pickCustomAvatar();
                   },
-                  leading: const Icon(Icons.photo_library_outlined),
-                  title: Text(l10n.chooseFromGallery, style: _valueStyle(context)),
+                  leading: const PopIconChip(icon: Icons.photo_library_outlined),
+                  title: Text(l10n.chooseFromGallery, style: popValue()),
                 ),
                 if (_avatarUrl != null)
                   ListTile(
@@ -452,8 +437,14 @@ class _AccountPageState extends State<AccountPage> {
                       Navigator.pop(sheetContext);
                       await _removeCustomAvatar();
                     },
-                    leading: const Icon(Icons.delete_outline, color: Colors.red),
-                    title: Text(l10n.removePhoto, style: _valueStyle(context)),
+                    leading: const PopIconChip(
+                      icon: Icons.delete_outline,
+                      color: popDanger,
+                    ),
+                    title: Text(
+                      l10n.removePhoto,
+                      style: popValue(color: popDanger),
+                    ),
                   ),
               ],
             ),
@@ -484,9 +475,7 @@ class _AccountPageState extends State<AccountPage> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.account),
-      ),
+      appBar: popAppBar(title: l10n.account),
       body: SafeArea(
         child: _isEditing
             ? Form(
@@ -500,21 +489,21 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildContent(AppLocalizations l10n) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
       children: [
         _buildProfileHeader(l10n),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         _buildPrivacyCard(l10n),
         if (!_isEmailVerified) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           _buildVerificationBanner(l10n),
         ],
         if (_isEditing) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           _buildEditCard(l10n),
         ],
-        const SizedBox(height: 16),
-        _isEditing ? _buildSaveCard(l10n) : _buildLogoutCard(l10n),
+        const SizedBox(height: 22),
+        _isEditing ? _buildSaveButtons(l10n) : _buildLogoutButton(l10n),
       ],
     );
   }
@@ -524,34 +513,20 @@ class _AccountPageState extends State<AccountPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0DFC2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              _isPrivate ? Icons.lock_outline : Icons.public,
-              color: _accentColor,
-            ),
-          ),
+          PopIconChip(icon: _isPrivate ? Icons.lock_outline : Icons.public),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  // TODO: move to AppLocalizations once the key is added
-                  // to the .arb files (e.g. l10n.privateAccount).
-                  _isPrivate ? 'Compte privé' : 'Compte public',
-                  style: _valueStyle(context),
+                  _isPrivate ? l10n.privateAccount : l10n.publicAccount,
+                  style: popValue(fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _isPrivate
-                      ? 'Seuls tes amis acceptés voient ton profil et tes défis.'
-                      : 'Tout le monde peut voir ton profil et tes défis.',
-                  style: _mutedStyle(context),
+                  _isPrivate ? l10n.privateAccountDesc : l10n.publicAccountDesc,
+                  style: popMuted(fontSize: 14),
                 ),
               ],
             ),
@@ -565,7 +540,6 @@ class _AccountPageState extends State<AccountPage> {
                 )
               : Switch(
                   value: _isPrivate,
-                  activeColor: _accentColor,
                   onChanged: _togglePrivacy,
                 ),
         ],
@@ -576,18 +550,17 @@ class _AccountPageState extends State<AccountPage> {
   Widget _buildVerificationBanner(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7E6),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _accentColor.withOpacity(0.4)),
-      ),
+      decoration: popCardDecoration(color: popYellow, radius: 20, shadow: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.mark_email_unread_outlined, color: _accentColor),
+              const PopIconChip(
+                icon: Icons.mark_email_unread_outlined,
+                background: popCard,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -595,54 +568,38 @@ class _AccountPageState extends State<AccountPage> {
                   children: [
                     Text(
                       l10n.emailNotVerifiedTitle,
-                      style: GoogleFonts.nunito(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: _inkColor,
-                      ),
+                      style: popTitle(fontSize: 17),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       l10n.emailNotVerifiedMessage,
-                      style: GoogleFonts.nunito(
-                        fontSize: 13,
-                        color: _inkMuted,
-                      ),
+                      style: popBody(fontSize: 14),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
-                child: FilledButton.icon(
-                  onPressed:
-                      _isResendingVerification ? null : _resendVerificationEmail,
-                  icon: _isResendingVerification
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.send_outlined, size: 18),
-                  label: Text(l10n.resendVerificationEmail),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _accentColor,
-                  ),
+                child: PopButton(
+                  onPressed: _resendVerificationEmail,
+                  loading: _isResendingVerification,
+                  icon: Icons.send_outlined,
+                  label: l10n.resendVerificationEmail,
+                  color: popInk,
+                  dense: true,
+                  expand: true,
                 ),
               ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
+              const SizedBox(width: 10),
+              PopIconButton(
                 onPressed: _refreshProfile,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: Text(l10n.refresh),
-                style: OutlinedButton.styleFrom(foregroundColor: _inkColor),
+                icon: Icons.refresh,
+                tooltip: l10n.refresh,
+                size: 44,
               ),
             ],
           ),
@@ -657,90 +614,45 @@ class _AccountPageState extends State<AccountPage> {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFF2D9),
-            Color(0xFFF0D0A8),
-          ],
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x332E1B0F),
-            blurRadius: 24,
-            offset: Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Stack(
+      decoration: popCardDecoration(radius: 26, shadow: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Positioned(
-            right: -30,
-            top: -40,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                shape: BoxShape.circle,
-              ),
-            ),
+          GestureDetector(
+            onTap: _showAvatarPicker,
+            child: _buildAvatar(size: 88, showBadge: true),
           ),
-          Positioned(
-            left: -20,
-            bottom: -30,
-            child: Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: _showAvatarPicker,
-                child: _buildAvatar(size: 88, showBadge: true),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l10n.profile, style: _titleStyle(context)),
-                    const SizedBox(height: 6),
-                    Text(username, style: _valueStyle(context)),
-                    const SizedBox(height: 4),
-                    Text(email, style: _mutedStyle(context)),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _isSaving ? null : _startEditing,
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: Text(l10n.edit),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _inkColor,
-                        backgroundColor: Colors.white.withOpacity(0.7),
-                        side: const BorderSide(color: Color(0xFFDFC5A1)),
-                        textStyle: _labelStyle(context),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                  ],
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.profile.toUpperCase(), style: popLabel()),
+                const SizedBox(height: 4),
+                Text(
+                  username,
+                  style: popTitle(fontSize: 24),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  email,
+                  style: popMuted(fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                PopButton(
+                  onPressed: _isSaving ? null : _startEditing,
+                  icon: Icons.edit_outlined,
+                  label: l10n.edit,
+                  color: popYellow,
+                  foreground: popInk,
+                  dense: true,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -752,14 +664,14 @@ class _AccountPageState extends State<AccountPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.profile, style: _labelStyle(context)),
-          const SizedBox(height: 12),
+          Text(l10n.profile.toUpperCase(), style: popLabel()),
+          const SizedBox(height: 14),
           TextFormField(
             controller: _usernameController,
-            decoration: _inputDecoration(l10n.username),
+            decoration: InputDecoration(labelText: l10n.username),
             textInputAction: TextInputAction.next,
             autocorrect: false,
-            style: _valueStyle(context),
+            style: popValue(fontSize: 16),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return l10n.pleaseEnterUsername;
@@ -773,10 +685,10 @@ class _AccountPageState extends State<AccountPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _emailController,
-            decoration: _inputDecoration(l10n.email),
+            decoration: InputDecoration(labelText: l10n.email),
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
-            style: _valueStyle(context),
+            style: popValue(fontSize: 16),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return l10n.pleaseEnterEmail;
@@ -791,7 +703,7 @@ class _AccountPageState extends State<AccountPage> {
             const SizedBox(height: 12),
             Text(
               _errorMessage!,
-              style: _labelStyle(context).copyWith(color: Colors.red),
+              style: popValue(fontSize: 13, color: popDanger),
             ),
           ],
         ],
@@ -799,181 +711,116 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildSaveCard(AppLocalizations l10n) {
-    return _buildCard(
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: _isSaving ? null : _saveProfile,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _accentColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: _valueStyle(context),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(l10n.save),
-            ),
+  Widget _buildSaveButtons(AppLocalizations l10n) {
+    return Row(
+      children: [
+        Expanded(
+          child: PopButton(
+            onPressed: _saveProfile,
+            loading: _isSaving,
+            label: l10n.save,
+            expand: true,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: OutlinedButton(
-              onPressed: _isSaving ? null : _cancelEditing,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _inkColor,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: Color(0xFFDFC5A1)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: _valueStyle(context),
-              ),
-              child: Text(l10n.cancel),
-            ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: PopButton(
+            onPressed: _isSaving ? null : _cancelEditing,
+            label: l10n.cancel,
+            color: popCard,
+            foreground: popInk,
+            expand: true,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildLogoutCard(AppLocalizations l10n) {
-    return _buildCard(
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: _logout,
-          icon: const Icon(Icons.logout),
-          label: Text(l10n.logout),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFB54132),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            textStyle: _valueStyle(context),
-          ),
-        ),
-      ),
+  Widget _buildLogoutButton(AppLocalizations l10n) {
+    return PopButton(
+      onPressed: _logout,
+      icon: Icons.logout,
+      label: l10n.logout,
+      color: popCoral,
+      foreground: popInk,
+      expand: true,
     );
   }
 
   Widget _buildCard({required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0DFC2)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1F2E1B0F),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
+      decoration: popCardDecoration(radius: 20, shadow: 4),
       child: child,
     );
   }
-
 
   Widget _buildAvatar({double size = 96, bool showBadge = false}) {
     final option = _resolveAvatarOption();
     Widget avatarInner;
 
     if (_pendingAvatarBytes != null) {
-      avatarInner = ClipOval(
-        child: Image.memory(
-          _pendingAvatarBytes!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        ),
+      avatarInner = Image.memory(
+        _pendingAvatarBytes!,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
       );
     } else if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
       final resolvedAvatarUrl = resolveMediaUrl(_avatarUrl!)!;
-      avatarInner = ClipOval(
-        child: Image.network(
-          resolvedAvatarUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return Container(
-              width: size,
-              height: size,
-              color: option.background,
-              child: const Center(child: CircularProgressIndicator()),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: option.background,
-              ),
-              child: Icon(
-                option.icon,
-                color: option.foreground,
-                size: size * 0.45,
-              ),
-            );
-          },
-        ),
+      avatarInner = Image.network(
+        resolvedAvatarUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            width: size,
+            height: size,
+            color: option.background,
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: size,
+            height: size,
+            color: option.background,
+            child: Icon(
+              option.icon,
+              color: option.foreground,
+              size: size * 0.45,
+            ),
+          );
+        },
       );
     } else {
       avatarInner = Container(
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: option.background,
-        ),
+        color: option.background,
         child: Icon(option.icon, color: option.foreground, size: size * 0.45),
       );
     }
 
     return Stack(
-      alignment: Alignment.center,
+      clipBehavior: Clip.none,
       children: [
         Container(
-          width: size + 8,
-          height: size + 8,
-          decoration: const BoxDecoration(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFFFFFFFF),
-                Color(0xFFE8D0B0),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: popCard,
+            boxShadow: popShadow(4),
           ),
-        ),
-        ClipOval(
-          child: Container(
-            width: size,
-            height: size,
-            color: Colors.white,
-            child: avatarInner,
+          // Drawn over the picture so photos get the same ink outline.
+          foregroundDecoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: popInk, width: popStroke),
           ),
+          child: ClipOval(child: avatarInner),
         ),
         if (_isAvatarLoading)
           Container(
@@ -981,7 +828,7 @@ class _AccountPageState extends State<AccountPage> {
             height: size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.black.withOpacity(0.35),
+              color: Colors.black.withValues(alpha: 0.35),
             ),
             child: const Center(
               child: SizedBox(
@@ -996,18 +843,22 @@ class _AccountPageState extends State<AccountPage> {
           ),
         if (showBadge)
           Positioned(
-            bottom: 2,
-            right: 2,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.camera_alt_outlined,
-                color: Colors.white,
-                size: 14,
+            bottom: -2,
+            right: -4,
+            child: Transform.rotate(
+              angle: -0.08,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: popPurple,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: popInk, width: 2),
+                ),
+                child: const Icon(
+                  Icons.photo_camera_outlined,
+                  color: Colors.white,
+                  size: 16,
+                ),
               ),
             ),
           ),
@@ -1020,82 +871,35 @@ class _AccountPageState extends State<AccountPage> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected ? _accentColor : const Color(0xFFE0CBA7),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Container(
-          width: 52,
-          height: 52,
+    return Semantics(
+      selected: isSelected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(6),
+          // Lavender rather than yellow, which is also one of the avatars.
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: option.background,
+            color: isSelected ? popBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSelected ? popInk : Colors.transparent,
+              width: popStroke,
+            ),
+            boxShadow: isSelected ? popShadow(3) : null,
           ),
-          child: Icon(option.icon, color: option.foreground),
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: option.background,
+              border: Border.all(color: popInk, width: popStroke),
+            ),
+            child: Icon(option.icon, color: option.foreground),
+          ),
         ),
-      ),
-    );
-  }
-
-  TextStyle _titleStyle(BuildContext context) {
-    return GoogleFonts.dmSerifDisplay(
-      color: _inkColor,
-      fontSize: 26,
-      letterSpacing: 0.2,
-    );
-  }
-
-  TextStyle _labelStyle(BuildContext context) {
-    return GoogleFonts.karla(
-      color: _inkMuted,
-      fontSize: 13,
-      letterSpacing: 0.2,
-      fontWeight: FontWeight.w600,
-    );
-  }
-
-  TextStyle _valueStyle(BuildContext context) {
-    return GoogleFonts.karla(
-      color: _inkColor,
-      fontSize: 16,
-      fontWeight: FontWeight.w700,
-    );
-  }
-
-  TextStyle _mutedStyle(BuildContext context) {
-    return GoogleFonts.karla(
-      color: _inkMuted,
-      fontSize: 14,
-    );
-  }
-
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: _labelStyle(context),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _accentColor, width: 1.5),
       ),
     );
   }
