@@ -4,7 +4,7 @@ import '../services/chat_service.dart';
 import '../services/friend_service.dart';
 import '../services/api_exception.dart';
 import '../widgets/feed_avatar.dart';
-import '../widgets/paper.dart';
+import '../widgets/sticker_pop.dart';
 
 class GroupMembersPage extends StatefulWidget {
   final int conversationId;
@@ -54,7 +54,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
         setState(() => _isLoading = false);
         final message = e is ApiException ? e.message : 'Erreur lors du chargement des membres';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: paperDanger),
+          SnackBar(content: Text(message), backgroundColor: popCoral),
         );
       }
     }
@@ -70,10 +70,6 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: paperCard,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (_) => _AddMembersSheet(
         conversationId: widget.conversationId,
         existingMemberIds: memberIds,
@@ -102,7 +98,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   }
 
   Future<void> _remove(int userId, String username) async {
-    final confirmed = await paperConfirm(
+    final confirmed = await popConfirm(
       context,
       title: 'Retirer du groupe',
       message: 'Veux-tu vraiment retirer $username du groupe ?',
@@ -124,23 +120,21 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
   void _showError(Object error) {
     final message = error is ApiException ? error.message : 'Une erreur est survenue';
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: paperDanger),
+      SnackBar(content: Text(message), backgroundColor: popCoral),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: paperBg,
-      appBar: paperAppBar(
+      appBar: popAppBar(
         title: 'Membres',
         subtitle: _isLoading ? null : '${_members.length} membre(s)',
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: paperAccent))
+          ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,
-              color: paperAccent,
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
@@ -155,7 +149,7 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
 
                   return Container(
                     padding: const EdgeInsets.all(14),
-                    decoration: paperCardDecoration(),
+                    decoration: popCardDecoration(shadow: 4),
                     child: Row(
                       children: [
                         ExcludeSemantics(
@@ -174,9 +168,9 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                               children: [
                                 Text(
                                   isMe ? '$username (toi)' : username,
-                                  style: paperValue(fontSize: 16),
+                                  style: popTitle(fontSize: 17),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
                                 _RoleChip(isAdmin: isAdmin),
                               ],
                             ),
@@ -186,11 +180,6 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                           PopupMenuButton<String>(
                             tooltip: 'Gérer $username',
                             icon: const Icon(Icons.more_vert),
-                            color: paperCard,
-                            iconColor: paperInk,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
                             onSelected: (action) {
                               if (action == 'promote') _promote(user['id']);
                               if (action == 'demote') _demote(user['id']);
@@ -203,21 +192,21 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
                                 PopupMenuItem(
                                   value: 'promote',
                                   child: Text('Promouvoir admin',
-                                      style: paperValue(fontSize: 14)),
+                                      style: popValue(fontSize: 14)),
                                 ),
                               if (isAdmin)
                                 PopupMenuItem(
                                   value: 'demote',
                                   child: Text('Rétrograder membre',
-                                      style: paperValue(fontSize: 14)),
+                                      style: popValue(fontSize: 14)),
                                 ),
                               PopupMenuItem(
                                 value: 'remove',
                                 child: Text(
                                   'Retirer du groupe',
-                                  style: paperValue(
+                                  style: popValue(
                                     fontSize: 14,
-                                    color: paperDanger,
+                                    color: popDanger,
                                   ),
                                 ),
                               ),
@@ -233,12 +222,10 @@ class _GroupMembersPageState extends State<GroupMembersPage> {
       // bouton qu'à eux.
       floatingActionButton: (_isLoading || !_isCurrentUserAdmin)
           ? null
-          : FloatingActionButton.extended(
+          : PopButton(
               onPressed: _openAddMembers,
-              backgroundColor: paperAccentStrong,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.person_add_alt_1),
-              label: Text('Ajouter', style: paperValue(color: Colors.white)),
+              icon: Icons.person_add_alt_1,
+              label: 'Ajouter',
             ),
     );
   }
@@ -251,26 +238,12 @@ class _RoleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: paperChip,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ExcludeSemantics(
-            child: Icon(
-              isAdmin ? Icons.shield_outlined : Icons.person_outline,
-              size: 13,
-              color: paperInkMuted,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(isAdmin ? 'Admin' : 'Membre', style: paperLabel(fontSize: 11)),
-        ],
-      ),
+    return PopSticker(
+      label: isAdmin ? 'Admin' : 'Membre',
+      icon: isAdmin ? Icons.shield_outlined : Icons.person_outline,
+      color: isAdmin ? popYellow : popBg,
+      angle: isAdmin ? -0.04 : 0,
+      fontSize: 12,
     );
   }
 }
@@ -324,7 +297,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: paperDanger),
+      SnackBar(content: Text(message), backgroundColor: popCoral),
     );
   }
 
@@ -354,7 +327,7 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
               alignment: Alignment.centerLeft,
               child: Semantics(
                 header: true,
-                child: Text('Ajouter des membres', style: paperTitle()),
+                child: Text('Ajouter des membres', style: popTitle()),
               ),
             ),
           ),
@@ -362,32 +335,12 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
           if (_candidates.isNotEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed:
-                      _selected.isEmpty || _isSubmitting ? null : _submit,
-                  icon: _isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.person_add_alt_1),
-                  label: Text('Ajouter (${_selected.length})'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: paperAccentStrong,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 52),
-                    textStyle: paperValue(color: Colors.white),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
+              child: PopButton(
+                onPressed: _selected.isEmpty ? null : _submit,
+                loading: _isSubmitting,
+                icon: Icons.person_add_alt_1,
+                label: 'Ajouter (${_selected.length})',
+                expand: true,
               ),
             ),
         ],
@@ -397,11 +350,11 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
 
   Widget _buildList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: paperAccent));
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_candidates.isEmpty) {
-      return const PaperEmptyState(
+      return const PopEmptyState(
         icon: Icons.group_outlined,
         title: 'Aucun ami à ajouter',
         message: 'Tous tes amis sont déjà dans ce groupe.',
@@ -418,37 +371,39 @@ class _AddMembersSheetState extends State<_AddMembersSheet> {
         final id = friend['id'] as int;
         final isSelected = _selected.contains(id);
 
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? paperAccent : paperBorder,
-            ),
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: popCardDecoration(
+            color: isSelected ? popYellow : popCard,
+            radius: 16,
+            shadow: isSelected ? 3 : 0,
           ),
           clipBehavior: Clip.antiAlias,
-          child: CheckboxListTile(
-            value: isSelected,
-            onChanged: (checked) => setState(() {
-              if (checked == true) {
-                _selected.add(id);
-              } else {
-                _selected.remove(id);
-              }
-            }),
-            activeColor: paperAccentStrong,
-            controlAffinity: ListTileControlAffinity.trailing,
-            title: Text(username, style: paperValue()),
-            secondary: ExcludeSemantics(
-              child: FeedAvatar(
-                username: username,
-                avatarUrl: friend['avatarUrl']?.toString(),
-                avatarKey: friend['avatarKey']?.toString(),
-                size: 42,
+          // Transparent material so the tile's ink shows above the card colour.
+          child: Material(
+            type: MaterialType.transparency,
+            child: CheckboxListTile(
+              value: isSelected,
+              onChanged: (checked) => setState(() {
+                if (checked == true) {
+                  _selected.add(id);
+                } else {
+                  _selected.remove(id);
+                }
+              }),
+              controlAffinity: ListTileControlAffinity.trailing,
+              title: Text(username, style: popValue(fontSize: 16)),
+              secondary: ExcludeSemantics(
+                child: FeedAvatar(
+                  username: username,
+                  avatarUrl: friend['avatarUrl']?.toString(),
+                  avatarKey: friend['avatarKey']?.toString(),
+                  size: 42,
+                ),
               ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           ),
         );
       },

@@ -3,7 +3,7 @@ import '../services/friend_service.dart';
 import '../services/chat_service.dart';
 import '../services/api_exception.dart';
 import '../widgets/feed_avatar.dart';
-import '../widgets/paper.dart';
+import '../widgets/sticker_pop.dart';
 
 class CreateGroupPage extends StatefulWidget {
   const CreateGroupPage({super.key});
@@ -51,14 +51,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         setState(() => _isLoading = false);
         final message = e is ApiException ? e.message : 'Erreur lors du chargement des amis';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: paperDanger),
+          SnackBar(content: Text(message), backgroundColor: popCoral),
         );
       }
     }
   }
 
   void _showNoFriendsDialog() {
-    paperInfo(
+    popInfo(
       context,
       title: 'Aucun ami',
       message:
@@ -99,14 +99,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Groupe créé !'), backgroundColor: paperSuccess),
+          const SnackBar(content: Text('Groupe créé !'), backgroundColor: popGreen),
         );
       }
     } catch (e) {
       if (mounted) {
         final message = e is ApiException ? e.message : 'Erreur lors de la création du groupe';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: paperDanger),
+          SnackBar(content: Text(message), backgroundColor: popCoral),
         );
       }
     }
@@ -115,19 +115,18 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: paperBg,
-      appBar: paperAppBar(title: 'Nouveau groupe'),
+      appBar: popAppBar(title: 'Nouveau groupe'),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _nameController,
-              style: paperValue(),
+              style: popValue(),
               textInputAction: TextInputAction.done,
-              decoration: paperInputDecoration(
-                label: 'Nom du groupe',
-                prefixIcon: const Icon(Icons.badge_outlined),
+              decoration: const InputDecoration(
+                labelText: 'Nom du groupe',
+                prefixIcon: Icon(Icons.badge_outlined),
               ),
             ),
           ),
@@ -139,16 +138,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 header: true,
                 child: Text(
                   'MEMBRES — ${_selectedUserIds.length} SÉLECTIONNÉ(S)',
-                  style: paperLabel(),
+                  style: popLabel(),
                 ),
               ),
             ),
           ),
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: paperAccent),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
                     itemCount: _friends.length,
@@ -159,28 +156,37 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       final isSelected =
                           _selectedUserIds.contains(friend['id']);
 
-                      return Container(
-                        decoration: paperCardDecoration(
-                          border: isSelected ? paperAccent : null,
+                      // Selected friends are lifted, like a pressed-out sticker.
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: popCardDecoration(
+                          color: isSelected ? popYellow : popCard,
+                          radius: 18,
+                          shadow: isSelected ? 4 : 0,
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: CheckboxListTile(
-                          value: isSelected,
-                          onChanged: (_) => _toggleSelection(friend['id']),
-                          activeColor: paperAccentStrong,
-                          controlAffinity: ListTileControlAffinity.trailing,
-                          title: Text(username, style: paperValue()),
-                          secondary: ExcludeSemantics(
-                            child: FeedAvatar(
-                              username: username,
-                              avatarUrl: friend['avatarUrl']?.toString(),
-                              avatarKey: friend['avatarKey']?.toString(),
-                              size: 42,
+                        // Transparent material so the tile's ink shows above
+                        // the card colour.
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: CheckboxListTile(
+                            value: isSelected,
+                            onChanged: (_) => _toggleSelection(friend['id']),
+                            controlAffinity: ListTileControlAffinity.trailing,
+                            title:
+                                Text(username, style: popValue(fontSize: 16)),
+                            secondary: ExcludeSemantics(
+                              child: FeedAvatar(
+                                username: username,
+                                avatarUrl: friend['avatarUrl']?.toString(),
+                                avatarKey: friend['avatarKey']?.toString(),
+                                size: 42,
+                              ),
                             ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
                           ),
                         ),
                       );
@@ -191,28 +197,17 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
           // isolée dans l'AppBar.
           Container(
             decoration: const BoxDecoration(
-              color: paperCard,
-              border: Border(top: BorderSide(color: paperBorder)),
+              color: popCard,
+              border: Border(top: BorderSide(color: popInk, width: popStroke)),
             ),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: SafeArea(
               top: false,
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _submit,
-                  icon: const Icon(Icons.group_add_outlined),
-                  label: Text('Créer le groupe (${_selectedUserIds.length})'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: paperAccentStrong,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 52),
-                    textStyle: paperValue(color: Colors.white),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
+              child: PopButton(
+                onPressed: _submit,
+                icon: Icons.group_add_outlined,
+                label: 'Créer le groupe (${_selectedUserIds.length})',
+                expand: true,
               ),
             ),
           ),

@@ -3,7 +3,7 @@ import '../l10n/app_localizations.dart';
 import '../models/feed_post.dart';
 import '../services/api_exception.dart';
 import '../services/feed_service.dart';
-import '../widgets/paper.dart';
+import '../widgets/sticker_pop.dart';
 import '../widgets/post_card.dart';
 
 /// Onglet « Feed » d'un groupe : posts réalisés sur les défis du groupe.
@@ -43,7 +43,7 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e is ApiException ? e.message : 'Erreur de chargement'),
-            backgroundColor: paperDanger,
+            backgroundColor: popCoral,
           ),
         );
       }
@@ -81,15 +81,14 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: paperAccent));
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_posts.isEmpty) {
       return RefreshIndicator(
         onRefresh: _load,
-        color: paperAccent,
-        child: const PaperEmptyState(
-          icon: Icons.photo_library_outlined,
+        child: const PopEmptyState(
+          mascot: PopMascotMood.confused,
           title: 'Aucune photo',
           message: 'Relève un défi depuis l\'appareil photo pour remplir ce feed !',
         ),
@@ -98,12 +97,11 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: paperAccent,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+        padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
         itemCount: _posts.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        separatorBuilder: (_, __) => const SizedBox(height: 20),
         itemBuilder: (context, index) {
           final post = _posts[index];
           return PostCard(

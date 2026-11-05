@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/chat_service.dart';
 import '../services/api_exception.dart';
-import '../widgets/paper.dart';
+import '../widgets/sticker_pop.dart';
 
 /// Onglet « Défis » d'un groupe : liste les défis du groupe et permet à
 /// n'importe quel membre d'en créer un (fenêtre maintenant → endsAt).
@@ -45,7 +45,7 @@ class _GroupChallengesTabState extends State<GroupChallengesTab> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: paperDanger),
+      SnackBar(content: Text(message), backgroundColor: popCoral),
     );
   }
 
@@ -67,23 +67,21 @@ class _GroupChallengesTabState extends State<GroupChallengesTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: paperBg,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: paperAccent))
+          ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,
-              color: paperAccent,
               child: _challenges.isEmpty
-                  ? const PaperEmptyState(
-                      icon: Icons.emoji_events_outlined,
+                  ? const PopEmptyState(
+                      mascot: PopMascotMood.confused,
                       title: 'Aucun défi',
                       message: 'Crée le premier défi du groupe !',
                     )
                   : ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 96),
                       itemCount: _challenges.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
                       itemBuilder: (_, i) {
                         final c = _challenges[i] as Map<String, dynamic>;
                         return _ChallengeCard(
@@ -93,13 +91,13 @@ class _GroupChallengesTabState extends State<GroupChallengesTab> {
                       },
                     ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openCreateDialog,
-        backgroundColor: paperAccentStrong,
-        foregroundColor: Colors.white,
-        tooltip: 'Créer un défi',
-        icon: const Icon(Icons.add),
-        label: Text('Défi', style: paperValue(color: Colors.white)),
+      floatingActionButton: Tooltip(
+        message: 'Créer un défi',
+        child: PopButton(
+          onPressed: _openCreateDialog,
+          icon: Icons.add,
+          label: 'Défi',
+        ),
       ),
     );
   }
@@ -123,14 +121,17 @@ class _ChallengeCard extends StatelessWidget {
     return MergeSemantics(
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: paperCardDecoration(),
+        decoration: popCardDecoration(
+          color: isActive ? popYellow : popCard,
+          shadow: isActive ? 5 : 3,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ExcludeSemantics(
-              child: PaperIconChip(
-                icon: isActive ? Icons.emoji_events : Icons.history,
-                color: isActive ? paperAccentStrong : paperInkMuted,
+              child: PopIconChip(
+                icon: isActive ? Icons.emoji_events_outlined : Icons.history,
+                background: isActive ? popCard : popBg,
               ),
             ),
             const SizedBox(width: 14),
@@ -140,20 +141,25 @@ class _ChallengeCard extends StatelessWidget {
                 children: [
                   Text(
                     challenge['title']?.toString() ?? '',
-                    style: paperValue(fontSize: 16),
+                    style: popTitle(fontSize: 17),
                   ),
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(description, style: paperMuted(fontSize: 14)),
-                  ],
-                  const SizedBox(height: 8),
-                  // Statut en texte : l'état ne repose jamais sur la seule couleur.
-                  Text(
-                    status,
-                    style: paperLabel(
-                      fontSize: 12,
-                      color: isActive ? paperAccentStrong : paperInkMuted,
+                    Text(
+                      description,
+                      style: isActive
+                          ? popBody(fontSize: 14)
+                          : popMuted(fontSize: 14),
                     ),
+                  ],
+                  const SizedBox(height: 10),
+                  // Statut en texte : l'état ne repose jamais sur la seule couleur.
+                  PopSticker(
+                    label: status,
+                    icon: isActive ? Icons.timer_outlined : Icons.flag_outlined,
+                    color: isActive ? popCard : popBg,
+                    angle: isActive ? -0.03 : 0,
+                    fontSize: 12,
                   ),
                 ],
               ),
@@ -193,7 +199,7 @@ class _CreateChallengeDialogState extends State<_CreateChallengeDialog> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: paperDanger),
+      SnackBar(content: Text(message), backgroundColor: popCoral),
     );
   }
 
@@ -252,9 +258,7 @@ class _CreateChallengeDialogState extends State<_CreateChallengeDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: paperCard,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text('Nouveau défi', style: paperTitle(fontSize: 21)),
+      title: const Text('Nouveau défi'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -263,61 +267,48 @@ class _CreateChallengeDialogState extends State<_CreateChallengeDialog> {
             TextField(
               controller: _titleController,
               maxLength: 100,
-              style: paperValue(),
-              decoration: paperInputDecoration(label: 'Titre'),
+              style: popValue(),
+              decoration: const InputDecoration(labelText: 'Titre'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _descController,
               maxLength: 500,
               maxLines: 2,
-              style: paperValue(fontSize: 14),
+              style: popBody(fontSize: 14),
               decoration:
-                  paperInputDecoration(label: 'Description (optionnel)'),
+                  const InputDecoration(labelText: 'Description (optionnel)'),
             ),
             const SizedBox(height: 16),
-            Text('Fin du défi', style: paperLabel()),
-            const SizedBox(height: 6),
+            Text('FIN DU DÉFI', style: popLabel()),
+            const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: _pickEndDate,
               icon: const Icon(Icons.event_outlined, size: 18),
               label: Text(DateFormat('dd/MM/yyyy à HH:mm').format(_endsAt)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: paperInk,
-                side: const BorderSide(color: Color(0xFFE7D3B5)),
                 minimumSize: const Size(double.infinity, 48),
                 alignment: Alignment.centerLeft,
-                textStyle: paperValue(fontSize: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                textStyle: popValue(fontSize: 14),
               ),
             ),
           ],
         ),
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       actions: [
-        TextButton(
+        PopButton(
           onPressed: _submitting ? null : () => Navigator.pop(context, false),
-          style: TextButton.styleFrom(foregroundColor: paperInk),
-          child: const Text('Annuler'),
+          label: 'Annuler',
+          color: popCard,
+          foreground: popInk,
+          dense: true,
         ),
-        FilledButton(
-          onPressed: _submitting ? null : _submit,
-          style: FilledButton.styleFrom(
-            backgroundColor: paperAccentStrong,
-            foregroundColor: Colors.white,
-          ),
-          child: _submitting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text('Créer'),
+        PopButton(
+          onPressed: _submit,
+          loading: _submitting,
+          label: 'Créer',
+          dense: true,
         ),
       ],
     );
