@@ -1,6 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 
+import '../widgets/sticker_pop.dart';
+
 class NotificationService {
   NotificationService._internal();
   static final NotificationService _instance = NotificationService._internal();
@@ -25,9 +27,15 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
+    // Required on Linux (desktop build): without it initialize() throws and
+    // the app never reaches runApp.
+    const LinuxInitializationSettings initializationSettingsLinux =
+        LinuxInitializationSettings(defaultActionName: 'Open notification');
+
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
+      linux: initializationSettingsLinux,
     );
 
     await _notificationsPlugin.initialize(
@@ -102,7 +110,7 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       icon: 'ic_notification',
-      color: const Color(0xFF3B2A21),
+      color: popPurple,
     );
 
     const iosDetails = DarwinNotificationDetails();
