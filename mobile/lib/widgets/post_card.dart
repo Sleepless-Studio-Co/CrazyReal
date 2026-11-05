@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'package:share_plus/share_plus.dart';
@@ -11,10 +10,7 @@ import '../utils/time_ago.dart';
 import 'feed_avatar.dart';
 import 'full_screen_photo_page.dart';
 import 'full_screen_video_page.dart';
-
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
-const Color _cardColor = Color(0xFFFFF7E6);
+import 'sticker_pop.dart';
 
 class PostCard extends StatelessWidget {
   const PostCard({
@@ -41,198 +37,162 @@ class PostCard extends StatelessWidget {
         ? formatTimeAgo(post.createdAt!, l10n)
         : null;
 
+    // « Challenge · 12 min », like the « group · time » line of the mockup.
+    final caption = [
+      if (post.challenge?.title.isNotEmpty == true) post.challenge!.title,
+      if (timeLabel != null) timeLabel,
+    ].join(' · ');
+    final upvoteLabel = post.hasUpvoted ? l10n.postUpvoted : l10n.postUpvote;
+
     return Container(
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0DFC2)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1F2E1B0F),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(14),
+      decoration: popCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(
-              children: [
-                FeedAvatar(
-                  username: post.user.username,
-                  avatarUrl: post.user.avatarUrl,
-                  avatarKey: post.user.avatarKey,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+          Row(
+            children: [
+              FeedAvatar(
+                username: post.user.username,
+                avatarUrl: post.user.avatarUrl,
+                avatarKey: post.user.avatarKey,
+                size: 46,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      username,
+                      style: popTitle(fontSize: 17),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (caption.isNotEmpty) ...[
+                      const SizedBox(height: 2),
                       Text(
-                        username,
-                        style: _valueStyle(),
+                        caption,
+                        style: popMuted(),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (timeLabel != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          timeLabel,
-                          style: _mutedStyle(fontSize: 12.5),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          GestureDetector(
-            onTap: photoUrl.isEmpty
-                ? null
-                : () {
-                    if (post.isVideo) {
-                      _VideoPreview.pauseActiveVideo();
-                      FullScreenVideoPage.open(
-                        context,
-                        videoUrl: photoUrl,
-                        caption: challengeLabel,
-                      );
-                    } else {
-                      FullScreenPhotoPage.open(
-                        context,
-                        imageUrl: photoUrl,
-                        heroTag: 'post-photo-${post.id}',
-                        caption: challengeLabel,
-                      );
-                    }
-                  },
-            child: AspectRatio(
-              aspectRatio: 4 / 5,
-              child: post.isVideo
-                  ? _VideoPreview(mediaUrl: photoUrl)
-                  : Hero(
-                      tag: 'post-photo-${post.id}',
-                      child: Image.network(
-                        photoUrl,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: const Color(0xFFEEDCC5),
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
+          const SizedBox(height: 12),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              GestureDetector(
+                onTap: photoUrl.isEmpty
+                    ? null
+                    : () {
+                        if (post.isVideo) {
+                          _VideoPreview.pauseActiveVideo();
+                          FullScreenVideoPage.open(
+                            context,
+                            videoUrl: photoUrl,
+                            caption: challengeLabel,
                           );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: const Color(0xFFEEDCC5),
-                            child: const Center(
-                              child: Icon(
-                                Icons.broken_image_outlined,
-                                color: _inkMuted,
-                                size: 42,
-                              ),
-                            ),
+                        } else {
+                          FullScreenPhotoPage.open(
+                            context,
+                            imageUrl: photoUrl,
+                            heroTag: 'post-photo-${post.id}',
+                            caption: challengeLabel,
                           );
-                        },
-                      ),
-                    ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      challengeLabel,
-                      style: _labelStyle(),
-                    ),
+                        }
+                      },
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: popPhoto,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: photoUrl.isEmpty
-                      ? null
-                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
-                  borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Icon(
-                      Icons.share_outlined,
-                      color: _inkMuted,
-                      size: 22,
-                    ),
+                  // Drawn over the photo, which would otherwise hide it.
+                  foregroundDecoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: popInk, width: popStroke),
                   ),
-                ),
-                const SizedBox(width: 4),
-                InkWell(
-                  onTap: onUpvote,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          post.hasUpvoted ? Icons.favorite : Icons.favorite_border,
-                          color: post.hasUpvoted ? const Color(0xFFE05252) : _inkMuted,
-                          size: 22,
-                        ),
-                        if (post.upvoteCount > 0) ...[
-                          const SizedBox(width: 4),
-                          Text(
-                            '${post.upvoteCount}',
-                            style: _labelStyle().copyWith(
-                              color: post.hasUpvoted ? const Color(0xFFE05252) : _inkMuted,
+                  child: AspectRatio(
+                    aspectRatio: 4 / 5,
+                    child: post.isVideo
+                        ? _VideoPreview(mediaUrl: photoUrl)
+                        : Hero(
+                            tag: 'post-photo-${post.id}',
+                            child: Image.network(
+                              photoUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    color: popInk,
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    color: popInk,
+                                    size: 42,
+                                  ),
+                                );
+                              },
                             ),
                           ),
-                        ],
-                      ],
-                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Positioned(
+                left: -6,
+                bottom: 16,
+                child: PopSticker(
+                  label: l10n.postChallengeDone,
+                  icon: Icons.check_rounded,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              PopButton(
+                label: post.upvoteCount > 0
+                    ? '$upvoteLabel · ${post.upvoteCount}'
+                    : upvoteLabel,
+                semanticLabel:
+                    '$upvoteLabel, ${l10n.postUpvoteCount(post.upvoteCount)}',
+                icon: Icons.arrow_upward_rounded,
+                color: post.hasUpvoted ? popCoral : popCard,
+                foreground: popInk,
+                dense: true,
+                onPressed: onUpvote,
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: PopButton(
+                  label: l10n.postShare,
+                  icon: Icons.share_outlined,
+                  color: popCard,
+                  foreground: popInk,
+                  dense: true,
+                  onPressed: photoUrl.isEmpty
+                      ? null
+                      : () => SharePlus.instance
+                          .share(ShareParams(uri: Uri.parse(photoUrl))),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-    );
-  }
-
-  TextStyle _labelStyle() {
-    return GoogleFonts.karla(
-      color: _inkMuted,
-      fontSize: 12.5,
-      letterSpacing: 0.2,
-      fontWeight: FontWeight.w600,
-    );
-  }
-
-  TextStyle _valueStyle() {
-    return GoogleFonts.karla(
-      color: _inkColor,
-      fontSize: 16,
-      fontWeight: FontWeight.w700,
-    );
-  }
-
-  TextStyle _mutedStyle({double fontSize = 14}) {
-    return GoogleFonts.karla(
-      color: _inkMuted,
-      fontSize: fontSize,
     );
   }
 }
@@ -314,14 +274,11 @@ class _VideoPreviewState extends State<_VideoPreview> {
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done ||
               snapshot.hasError) {
-            return Container(
-              color: const Color(0xFF2A211C),
-              child: const Center(
-                child: Icon(
-                  Icons.videocam_outlined,
-                  color: Colors.white38,
-                  size: 56,
-                ),
+            return const Center(
+              child: Icon(
+                Icons.videocam_outlined,
+                color: popInk,
+                size: 56,
               ),
             );
           }
