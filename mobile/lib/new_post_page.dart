@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'l10n/app_localizations.dart';
 import 'auth/auth_service.dart';
 import 'utils/media_url.dart';
+import 'widgets/sticker_pop.dart';
 
 final String baseUrl = apiBaseUrl;
 
@@ -424,7 +425,7 @@ class _NewPageState extends State<NewPage> {
         height: 80,
         child: Center(
           child: CircularProgressIndicator(
-            color: Color(0xFFFFE500),
+            color: popYellow,
             strokeWidth: 3,
           ),
         ),
@@ -465,15 +466,14 @@ class _NewPageState extends State<NewPage> {
     if (challengeError != null) {
       return Text(
         challengeError!,
-        style: const TextStyle(fontSize: 14, color: Colors.red),
+        style: popValue(fontSize: 14, color: popDanger),
         textAlign: TextAlign.center,
       );
     }
     if (_challenges.isEmpty) {
       return Text(
         l10n.loadingChallenge,
-        style: const TextStyle(
-            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+        style: popTitle(fontSize: 18),
         textAlign: TextAlign.center,
       );
     }
@@ -484,49 +484,50 @@ class _NewPageState extends State<NewPage> {
     );
     final description = selected['description']?.toString() ?? '';
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        DropdownButton<int>(
-          value: selected['id'] as int,
-          isExpanded: true,
-          underline: const SizedBox.shrink(),
-          items: _challenges
-              .map((c) => DropdownMenuItem<int>(
-                    value: c['id'] as int,
-                    child: Text(
-                      _challengeLabel(c, l10n),
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ))
-              .toList(),
-          onChanged: (id) {
-            setState(() => _selectedChallengeId = id);
-            _updateChallengeTimer();
-          },
-        ),
-        if (description.isNotEmpty)
-          Text(
-            description,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
-            textAlign: TextAlign.center,
+    // « Défi » yellow card, like the challenge of the week on the home feed.
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 6, 12, 14),
+      decoration: popCardDecoration(color: popYellow, radius: 22),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButton<int>(
+            value: selected['id'] as int,
+            isExpanded: true,
+            underline: const SizedBox.shrink(),
+            borderRadius: BorderRadius.circular(16),
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: popInk),
+            items: _challenges
+                .map((c) => DropdownMenuItem<int>(
+                      value: c['id'] as int,
+                      child: Text(
+                        _challengeLabel(c, l10n),
+                        style: popTitle(fontSize: 18),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ))
+                .toList(),
+            onChanged: (id) {
+              setState(() => _selectedChallengeId = id);
+              _updateChallengeTimer();
+            },
           ),
-        if (_remainingChallengeTime != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Temps restant : ${_formatRemaining(_remainingChallengeTime!)}',
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFB85C38),
+          if (description.isNotEmpty)
+            Text(description, style: popBody(fontSize: 14)),
+          if (_remainingChallengeTime != null) ...[
+            const SizedBox(height: 10),
+            PopSticker(
+              label: l10n.challengeTimeLeft(
+                _formatRemaining(_remainingChallengeTime!),
+              ),
+              color: popCoral,
+              icon: Icons.timer_outlined,
+              angle: -0.03,
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -543,9 +544,12 @@ class _NewPageState extends State<NewPage> {
                 constraints: BoxConstraints(
                   maxHeight: constraints.maxHeight * 0.42,
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  child: _buildChallengePicker(l10n),
+                child: SafeArea(
+                  bottom: false,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+                    child: _buildChallengePicker(l10n),
+                  ),
                 ),
               );
             },
@@ -553,10 +557,15 @@ class _NewPageState extends State<NewPage> {
           Expanded(
             child: Container(
               width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
-                color: Colors.black,
+                borderRadius: BorderRadius.circular(26),
+                color: popInk,
+              ),
+              // Drawn over the preview, which would otherwise hide it.
+              foregroundDecoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: popInk, width: popStroke),
               ),
               clipBehavior: Clip.hardEdge,
               child: Stack(
@@ -566,10 +575,7 @@ class _NewPageState extends State<NewPage> {
                       ? Center(
                           child: Text(
                             l10n.cameraOnlyMobile,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
+                            style: popValue(fontSize: 16, color: Colors.white),
                             textAlign: TextAlign.center,
                           ),
                         )
@@ -581,7 +587,9 @@ class _NewPageState extends State<NewPage> {
                               return CameraPreview(_controller!);
                             }
                             return const Center(
-                              child: CircularProgressIndicator(),
+                              child: CircularProgressIndicator(
+                                color: popYellow,
+                              ),
                             );
                           },
                         ),
@@ -593,39 +601,56 @@ class _NewPageState extends State<NewPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        FloatingActionButton(
-                          heroTag: 'flash',
+                        PopIconButton(
+                          icon: _getFlashIcon(),
+                          tooltip: l10n.cameraFlash,
+                          size: 52,
                           onPressed: _toggleFlash,
-                          backgroundColor: const Color(0xFF195A3B),
-                          foregroundColor: Colors.white,
-                          child: Icon(_getFlashIcon()),
                         ),
-                        SizedBox(
-                          width: 80,
-                          height: 80,
-                          child: FloatingActionButton(
-                            heroTag: 'photo',
-                            onPressed:
-                                isUploading ? null : takeAndUploadPicture,
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.white,
-                            splashColor: Colors.grey.withOpacity(0.3),
-                            focusColor: Colors.grey.withOpacity(0.2),
-                            elevation: 0,
-                            child: isUploading
-                                ? const CircularProgressIndicator(
-                                    color: Color(0xFFFFE500),
+                        isUploading
+                            ? const SizedBox(
+                                width: 80,
+                                height: 80,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    color: popYellow,
                                     strokeWidth: 3,
-                                  )
-                                : const Icon(Icons.circle_outlined, size: 80),
-                          ),
-                        ),
-                        FloatingActionButton(
-                          heroTag: 'flip',
+                                  ),
+                                ),
+                              )
+                            : Tooltip(
+                                message: l10n.takePhoto,
+                                excludeFromSemantics: true,
+                                // Shutter: white sticker with the « Défi »
+                                // yellow at its heart.
+                                child: PopPressable(
+                                  onPressed: takeAndUploadPicture,
+                                  semanticLabel: l10n.takePhoto,
+                                  radius: 40,
+                                  child: SizedBox.square(
+                                    dimension: 76,
+                                    child: Center(
+                                      child: Container(
+                                        width: 54,
+                                        height: 54,
+                                        decoration: BoxDecoration(
+                                          color: popYellow,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: popInk,
+                                            width: popStroke,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        PopIconButton(
+                          icon: Icons.flip_camera_ios_outlined,
+                          tooltip: l10n.cameraSwitch,
+                          size: 52,
                           onPressed: _cameras.length > 1 ? _switchCamera : null,
-                          backgroundColor: const Color(0xFF195A3B),
-                          foregroundColor: Colors.white,
-                          child: const Icon(Icons.flip_camera_ios),
                         ),
                       ],
                     ),
