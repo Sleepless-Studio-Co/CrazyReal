@@ -660,18 +660,6 @@
   "accessibility": "Accessibility",
   "@accessibility": { "description": "Accessibility settings section header" },
 
-  "theme": "Appearance",
-  "@theme": { "description": "Theme selection tile" },
-
-  "themeSystem": "Use phone settings",
-  "@themeSystem": { "description": "Theme follows the phone setting" },
-
-  "themeLight": "Light",
-  "@themeLight": { "description": "Light theme" },
-
-  "themeDark": "Dark",
-  "@themeDark": { "description": "Dark theme" },
-
   "language": "Language",
   "@language": { "description": "Language setting tile" },
 
@@ -828,5 +816,80 @@
   },
 
   "adminLoadError": "Could not load challenges",
-  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" }
+  "@adminLoadError": { "description": "Error shown when the challenge list fails to load" },
+
+  "homeWeeklyChallenge": "CHALLENGE OF THE WEEK",
+  "@homeWeeklyChallenge": { "description": "Label above the current weekly challenge on the home screen" },
+
+  "homeSpecialChallenge": "SPECIAL CHALLENGE",
+  "@homeSpecialChallenge": { "description": "Label above the current special challenge on the home screen" },
+
+  "homeDoIt": "I'm doing it!",
+  "@homeDoIt": { "description": "Button opening the camera to answer the current challenge" },
+
+  "challengeEndsInDays": "{days}d {hours}h",
+  "@challengeEndsInDays": {
+    "description": "Time left before a challenge ends, more than a day",
+    "placeholders": { "days": { "type": "int" }, "hours": { "type": "int" } }
+  },
+
+  "challengeEndsInHours": "{hours}h {minutes}m",
+  "@challengeEndsInHours": {
+    "description": "Time left before a challenge ends, less than a day",
+    "placeholders": { "hours": { "type": "int" }, "minutes": { "type": "int" } }
+  },
+
+  "challengeEndsInMinutes": "{minutes} min",
+  "@challengeEndsInMinutes": {
+    "description": "Time left before a challenge ends, less than an hour",
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+
+  "challengeTimeLeft": "Time left: {time}",
+  "@challengeTimeLeft": {
+    "description": "Countdown before the selected challenge ends",
+    "placeholders": { "time": { "type": "String" } }
+  },
+
+  "postChallengeDone": "Challenge done",
+  "@postChallengeDone": { "description": "Sticker shown on every post photo" },
+
+  "postUpvote": "Upvote",
+  "@postUpvote": { "description": "Upvote button of a post" },
+
+  "postUpvoted": "Upvoted",
+  "@postUpvoted": { "description": "Upvote button of a post the user already upvoted" },
+
+  "postUpvoteCount": "{count, plural, =0{No upvotes} =1{1 upvote} other{{count} upvotes}}",
+  "@postUpvoteCount": {
+    "description": "Number of upvotes, read by screen readers",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "postShare": "Share",
+  "@postShare": { "description": "Share button of a post" },
+
+  "feedAllCaughtUpTitle": "You're all caught up!",
+  "@feedAllCaughtUpTitle": { "description": "Card shown at the end of the feed" },
+
+  "feedAllCaughtUpMessage": "Nothing left to see. Go do the challenge with your crew.",
+  "@feedAllCaughtUpMessage": { "description": "Body of the end-of-feed card" },
+
+  "loginTitle": "Hey you!",
+  "@loginTitle": { "description": "Greeting on the login screen" },
+
+  "loginSubtitle": "Log in to see what your crew is up to.",
+  "@loginSubtitle": { "description": "Subtitle on the login screen" },
+
+  "registerTitle": "Join the crew",
+  "@registerTitle": { "description": "Greeting on the sign-up screen" },
+
+  "registerSubtitle": "Create your account and take on challenges with your friends.",
+  "@registerSubtitle": { "description": "Subtitle on the sign-up screen" },
+
+  "cameraFlash": "Flash",
+  "@cameraFlash": { "description": "Camera button cycling the flash mode" },
+
+  "cameraSwitch": "Switch camera",
+  "@cameraSwitch": { "description": "Camera button switching between front and back cameras" }
 }

@@ -419,18 +419,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accessibility => 'Accessibility';
 
   @override
-  String get theme => 'Appearance';
-
-  @override
-  String get themeSystem => 'Use phone settings';
-
-  @override
-  String get themeLight => 'Light';
-
-  @override
-  String get themeDark => 'Dark';
-
-  @override
   String get language => 'Language';
 
   @override
@@ -609,4 +597,83 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Could not load challenges';
+
+  @override
+  String get homeWeeklyChallenge => 'CHALLENGE OF THE WEEK';
+
+  @override
+  String get homeSpecialChallenge => 'SPECIAL CHALLENGE';
+
+  @override
+  String get homeDoIt => 'I\'m doing it!';
+
+  @override
+  String challengeEndsInDays(int days, int hours) {
+    return '${days}d ${hours}h';
+  }
+
+  @override
+  String challengeEndsInHours(int hours, int minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String challengeEndsInMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String challengeTimeLeft(String time) {
+    return 'Time left: $time';
+  }
+
+  @override
+  String get postChallengeDone => 'Challenge done';
+
+  @override
+  String get postUpvote => 'Upvote';
+
+  @override
+  String get postUpvoted => 'Upvoted';
+
+  @override
+  String postUpvoteCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count upvotes',
+      one: '1 upvote',
+      zero: 'No upvotes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get postShare => 'Share';
+
+  @override
+  String get feedAllCaughtUpTitle => 'You\'re all caught up!';
+
+  @override
+  String get feedAllCaughtUpMessage =>
+      'Nothing left to see. Go do the challenge with your crew.';
+
+  @override
+  String get loginTitle => 'Hey you!';
+
+  @override
+  String get loginSubtitle => 'Log in to see what your crew is up to.';
+
+  @override
+  String get registerTitle => 'Join the crew';
+
+  @override
+  String get registerSubtitle =>
+      'Create your account and take on challenges with your friends.';
+
+  @override
+  String get cameraFlash => 'Flash';
+
+  @override
+  String get cameraSwitch => 'Switch camera';
 }

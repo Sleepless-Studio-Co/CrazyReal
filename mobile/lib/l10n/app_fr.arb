@@ -660,18 +660,6 @@
   "accessibility": "Accessibilité",
   "@accessibility": { "description": "En-tête de section accessibilité" },
 
-  "theme": "Apparence",
-  "@theme": { "description": "Tuile de choix du thème" },
-
-  "themeSystem": "Selon le téléphone",
-  "@themeSystem": { "description": "Thème automatique selon le réglage du téléphone" },
-
-  "themeLight": "Clair",
-  "@themeLight": { "description": "Thème clair" },
-
-  "themeDark": "Sombre",
-  "@themeDark": { "description": "Thème sombre" },
-
   "language": "Langue",
   "@language": { "description": "Tuile langue" },
 
@@ -828,5 +816,80 @@
   },
 
   "adminLoadError": "Impossible de charger les défis",
-  "@adminLoadError": { "description": "Erreur au chargement de la liste" }
+  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
+
+  "homeWeeklyChallenge": "DÉFI DE LA SEMAINE",
+  "@homeWeeklyChallenge": { "description": "Libellé au-dessus du défi de la semaine sur l'accueil" },
+
+  "homeSpecialChallenge": "DÉFI SPÉCIAL",
+  "@homeSpecialChallenge": { "description": "Libellé au-dessus du défi spécial sur l'accueil" },
+
+  "homeDoIt": "Je le fais !",
+  "@homeDoIt": { "description": "Bouton qui ouvre l'appareil photo pour relever le défi" },
+
+  "challengeEndsInDays": "{days} j {hours} h",
+  "@challengeEndsInDays": {
+    "description": "Temps restant avant la fin d'un défi, plus d'un jour",
+    "placeholders": { "days": { "type": "int" }, "hours": { "type": "int" } }
+  },
+
+  "challengeEndsInHours": "{hours} h {minutes} min",
+  "@challengeEndsInHours": {
+    "description": "Temps restant avant la fin d'un défi, moins d'un jour",
+    "placeholders": { "hours": { "type": "int" }, "minutes": { "type": "int" } }
+  },
+
+  "challengeEndsInMinutes": "{minutes} min",
+  "@challengeEndsInMinutes": {
+    "description": "Temps restant avant la fin d'un défi, moins d'une heure",
+    "placeholders": { "minutes": { "type": "int" } }
+  },
+
+  "challengeTimeLeft": "Temps restant : {time}",
+  "@challengeTimeLeft": {
+    "description": "Compte à rebours avant la fin du défi sélectionné",
+    "placeholders": { "time": { "type": "String" } }
+  },
+
+  "postChallengeDone": "Défi validé",
+  "@postChallengeDone": { "description": "Sticker affiché sur la photo de chaque post" },
+
+  "postUpvote": "Upvote",
+  "@postUpvote": { "description": "Bouton upvote d'un post" },
+
+  "postUpvoted": "Upvoté",
+  "@postUpvoted": { "description": "Bouton upvote d'un post déjà upvoté" },
+
+  "postUpvoteCount": "{count, plural, =0{Aucun upvote} =1{1 upvote} other{{count} upvotes}}",
+  "@postUpvoteCount": {
+    "description": "Nombre d'upvotes, lu par les lecteurs d'écran",
+    "placeholders": { "count": { "type": "int" } }
+  },
+
+  "postShare": "Partager",
+  "@postShare": { "description": "Bouton partager d'un post" },
+
+  "feedAllCaughtUpTitle": "Tu es à jour !",
+  "@feedAllCaughtUpTitle": { "description": "Carte affichée à la fin du feed" },
+
+  "feedAllCaughtUpMessage": "Plus rien à voir. Va faire le défi avec ta bande.",
+  "@feedAllCaughtUpMessage": { "description": "Texte de la carte de fin du feed" },
+
+  "loginTitle": "Salut toi !",
+  "@loginTitle": { "description": "Accueil de l'écran de connexion" },
+
+  "loginSubtitle": "Connecte-toi pour voir ce que fait ta bande.",
+  "@loginSubtitle": { "description": "Sous-titre de l'écran de connexion" },
+
+  "registerTitle": "Rejoins la bande",
+  "@registerTitle": { "description": "Accueil de l'écran d'inscription" },
+
+  "registerSubtitle": "Crée ton compte et relève des défis avec tes potes.",
+  "@registerSubtitle": { "description": "Sous-titre de l'écran d'inscription" },
+
+  "cameraFlash": "Flash",
+  "@cameraFlash": { "description": "Bouton de l'appareil photo qui change le mode du flash" },
+
+  "cameraSwitch": "Changer de caméra",
+  "@cameraSwitch": { "description": "Bouton de l'appareil photo qui bascule entre caméra avant et arrière" }
 }

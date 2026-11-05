@@ -424,18 +424,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get accessibility => 'Accessibilité';
 
   @override
-  String get theme => 'Apparence';
-
-  @override
-  String get themeSystem => 'Selon le téléphone';
-
-  @override
-  String get themeLight => 'Clair';
-
-  @override
-  String get themeDark => 'Sombre';
-
-  @override
   String get language => 'Langue';
 
   @override
@@ -615,4 +603,83 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
+
+  @override
+  String get homeWeeklyChallenge => 'DÉFI DE LA SEMAINE';
+
+  @override
+  String get homeSpecialChallenge => 'DÉFI SPÉCIAL';
+
+  @override
+  String get homeDoIt => 'Je le fais !';
+
+  @override
+  String challengeEndsInDays(int days, int hours) {
+    return '$days j $hours h';
+  }
+
+  @override
+  String challengeEndsInHours(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String challengeEndsInMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String challengeTimeLeft(String time) {
+    return 'Temps restant : $time';
+  }
+
+  @override
+  String get postChallengeDone => 'Défi validé';
+
+  @override
+  String get postUpvote => 'Upvote';
+
+  @override
+  String get postUpvoted => 'Upvoté';
+
+  @override
+  String postUpvoteCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count upvotes',
+      one: '1 upvote',
+      zero: 'Aucun upvote',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get postShare => 'Partager';
+
+  @override
+  String get feedAllCaughtUpTitle => 'Tu es à jour !';
+
+  @override
+  String get feedAllCaughtUpMessage =>
+      'Plus rien à voir. Va faire le défi avec ta bande.';
+
+  @override
+  String get loginTitle => 'Salut toi !';
+
+  @override
+  String get loginSubtitle => 'Connecte-toi pour voir ce que fait ta bande.';
+
+  @override
+  String get registerTitle => 'Rejoins la bande';
+
+  @override
+  String get registerSubtitle =>
+      'Crée ton compte et relève des défis avec tes potes.';
+
+  @override
+  String get cameraFlash => 'Flash';
+
+  @override
+  String get cameraSwitch => 'Changer de caméra';
 }

@@ -866,30 +866,6 @@ abstract class AppLocalizations {
   /// **'Accessibility'**
   String get accessibility;
 
-  /// Theme selection tile
-  ///
-  /// In en, this message translates to:
-  /// **'Appearance'**
-  String get theme;
-
-  /// Theme follows the phone setting
-  ///
-  /// In en, this message translates to:
-  /// **'Use phone settings'**
-  String get themeSystem;
-
-  /// Light theme
-  ///
-  /// In en, this message translates to:
-  /// **'Light'**
-  String get themeLight;
-
-  /// Dark theme
-  ///
-  /// In en, this message translates to:
-  /// **'Dark'**
-  String get themeDark;
-
   /// Language setting tile
   ///
   /// In en, this message translates to:
@@ -1195,6 +1171,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load challenges'**
   String get adminLoadError;
+
+  /// Label above the current weekly challenge on the home screen
+  ///
+  /// In en, this message translates to:
+  /// **'CHALLENGE OF THE WEEK'**
+  String get homeWeeklyChallenge;
+
+  /// Label above the current special challenge on the home screen
+  ///
+  /// In en, this message translates to:
+  /// **'SPECIAL CHALLENGE'**
+  String get homeSpecialChallenge;
+
+  /// Button opening the camera to answer the current challenge
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m doing it!'**
+  String get homeDoIt;
+
+  /// Time left before a challenge ends, more than a day
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d {hours}h'**
+  String challengeEndsInDays(int days, int hours);
+
+  /// Time left before a challenge ends, less than a day
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String challengeEndsInHours(int hours, int minutes);
+
+  /// Time left before a challenge ends, less than an hour
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String challengeEndsInMinutes(int minutes);
+
+  /// Countdown before the selected challenge ends
+  ///
+  /// In en, this message translates to:
+  /// **'Time left: {time}'**
+  String challengeTimeLeft(String time);
+
+  /// Sticker shown on every post photo
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge done'**
+  String get postChallengeDone;
+
+  /// Upvote button of a post
+  ///
+  /// In en, this message translates to:
+  /// **'Upvote'**
+  String get postUpvote;
+
+  /// Upvote button of a post the user already upvoted
+  ///
+  /// In en, this message translates to:
+  /// **'Upvoted'**
+  String get postUpvoted;
+
+  /// Number of upvotes, read by screen readers
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No upvotes} =1{1 upvote} other{{count} upvotes}}'**
+  String postUpvoteCount(int count);
+
+  /// Share button of a post
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get postShare;
+
+  /// Card shown at the end of the feed
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all caught up!'**
+  String get feedAllCaughtUpTitle;
+
+  /// Body of the end-of-feed card
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing left to see. Go do the challenge with your crew.'**
+  String get feedAllCaughtUpMessage;
+
+  /// Greeting on the login screen
+  ///
+  /// In en, this message translates to:
+  /// **'Hey you!'**
+  String get loginTitle;
+
+  /// Subtitle on the login screen
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to see what your crew is up to.'**
+  String get loginSubtitle;
+
+  /// Greeting on the sign-up screen
+  ///
+  /// In en, this message translates to:
+  /// **'Join the crew'**
+  String get registerTitle;
+
+  /// Subtitle on the sign-up screen
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account and take on challenges with your friends.'**
+  String get registerSubtitle;
+
+  /// Camera button cycling the flash mode
+  ///
+  /// In en, this message translates to:
+  /// **'Flash'**
+  String get cameraFlash;
+
+  /// Camera button switching between front and back cameras
+  ///
+  /// In en, this message translates to:
+  /// **'Switch camera'**
+  String get cameraSwitch;
 }
 
 class _AppLocalizationsDelegate
