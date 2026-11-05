@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'auth_service.dart';
 import 'register_page.dart';
 import '../l10n/app_localizations.dart';
+import '../widgets/sticker_pop.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, this.onAuthSuccess});
@@ -63,79 +64,111 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.login),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.email,
-                  border: const OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return AppLocalizations.of(context)!.pleaseEnterEmail;
-                  }
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                    return AppLocalizations.of(context)!.pleaseEnterValidEmail;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.password,
-                  border: const OutlineInputBorder(),
-                ),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return AppLocalizations.of(context)!.pleaseEnterPassword;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              if (_errorMessage != null)
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : Text(AppLocalizations.of(context)!.login),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RegisterPage(
-                        onAuthSuccess: widget.onAuthSuccess,
-                      ),
+      // Only a back button, when the page was pushed from the sign-up screen.
+      appBar: Navigator.of(context).canPop() ? AppBar() : null,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Center(child: PopLogo(fontSize: 30)),
+                  const SizedBox(height: 20),
+                  const Center(
+                    child: PopMascot(PopMascotMood.hello, size: 170),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    l10n.loginTitle,
+                    style: popDisplay(fontSize: 30),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.loginSubtitle,
+                    style: popMuted(fontSize: 15),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: popCardDecoration(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context)!.email,
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return AppLocalizations.of(context)!
+                                  .pleaseEnterEmail;
+                            }
+                            if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                                .hasMatch(value)) {
+                              return AppLocalizations.of(context)!
+                                  .pleaseEnterValidEmail;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context)!.password,
+                          ),
+                          obscureText: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return AppLocalizations.of(context)!
+                                  .pleaseEnterPassword;
+                            }
+                            return null;
+                          },
+                        ),
+                        if (_errorMessage != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _errorMessage!,
+                            style: popValue(fontSize: 13, color: popDanger),
+                          ),
+                        ],
+                        const SizedBox(height: 18),
+                        PopButton(
+                          onPressed: _login,
+                          loading: _isLoading,
+                          label: l10n.login,
+                          expand: true,
+                        ),
+                      ],
                     ),
-                  );
-                },
-                child: Text(AppLocalizations.of(context)!.dontHaveAccount),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => RegisterPage(
+                            onAuthSuccess: widget.onAuthSuccess,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text(AppLocalizations.of(context)!.dontHaveAccount),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
