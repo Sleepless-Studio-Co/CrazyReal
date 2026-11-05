@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'admin/admin_page.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
-import 'theme_notifier.dart';
 import 'services/api_exception.dart';
-
-const Color _accentColor = Color(0xFFB85C38);
-const Color _dangerColor = Color(0xFFB54132);
+import 'widgets/sticker_pop.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({
@@ -117,49 +113,9 @@ class _SettingPageState extends State<SettingPage> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _showThemePicker() async {
-    final l10n = AppLocalizations.of(context)!;
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.theme),
-        children: [
-          _ThemeOption(
-            mode: ThemeMode.system,
-            label: l10n.themeSystem,
-            current: appThemeMode.value,
-          ),
-          _ThemeOption(
-            mode: ThemeMode.light,
-            label: l10n.themeLight,
-            current: appThemeMode.value,
-          ),
-          _ThemeOption(
-            mode: ThemeMode.dark,
-            label: l10n.themeDark,
-            current: appThemeMode.value,
-          ),
-        ],
-      ),
-    );
-    if (mounted) setState(() {});
-  }
-
   void _showHelp() {
     final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.helpCenter),
-        content: Text(l10n.helpInfo),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+    popInfo(context, title: l10n.helpCenter, message: l10n.helpInfo);
   }
 
   void _showComingSoon() {
@@ -172,7 +128,7 @@ class _SettingPageState extends State<SettingPage> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: popCoral),
     );
   }
 
@@ -182,19 +138,9 @@ class _SettingPageState extends State<SettingPage> {
     final langLabel = appLocale.value.languageCode == 'fr' ? l10n.french : l10n.english;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          l10n.settings,
-          style: GoogleFonts.dmSerifDisplay(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 22,
-          ),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-      ),
+      appBar: popAppBar(title: l10n.settings),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
           if (_isAdmin) ...[
             _SectionHeader(l10n.administration),
@@ -237,12 +183,6 @@ class _SettingPageState extends State<SettingPage> {
               subtitle: langLabel,
               onTap: _showLanguagePicker,
             ),
-            _NavTile(
-              icon: Icons.brightness_6_outlined,
-              title: l10n.theme,
-              subtitle: _themeLabel(l10n, appThemeMode.value),
-              onTap: _showThemePicker,
-            ),
           ]),
           const SizedBox(height: 16),
           _SectionHeader(l10n.helpCenter),
@@ -258,8 +198,8 @@ class _SettingPageState extends State<SettingPage> {
             _NavTile(
               icon: Icons.delete_forever_outlined,
               title: l10n.deleteAccount,
-              iconColor: _dangerColor,
-              titleColor: _dangerColor,
+              iconColor: popDanger,
+              titleColor: popDanger,
               loading: _isDeleting,
               onTap: _deleteAccount,
             ),
@@ -267,17 +207,6 @@ class _SettingPageState extends State<SettingPage> {
         ],
       ),
     );
-  }
-}
-
-String _themeLabel(AppLocalizations l10n, ThemeMode mode) {
-  switch (mode) {
-    case ThemeMode.light:
-      return l10n.themeLight;
-    case ThemeMode.dark:
-      return l10n.themeDark;
-    case ThemeMode.system:
-      return l10n.themeSystem;
   }
 }
 
@@ -306,59 +235,11 @@ class _LangOption extends StatelessWidget {
           SizedBox(
             width: 18,
             child: current == code
-                ? const Icon(Icons.check, size: 18, color: _accentColor)
+                ? const Icon(Icons.check, size: 18, color: popPurple)
                 : null,
           ),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.karla(
-              fontSize: 15,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ThemeOption extends StatelessWidget {
-  const _ThemeOption({
-    required this.mode,
-    required this.label,
-    required this.current,
-  });
-
-  final ThemeMode mode;
-  final String label;
-  final ThemeMode current;
-
-  @override
-  Widget build(BuildContext context) {
-    return SimpleDialogOption(
-      onPressed: () async {
-        Navigator.pop(context);
-        appThemeMode.value = mode;
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('theme_mode', themeModeToString(mode));
-      },
-      child: Row(
-        children: [
-          SizedBox(
-            width: 18,
-            child: current == mode
-                ? const Icon(Icons.check, size: 18, color: _accentColor)
-                : null,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.karla(
-              fontSize: 15,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
+          Text(label, style: popValue()),
         ],
       ),
     );
@@ -373,15 +254,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 0, 0, 8),
-      child: Text(
-        title.toUpperCase(),
-        style: GoogleFonts.karla(
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-        ),
-      ),
+      child: Text(title.toUpperCase(), style: popLabel()),
     );
   }
 }
@@ -393,21 +266,13 @@ class _SettingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1F2E1B0F),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
+      decoration: popCardDecoration(radius: 18, shadow: 4),
+      clipBehavior: Clip.antiAlias,
+      // Transparent material so the tiles' ink shows above the white card.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(children: children),
       ),
-      child: Column(children: children),
     );
   }
 }
@@ -441,39 +306,18 @@ class _NavTile extends StatelessWidget {
         child: CircularProgressIndicator(strokeWidth: 2),
       );
     } else {
-      trailing = Icon(
-        Icons.chevron_right,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-        size: 20,
-      );
+      trailing = const Icon(Icons.chevron_right, color: popInk, size: 22);
     }
 
     return ListTile(
       onTap: loading ? null : onTap,
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: iconColor ?? _accentColor, size: 20),
-      ),
+      leading: PopIconChip(icon: icon, color: iconColor ?? popInk),
       title: Text(
         title,
-        style: GoogleFonts.karla(
-          color: Theme.of(context).colorScheme.onSurface,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-        ),
+        style: popValue(color: titleColor ?? popInk),
       ),
       subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: GoogleFonts.karla(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            )
+          ? Text(subtitle!, style: popMuted())
           : null,
       trailing: trailing,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -501,30 +345,10 @@ class _SwitchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: _accentColor, size: 20),
-      ),
-      title: Text(
-        title,
-        style: GoogleFonts.karla(
-          color: Theme.of(context).colorScheme.onSurface,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      leading: PopIconChip(icon: icon),
+      title: Text(title, style: popValue()),
       subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: GoogleFonts.karla(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            )
+          ? Text(subtitle!, style: popMuted())
           : null,
       trailing: loading
           ? const SizedBox(
@@ -532,11 +356,7 @@ class _SwitchTile extends StatelessWidget {
               height: 20,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : Switch(
-              value: value,
-              activeThumbColor: _accentColor,
-              onChanged: onChanged,
-            ),
+          : Switch(value: value, onChanged: onChanged),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
@@ -576,17 +396,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
     final word = l10n.deleteAccountConfirmWord;
 
     return AlertDialog(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      title: Text(
-        l10n.deleteAccountConfirmTitle,
-        style: GoogleFonts.dmSerifDisplay(
-          color: Theme.of(context).colorScheme.onSurface,
-          fontSize: 21,
-        ),
-      ),
+      title: Text(l10n.deleteAccountConfirmTitle),
       // Scrollable so the dialog survives large text scales and the keyboard.
       content: SingleChildScrollView(
         child: Column(
@@ -595,19 +405,12 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
           children: [
             Text(
               l10n.deleteAccountConfirmBody,
-              style: GoogleFonts.karla(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 14,
-              ),
+              style: popBody(fontSize: 14, color: popInkMuted),
             ),
             const SizedBox(height: 16),
             Text(
               l10n.deleteAccountConfirmPrompt(word),
-              style: GoogleFonts.karla(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-              ),
+              style: popValue(fontSize: 14),
             ),
             const SizedBox(height: 10),
             TextField(
@@ -616,55 +419,48 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               autocorrect: false,
               enableSuggestions: false,
               textCapitalization: TextCapitalization.characters,
-              style: GoogleFonts.karla(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
+              style: popValue(),
               decoration: InputDecoration(
                 labelText: l10n.deleteAccountConfirmHint,
                 hintText: word,
-                labelStyle: GoogleFonts.karla(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 13,
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
-                ),
+                floatingLabelStyle: popValue(color: popDanger),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: _dangerColor, width: 1.5),
+                  borderSide:
+                      const BorderSide(color: popDanger, width: popStroke),
                 ),
               ),
+            ),
+            const SizedBox(height: 22),
+            // Full-width buttons: the long destructive label does not fit
+            // next to « Annuler » in the dialog's action bar.
+            // Stays disabled — and announced as such — until the word matches.
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _controller,
+              builder: (_, value, __) {
+                final matches =
+                    value.text.trim().toUpperCase() == word.toUpperCase();
+                return PopButton(
+                  onPressed:
+                      matches ? () => Navigator.pop(context, true) : null,
+                  label: l10n.deleteAccount,
+                  color: popCoral,
+                  foreground: popInk,
+                  expand: true,
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            PopButton(
+              onPressed: () => Navigator.pop(context, false),
+              label: l10n.cancel,
+              color: popCard,
+              foreground: popInk,
+              expand: true,
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          style: TextButton.styleFrom(
-            foregroundColor: Theme.of(context).colorScheme.onSurface,
-          ),
-          child: Text(l10n.cancel),
-        ),
-        // Stays disabled — and announced as such — until the word matches.
-        ValueListenableBuilder<TextEditingValue>(
-          valueListenable: _controller,
-          builder: (_, value, __) {
-            final matches =
-                value.text.trim().toUpperCase() == word.toUpperCase();
-            return TextButton(
-              onPressed: matches ? () => Navigator.pop(context, true) : null,
-              style: TextButton.styleFrom(foregroundColor: _dangerColor),
-              child: Text(l10n.deleteAccount),
-            );
-          },
-        ),
-      ],
     );
   }
 }

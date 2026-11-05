@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
-import 'theme_notifier.dart';
 import 'home_page.dart';
 import 'friend_page.dart';
 import 'new_post_page.dart';
@@ -15,6 +15,7 @@ import 'auth/login_page.dart';
 import 'services/chat_socket_service.dart';
 import 'services/notification_service.dart';
 import 'services/global_notification_service.dart';
+import 'widgets/sticker_pop.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -24,7 +25,6 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final savedLang = prefs.getString('app_locale') ?? 'en';
   appLocale.value = Locale(savedLang, '');
-  appThemeMode.value = themeModeFromString(prefs.getString('theme_mode'));
   await NotificationService().init(navKey: navigatorKey);
   runApp(const MyApp());
 }
@@ -37,23 +37,19 @@ class MyApp extends StatelessWidget {
     return ValueListenableBuilder<Locale>(
       valueListenable: appLocale,
       builder: (context, locale, _) {
-        return ValueListenableBuilder<ThemeMode>(
-          valueListenable: appThemeMode,
-          builder: (context, themeMode, _) => MaterialApp(
+        return MaterialApp(
           navigatorKey: navigatorKey,
           title: 'CrazyReal',
           locale: locale,
-          themeMode: themeMode,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            scaffoldBackgroundColor: const Color(0xFFF7EBD1),
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple,
-              brightness: Brightness.dark,
+          // Sticker Pop only exists in light: no dark theme on purpose.
+          theme: buildStickerPopTheme(),
+          // Dark status bar icons on screens without an app bar (home,
+          // camera, login); app bars and full-screen viewers set their own.
+          builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+            value: SystemUiOverlayStyle.dark.copyWith(
+              statusBarColor: Colors.transparent,
             ),
-            scaffoldBackgroundColor: const Color(0xFF171311),
+            child: child!,
           ),
           localizationsDelegates: const [
             AppLocalizations.delegate,
@@ -66,7 +62,6 @@ class MyApp extends StatelessWidget {
             Locale('fr', ''),
           ],
           home: const AuthGate(),
-          ),
         );
       },
     );
@@ -133,7 +128,14 @@ class _AuthGateState extends State<AuthGate> {
     if (_isLoading) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PopLogo(fontSize: 32),
+              SizedBox(height: 32),
+              CircularProgressIndicator(),
+            ],
+          ),
         ),
       );
     }
@@ -220,34 +222,19 @@ class _MainScreenState extends State<MainScreen> {
     
     return Scaffold(
       body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home),
-            label: l10n.home,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.people),
-            label: l10n.friends,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.add_box_outlined),
+      bottomNavigationBar: PopNavBar(
+        items: [
+          PopNavItem(icon: Icons.home_outlined, label: l10n.home),
+          PopNavItem(icon: Icons.people_outline, label: l10n.friends),
+          PopNavItem(
+            icon: Icons.photo_camera_outlined,
             label: l10n.newPost,
+            primary: true,
           ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.settings),
-            label: l10n.settings,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.account_circle),
-            label: l10n.account,
-          ),
+          PopNavItem(icon: Icons.settings_outlined, label: l10n.settings),
+          PopNavItem(icon: Icons.person_outline, label: l10n.account),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        type: BottomNavigationBarType.fixed,
         onTap: _onItemTapped,
       ),
     );
