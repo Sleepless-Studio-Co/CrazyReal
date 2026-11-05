@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-const Color _cardColor = Color(0xFFFFF7E6);
+import 'paper.dart';
 
 class PostCardSkeleton extends StatelessWidget {
   const PostCardSkeleton({super.key});
@@ -9,9 +8,9 @@ class PostCardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: context.paper.card,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0DFC2)),
+        border: Border.all(color: context.paper.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,7 +23,7 @@ class PostCardSkeleton extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEDCC5),
+                    color: context.paper.placeholder,
                     borderRadius: BorderRadius.circular(22),
                   ),
                 ),
@@ -33,7 +32,7 @@ class PostCardSkeleton extends StatelessWidget {
                   child: Container(
                     height: 14,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEDCC5),
+                      color: context.paper.placeholder,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
@@ -43,7 +42,7 @@ class PostCardSkeleton extends StatelessWidget {
           ),
           AspectRatio(
             aspectRatio: 4 / 5,
-            child: Container(color: const Color(0xFFEEDCC5)),
+            child: Container(color: context.paper.placeholder),
           ),
           const SizedBox(height: 16),
         ],
