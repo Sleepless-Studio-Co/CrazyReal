@@ -3,7 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links
+  emoji_picker_flutter
   file_selector_windows
+  flutter_secure_storage_windows
   permission_handler_windows
   share_plus
   url_launcher_windows

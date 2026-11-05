@@ -550,6 +550,41 @@
     "description": "Catégorie des défis entre amis"
   },
 
+  "challengeIdeaOpen": "Proposer un défi",
+  "@challengeIdeaOpen": {
+    "description": "Tooltip pour ouvrir la boîte à idées"
+  },
+
+  "challengeIdeaTitle": "Boîte à idées",
+  "@challengeIdeaTitle": {
+    "description": "Titre de la boîte à idées de défis"
+  },
+
+  "challengeIdeaDescription": "Une idée de défi ? Partage-la avec l’équipe.",
+  "@challengeIdeaDescription": {
+    "description": "Description affichée dans la boîte à idées"
+  },
+
+  "challengeIdeaHint": "Mon idée de défi...",
+  "@challengeIdeaHint": {
+    "description": "Placeholder du champ d’idée de défi"
+  },
+
+  "challengeIdeaSend": "Envoyer l’idée",
+  "@challengeIdeaSend": {
+    "description": "Bouton pour envoyer une idée de défi"
+  },
+
+  "challengeIdeaSuccess": "Merci pour ton idée !",
+  "@challengeIdeaSuccess": {
+    "description": "Confirmation après l’envoi d’une idée de défi"
+  },
+
+  "challengeIdeaError": "Impossible d’envoyer ton idée.",
+  "@challengeIdeaError": {
+    "description": "Erreur après l’envoi d’une idée de défi"
+  },
+
   "publishFirstPost": "Publier une photo",
   "@publishFirstPost": {
     "description": "Bouton CTA quand le feed est vide"
@@ -726,6 +761,18 @@
   "adminChallengesTitle": "Défis",
   "@adminChallengesTitle": { "description": "Titre de la page admin des défis" },
 
+  "adminChallengeIdeasTitle": "Idées de défis",
+  "@adminChallengeIdeasTitle": { "description": "Titre et entrée des idées de défis" },
+  "adminChallengeIdeasDesc": "Valider les idées proposées",
+  "@adminChallengeIdeasDesc": { "description": "Sous-titre de l'entrée des idées de défis" },
+  "adminChallengeIdeasLoadError": "Impossible de charger les idées de défis.",
+  "adminNoChallengeIdeas": "Aucune idée de défi pour le moment",
+  "adminIdeaPending": "En attente",
+  "adminIdeaApproved": "Validée",
+  "adminIdeaRejected": "Non validée",
+  "adminIdeaApprove": "Valider",
+  "adminIdeaReject": "Refuser",
+
   "adminNewChallenge": "Nouveau défi",
   "@adminNewChallenge": { "description": "Bouton de création et titre de la boîte de dialogue" },
 
@@ -829,6 +876,30 @@
 
   "adminLoadError": "Impossible de charger les défis",
   "@adminLoadError": { "description": "Erreur au chargement de la liste" },
+
+  "viewProfile": "Voir le profil de {username}",
+  "@viewProfile": {"description": "Libellé lecteur d'écran de l'avatar cliquable", "placeholders": {"username": {"type": "String"}}},
+
+  "profilePostsCount": "{count, plural, =0{défi} =1{défi} other{défis}}",
+  "@profilePostsCount": {"description": "Libellé sous le nombre de défis réalisés", "placeholders": {"count": {"type": "int"}}},
+
+  "profileFriendsCount": "{count, plural, =0{abonné} =1{abonné} other{abonnés}}",
+  "@profileFriendsCount": {"description": "Libellé sous le nombre d'abonnés (amis)", "placeholders": {"count": {"type": "int"}}},
+
+  "profileNoPosts": "Aucun défi réalisé pour le moment",
+  "@profileNoPosts": {"description": "Profil sans post"},
+
+  "profilePrivateTitle": "Ce compte est privé",
+  "@profilePrivateTitle": {"description": "Profil privé non accessible"},
+
+  "profilePrivateMessage": "Deviens ami avec cette personne pour voir ses défis.",
+  "@profilePrivateMessage": {"description": "Explication profil privé"},
+
+  "profileLoadError": "Impossible de charger le profil",
+  "@profileLoadError": {"description": "Erreur de chargement du profil"},
+
+  "profilePosts": "Défis",
+  "@profilePosts": {"description": "Titre de la liste des posts d'un profil"},
 
   "topPostsTitle": "Meilleurs défis",
   "@topPostsTitle": { "description": "Titre de la page des posts les plus upvotés des défis terminés" },

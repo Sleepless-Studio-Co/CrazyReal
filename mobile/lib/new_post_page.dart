@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'l10n/app_localizations.dart';
 import 'auth/auth_service.dart';
 import 'utils/media_url.dart';
+import 'widgets/paper.dart';
 
 final String baseUrl = apiBaseUrl;
 
@@ -30,6 +31,7 @@ class _NewPageState extends State<NewPage> {
   // Défis réalisables : global courant + défis de mes groupes actifs.
   List<Map<String, dynamic>> _challenges = [];
   int? _selectedChallengeId;
+  bool _showingGlobalChallenges = true;
   String? challengeError;
   bool isUploading = false;
   bool isRecording = false;
@@ -156,8 +158,14 @@ class _NewPageState extends State<NewPage> {
         setState(() {
           _challenges =
               data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-          _selectedChallengeId =
-              _challenges.isNotEmpty ? _challenges.first['id'] as int : null;
+          final scopedChallenges = _challenges
+              .where((challenge) => _isGlobalChallenge(challenge))
+              .toList();
+          _selectedChallengeId = scopedChallenges.isNotEmpty
+              ? scopedChallenges.first['id'] as int
+              : (_challenges.isNotEmpty
+                  ? _challenges.first['id'] as int
+                  : null);
           challengeError = null;
         });
         _updateChallengeTimer();
@@ -169,9 +177,7 @@ class _NewPageState extends State<NewPage> {
         if (mounted) {
           final l10n = AppLocalizations.of(context)!;
           setState(() => challengeError = l10n
-              
               .serverError('${response.statusCode}')
-              
               .replaceAll('{code}', '${response.statusCode}'));
         }
       }
@@ -190,6 +196,83 @@ class _NewPageState extends State<NewPage> {
       return '${l10n.feedFriendChallenge} · ${group['name']} · $title';
     }
     return '${l10n.feedGlobalChallenge} · $title';
+  }
+
+  bool _isGlobalChallenge(Map<String, dynamic> challenge) {
+    return challenge['group'] == null;
+  }
+
+  List<Map<String, dynamic>> _challengesForCurrentScope() {
+    return _challenges
+        .where((challenge) =>
+            _isGlobalChallenge(challenge) == _showingGlobalChallenges)
+        .toList();
+  }
+
+  bool get _hasFriendChallenges =>
+      _challenges.any((challenge) => !_isGlobalChallenge(challenge));
+
+  Future<void> _selectChallengeScope(
+    BuildContext context,
+    AppLocalizations l10n,
+    bool showGlobal,
+  ) async {
+    if (!showGlobal && !_hasFriendChallenges) return;
+
+    if (_showingGlobalChallenges == showGlobal) {
+      await _openChallengeMenu(context, l10n);
+      return;
+    }
+
+    final scopedChallenges = _challenges
+        .where((challenge) => _isGlobalChallenge(challenge) == showGlobal)
+        .toList();
+    setState(() {
+      _showingGlobalChallenges = showGlobal;
+      _selectedChallengeId = scopedChallenges.isNotEmpty
+          ? scopedChallenges.first['id'] as int
+          : null;
+    });
+    _updateChallengeTimer();
+  }
+
+  Future<void> _openChallengeMenu(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final selectedId = await showMenu<int>(
+      context: context,
+      color: const Color(0xFFF3D7B2),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy + renderBox.size.height,
+        offset.dx + renderBox.size.width,
+        0,
+      ),
+      items: _challengesForCurrentScope()
+          .map(
+            (challenge) => PopupMenuItem<int>(
+              value: challenge['id'] as int,
+              child: Text(
+                _challengeLabel(challenge, l10n),
+                style: const TextStyle(color: Color(0xFF3B2A21)),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
+          .toList(),
+    );
+
+    if (selectedId != null) {
+      setState(() => _selectedChallengeId = selectedId);
+      _updateChallengeTimer();
+    }
   }
 
   void _updateChallengeTimer() {
@@ -237,7 +320,6 @@ class _NewPageState extends State<NewPage> {
 
       final request =
           http.MultipartRequest('POST', Uri.parse('$baseUrl/posts'));
-      final image = await _controller!.takePicture();
 
       request.headers['Authorization'] = 'Bearer $token';
       request.files.add(await http.MultipartFile.fromPath(
@@ -245,13 +327,12 @@ class _NewPageState extends State<NewPage> {
         filePath,
         filename: filePath.split(Platform.pathSeparator).last,
       ));
-      final response = await request.send().timeout(const Duration(minutes: 5));
-      final responseBody = await response.stream.bytesToString();
-
-      request.files.add(await http.MultipartFile.fromPath('file', image.path));
       if (_selectedChallengeId != null) {
         request.fields['challengeId'] = _selectedChallengeId.toString();
       }
+
+      final response = await request.send().timeout(const Duration(minutes: 5));
+      final responseBody = await response.stream.bytesToString();
 
       print('Upload response status: ${response.statusCode}');
 
@@ -465,15 +546,15 @@ class _NewPageState extends State<NewPage> {
     if (challengeError != null) {
       return Text(
         challengeError!,
-        style: const TextStyle(fontSize: 14, color: Colors.red),
+        style: TextStyle(fontSize: 14, color: context.paper.danger),
         textAlign: TextAlign.center,
       );
     }
     if (_challenges.isEmpty) {
       return Text(
         l10n.loadingChallenge,
-        style: const TextStyle(
-            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+        style: TextStyle(
+            fontSize: 18, fontWeight: FontWeight.bold, color: context.paper.ink),
         textAlign: TextAlign.center,
       );
     }
@@ -482,47 +563,113 @@ class _NewPageState extends State<NewPage> {
       (c) => c['id'] == _selectedChallengeId,
       orElse: () => _challenges.first,
     );
+    final title = selected['title']?.toString() ?? '';
     final description = selected['description']?.toString() ?? '';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        DropdownButton<int>(
-          value: selected['id'] as int,
-          isExpanded: true,
-          underline: const SizedBox.shrink(),
-          items: _challenges
-              .map((c) => DropdownMenuItem<int>(
-                    value: c['id'] as int,
-                    child: Text(
-                      _challengeLabel(c, l10n),
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black),
-                      overflow: TextOverflow.ellipsis,
+        Builder(
+          builder: (filterContext) {
+            Widget scopeButton({
+              required String label,
+              required bool selected,
+              required bool enabled,
+              required bool isGlobal,
+            }) {
+              return OutlinedButton(
+                onPressed: enabled
+                    ? () => _selectChallengeScope(
+                          filterContext,
+                          l10n,
+                          isGlobal,
+                        )
+                    : null,
+                style: ButtonStyle(
+                  minimumSize: const WidgetStatePropertyAll(Size(0, 34)),
+                  padding: const WidgetStatePropertyAll(
+                    EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  shape: WidgetStatePropertyAll(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ))
-              .toList(),
-          onChanged: (id) {
-            setState(() => _selectedChallengeId = id);
-            _updateChallengeTimer();
+                  ),
+                  foregroundColor: WidgetStateProperty.resolveWith(
+                    (states) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return Colors.grey;
+                      }
+                      return selected ? Colors.white : const Color(0xFF3B2A21);
+                    },
+                  ),
+                  backgroundColor: WidgetStateProperty.resolveWith(
+                    (states) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return Colors.grey.shade300;
+                      }
+                      return selected ? const Color(0xFF3B2A21) : null;
+                    },
+                  ),
+                  side: WidgetStateProperty.resolveWith(
+                    (states) {
+                      if (states.contains(WidgetState.disabled)) {
+                        return BorderSide(color: Colors.grey.shade400);
+                      }
+                      return const BorderSide(color: Color(0xFF3B2A21));
+                    },
+                  ),
+                ),
+                child: Text(label, style: const TextStyle(fontSize: 13)),
+              );
+            }
+
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                scopeButton(
+                  label: l10n.feedGlobalChallenge,
+                  selected: _showingGlobalChallenges,
+                  enabled: true,
+                  isGlobal: true,
+                ),
+                const SizedBox(width: 4),
+                scopeButton(
+                  label: l10n.feedFriendChallenge,
+                  selected: !_showingGlobalChallenges,
+                  enabled: _hasFriendChallenges,
+                  isGlobal: false,
+                ),
+              ],
+            );
           },
         ),
+        if (title.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF3B2A21),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
         if (description.isNotEmpty)
           Text(
             description,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            style: TextStyle(fontSize: 14, color: context.paper.inkMuted),
             textAlign: TextAlign.center,
           ),
         if (_remainingChallengeTime != null) ...[
           const SizedBox(height: 8),
           Text(
             'Temps restant : ${_formatRemaining(_remainingChallengeTime!)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFB85C38),
+              color: context.paper.accent,
             ),
           ),
         ],
@@ -639,4 +786,3 @@ class _NewPageState extends State<NewPage> {
     );
   }
 }
-

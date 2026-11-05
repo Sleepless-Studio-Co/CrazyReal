@@ -8,7 +8,6 @@ import 'widgets/feed_avatar.dart';
 import 'widgets/paper.dart';
 
 class FriendPage extends StatefulWidget {
-
   final VoidCallback onUnauthorized;
 
   const FriendPage({super.key, required this.onUnauthorized});
@@ -59,7 +58,9 @@ class _FriendPageState extends State<FriendPage> {
   }
 
   void _showError(Object error) {
-    final message = error is ApiException ? error.message : AppLocalizations.of(context)!.error;
+    final message = error is ApiException
+        ? error.message
+        : AppLocalizations.of(context)!.error;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: paperDanger),
     );
@@ -107,7 +108,7 @@ class _FriendPageState extends State<FriendPage> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: paperCard,
+      backgroundColor: context.paper.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -121,8 +122,9 @@ class _FriendPageState extends State<FriendPage> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: paperBg,
+        backgroundColor: context.paper.bg,
         appBar: paperAppBar(
+          context,
           title: l10n.myFriends,
           actions: [
             IconButton(
@@ -136,14 +138,14 @@ class _FriendPageState extends State<FriendPage> {
               },
             ),
           ],
-          bottom: paperTabBar([
+          bottom: paperTabBar(context, [
             Tab(text: '${l10n.friends} (${_friends.length})'),
             Tab(text: '${l10n.requests} (${_pendingRequests.length})'),
           ]),
         ),
         body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: paperAccent),
+            ? Center(
+                child: CircularProgressIndicator(color: context.paper.accent),
               )
             : TabBarView(
                 children: [
@@ -156,7 +158,8 @@ class _FriendPageState extends State<FriendPage> {
           backgroundColor: paperAccentStrong,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.person_add_alt_1),
-          label: Text(l10n.addFriend, style: paperValue(color: Colors.white)),
+          label: Text(l10n.addFriend,
+              style: paperValue(context, color: Colors.white)),
         ),
       ),
     );
@@ -165,7 +168,7 @@ class _FriendPageState extends State<FriendPage> {
   Widget _buildFriendsTab(AppLocalizations l10n) {
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: paperAccent,
+      color: context.paper.accent,
       child: _friends.isEmpty
           ? PaperEmptyState(
               icon: Icons.group_outlined,
@@ -201,7 +204,7 @@ class _FriendPageState extends State<FriendPage> {
   Widget _buildRequestsTab(AppLocalizations l10n) {
     return RefreshIndicator(
       onRefresh: _loadData,
-      color: paperAccent,
+      color: context.paper.accent,
       child: _pendingRequests.isEmpty
           ? PaperEmptyState(
               icon: Icons.mark_email_read_outlined,
@@ -242,27 +245,26 @@ class _FriendCard extends StatelessWidget {
     return MergeSemantics(
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: paperCardDecoration(),
+        decoration: paperCardDecoration(context),
         child: Row(
           children: [
-            ExcludeSemantics(
-              child: FeedAvatar(
-                username: username,
-                avatarUrl: friend['avatarUrl']?.toString(),
-                avatarKey: friend['avatarKey']?.toString(),
-                size: 48,
-              ),
+            FeedAvatar(
+              username: username,
+              avatarUrl: friend['avatarUrl']?.toString(),
+              avatarKey: friend['avatarKey']?.toString(),
+              size: 48,
+              userId: friend['id'] as int?,
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(username, style: paperValue(fontSize: 16)),
+                  Text(username, style: paperValue(context, fontSize: 16)),
                   const SizedBox(height: 2),
                   Text(
                     email,
-                    style: paperMuted(),
+                    style: paperMuted(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -299,29 +301,29 @@ class _RequestCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: paperCardDecoration(),
+      decoration: paperCardDecoration(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MergeSemantics(
             child: Row(
               children: [
-                ExcludeSemantics(
-                  child: FeedAvatar(
-                    username: username,
-                    avatarUrl: requester['avatarUrl']?.toString(),
-                    avatarKey: requester['avatarKey']?.toString(),
-                    size: 48,
-                  ),
+                FeedAvatar(
+                  username: username,
+                  avatarUrl: requester['avatarUrl']?.toString(),
+                  avatarKey: requester['avatarKey']?.toString(),
+                  size: 48,
+                  userId: requester['id'] as int?,
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(username, style: paperValue(fontSize: 16)),
+                      Text(username, style: paperValue(context, fontSize: 16)),
                       const SizedBox(height: 2),
-                      Text(l10n.wantsToBeYourFriend, style: paperMuted()),
+                      Text(l10n.wantsToBeYourFriend,
+                          style: paperMuted(context)),
                     ],
                   ),
                 ),
@@ -339,13 +341,13 @@ class _RequestCard extends StatelessWidget {
                   icon: const Icon(Icons.close, size: 18),
                   label: Text(l10n.rejectRequest),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: paperDanger,
-                    side: const BorderSide(color: Color(0xFFE7C9BE)),
+                    foregroundColor: context.paper.danger,
+                    side: BorderSide(color: context.paper.fieldBorder),
                     minimumSize: const Size(0, 48),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    textStyle: paperValue(fontSize: 14),
+                    textStyle: paperValue(context, fontSize: 14),
                   ),
                 ),
               ),
@@ -362,7 +364,7 @@ class _RequestCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    textStyle: paperValue(fontSize: 14),
+                    textStyle: paperValue(context, fontSize: 14),
                   ),
                 ),
               ),
@@ -385,7 +387,7 @@ class _PrivacyChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: paperChip,
+        color: context.paper.chip,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -396,11 +398,11 @@ class _PrivacyChip extends StatelessWidget {
             child: Icon(
               isPrivate ? Icons.lock_outline : Icons.public,
               size: 14,
-              color: paperInkMuted,
+              color: context.paper.inkMuted,
             ),
           ),
           const SizedBox(width: 4),
-          Text(label, style: paperLabel(fontSize: 12)),
+          Text(label, style: paperLabel(context, fontSize: 12)),
         ],
       ),
     );
@@ -504,7 +506,7 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
                 alignment: Alignment.centerLeft,
                 child: Semantics(
                   header: true,
-                  child: Text(l10n.addFriend, style: paperTitle()),
+                  child: Text(l10n.addFriend, style: paperTitle(context)),
                 ),
               ),
             ),
@@ -514,9 +516,10 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
                 controller: _controller,
                 autofocus: true,
                 onChanged: _onChanged,
-                style: paperValue(),
+                style: paperValue(context),
                 textInputAction: TextInputAction.search,
                 decoration: paperInputDecoration(
+                  context,
                   label: l10n.searchUsersHint,
                   prefixIcon: const Icon(Icons.search),
                 ),
@@ -532,14 +535,16 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
 
   Widget _buildResults(AppLocalizations l10n) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: paperAccent));
+      return Center(
+          child: CircularProgressIndicator(color: context.paper.accent));
     }
     if (_controller.text.trim().isEmpty) {
       return const SizedBox.shrink();
     }
     if (_results.isEmpty) {
       return Center(
-        child: Text(l10n.noUsersFound, style: paperMuted(fontSize: 14)),
+        child:
+            Text(l10n.noUsersFound, style: paperMuted(context, fontSize: 14)),
       );
     }
     return ListView.separated(
@@ -555,19 +560,18 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
         return Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: context.paper.field,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: paperBorder),
+            border: Border.all(color: context.paper.border),
           ),
           child: Row(
             children: [
-              ExcludeSemantics(
-                child: FeedAvatar(
-                  username: username,
-                  avatarUrl: user['avatarUrl']?.toString(),
-                  avatarKey: user['avatarKey']?.toString(),
-                  size: 42,
-                ),
+              FeedAvatar(
+                username: username,
+                avatarUrl: user['avatarUrl']?.toString(),
+                avatarKey: user['avatarKey']?.toString(),
+                size: 42,
+                userId: user['id'] as int?,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -575,11 +579,11 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(username, style: paperValue()),
+                      Text(username, style: paperValue(context)),
                       const SizedBox(height: 2),
                       Text(
                         isPrivate ? l10n.accountPrivate : l10n.accountPublic,
-                        style: paperMuted(fontSize: 12),
+                        style: paperMuted(context, fontSize: 12),
                       ),
                     ],
                   ),
@@ -590,20 +594,22 @@ class _AddFriendSheetState extends State<_AddFriendSheet> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const ExcludeSemantics(
-                      child: Icon(Icons.check, color: paperSuccess, size: 18),
+                    ExcludeSemantics(
+                      child: Icon(Icons.check,
+                          color: context.paper.success, size: 18),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       l10n.requestSentShort,
-                      style: paperLabel(fontSize: 12, color: paperSuccess),
+                      style: paperLabel(context,
+                          fontSize: 12, color: context.paper.success),
                     ),
                   ],
                 )
               else
                 IconButton(
                   icon: const Icon(Icons.person_add_alt_1),
-                  color: paperAccentStrong,
+                  color: context.paper.accent,
                   // Names the person, so the button is unambiguous out of context.
                   tooltip: '${l10n.send} — $username',
                   onPressed: () => _send(user),

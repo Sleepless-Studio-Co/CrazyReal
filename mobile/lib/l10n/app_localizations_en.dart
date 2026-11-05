@@ -339,6 +339,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedFriendChallenge => 'Friends';
 
   @override
+  String get challengeIdeaOpen => 'Suggest a challenge';
+
+  @override
+  String get challengeIdeaTitle => 'Idea box';
+
+  @override
+  String get challengeIdeaDescription =>
+      'Have an idea for a challenge? Share it with the team.';
+
+  @override
+  String get challengeIdeaHint => 'My challenge idea...';
+
+  @override
+  String get challengeIdeaSend => 'Send idea';
+
+  @override
+  String get challengeIdeaSuccess => 'Thanks for your idea!';
+
+  @override
+  String get challengeIdeaError => 'Could not send your idea.';
+
+  @override
   String get publishFirstPost => 'Publish a photo';
 
   @override
@@ -487,6 +509,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminChallengesTitle => 'Challenges';
 
   @override
+  String get adminChallengeIdeasTitle => 'Challenge ideas';
+
+  @override
+  String get adminChallengeIdeasDesc => 'Review submitted challenge ideas';
+
+  @override
+  String get adminChallengeIdeasLoadError => 'Could not load challenge ideas.';
+
+  @override
+  String get adminNoChallengeIdeas => 'No challenge ideas yet';
+
+  @override
+  String get adminIdeaPending => 'Pending';
+
+  @override
+  String get adminIdeaApproved => 'Approved';
+
+  @override
+  String get adminIdeaRejected => 'Rejected';
+
+  @override
+  String get adminIdeaApprove => 'Approve';
+
+  @override
+  String get adminIdeaReject => 'Reject';
+
+  @override
   String get adminNewChallenge => 'New challenge';
 
   @override
@@ -609,6 +658,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Could not load challenges';
+
+  @override
+  String viewProfile(String username) {
+    return 'View $username\'s profile';
+  }
+
+  @override
+  String profilePostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'challenges',
+      one: 'challenge',
+      zero: 'challenges',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'followers',
+      one: 'follower',
+      zero: 'followers',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profileNoPosts => 'No challenges completed yet';
+
+  @override
+  String get profilePrivateTitle => 'This account is private';
+
+  @override
+  String get profilePrivateMessage => 'Become friends to see their challenges.';
+
+  @override
+  String get profileLoadError => 'Couldn\'t load the profile';
+
+  @override
+  String get profilePosts => 'Challenges';
 
   @override
   String get topPostsTitle => 'Best challenges';

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../l10n/app_localizations.dart';
+import '../user_profile_page.dart';
 import '../utils/media_url.dart';
 
 class AvatarOption {
@@ -63,6 +65,7 @@ class FeedAvatar extends StatelessWidget {
     this.avatarUrl,
     this.avatarKey,
     this.size = 44,
+    this.userId,
   });
 
   final String username;
@@ -70,8 +73,33 @@ class FeedAvatar extends StatelessWidget {
   final String? avatarKey;
   final double size;
 
+  /// When set, tapping the avatar opens this user's public profile.
+  final int? userId;
+
   @override
   Widget build(BuildContext context) {
+    final avatar = _buildAvatar();
+    final id = userId;
+    if (id == null || id <= 0) return avatar;
+
+    // Only the avatar's own semantics are hidden, so the InkWell keeps its
+    // tap/focus actions for screen readers.
+    return Semantics(
+      button: true,
+      label: AppLocalizations.of(context)!.viewProfile(username),
+      child: Material(
+        type: MaterialType.transparency,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => UserProfilePage.open(context, id),
+          child: ExcludeSemantics(child: avatar),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatar() {
     final resolvedUrl = resolveMediaUrl(avatarUrl);
     if (resolvedUrl != null && resolvedUrl.isNotEmpty) {
       return Container(

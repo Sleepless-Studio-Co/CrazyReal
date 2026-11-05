@@ -31,6 +31,12 @@ enum MediaType {
   VIDEO
 }
 
+enum ChallengeIdeaStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -62,6 +68,19 @@ model Post {
   challengeId Int
   createdAt   DateTime  @default(now())
   upVotes     UpVote[]
+  reactions   PostReaction[]
+  shareLinks   ShareLink[]
+}
+
+model ShareLink {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token, expiresAt])
 }
 
 model UpVote {
@@ -74,6 +93,32 @@ model UpVote {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+}
+
+model PostReaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  emoji     String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, emoji])
+  @@index([postId, emoji])
+}
+
+model ChallengeIdea {
+  id        Int                @id @default(autoincrement())
+  content   String             @db.VarChar(500)
+  userId    Int
+  createdAt DateTime           @default(now())
+  status    ChallengeIdeaStatus @default(PENDING)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
 }
 
 model User {
@@ -89,7 +134,9 @@ model User {
   createdAt     DateTime       @default(now())
   role          Role           @default(USER)
   posts         Post[]
+  challengeIdeas ChallengeIdea[]
   upVotes       UpVote[]
+  reactions     PostReaction[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")
