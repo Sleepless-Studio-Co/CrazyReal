@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import 'l10n/app_localizations.dart';
@@ -9,12 +8,10 @@ import 'models/feed_post.dart';
 import 'services/api_exception.dart';
 import 'services/feed_service.dart';
 import 'utils/media_url.dart';
+import 'utils/time_ago.dart';
 import 'widgets/post_card.dart';
 import 'widgets/post_card_skeleton.dart';
-
-
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
+import 'widgets/sticker_pop.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -37,7 +34,7 @@ class HomePageState extends State<HomePage> {
   bool _isLoading = true;
   bool _isRefreshing = false;
   String? _errorMessage;
-  String? _challengeSubtitle;
+  FeedChallengeSummary? _currentChallenge;
   List<AvailableChallenge> _availableChallenges = [];
   int _selectedChallengeId = -1;
   bool _isActive = true;
@@ -53,7 +50,7 @@ class HomePageState extends State<HomePage> {
     _initSocket();
     refreshFeed(showLoading: true);
     _loadAvailableChallenges();
-    _loadChallengeSubtitle();
+    _loadCurrentChallenge();
     _startPolling();
   }
 
@@ -100,6 +97,11 @@ class HomePageState extends State<HomePage> {
         _isRefreshing = false;
         _errorMessage = null;
       });
+
+      // The API answers again: bring back the challenge card and filters if
+      // they could not load at startup (server still booting, offline…).
+      if (_currentChallenge == null) _loadCurrentChallenge();
+      if (_availableChallenges.isEmpty) _loadAvailableChallenges();
     } on UnauthorizedException {
       if (mounted) widget.onUnauthorized();
     } catch (e) {
@@ -130,17 +132,22 @@ class HomePageState extends State<HomePage> {
     refreshFeed(showLoading: true);
   }
 
-  Future<void> _loadChallengeSubtitle() async {
+  Future<void> _loadCurrentChallenge() async {
     final challenge = await _feedService.fetchCurrentChallenge();
-    if (!mounted || challenge == null) return;
+    if (!mounted || challenge == null || challenge.title.isEmpty) return;
 
-    final subtitle = challenge.description.isNotEmpty
-        ? challenge.description
-        : challenge.title;
+    setState(() => _currentChallenge = challenge);
+  }
 
-    if (subtitle.isEmpty) return;
-
-    setState(() => _challengeSubtitle = subtitle);
+  /// End of the current challenge, as computed by the server for the list of
+  /// available challenges.
+  DateTime? get _currentChallengeEndsAt {
+    final id = _currentChallenge?.id;
+    if (id == null) return null;
+    return _availableChallenges
+        .where((challenge) => challenge.id == id)
+        .firstOrNull
+        ?.endsAt;
   }
 
   void _initSocket() {
@@ -233,192 +240,339 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final challenge = _currentChallenge;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF7EBD1),
-        elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.appTitle, style: _titleStyle()),
-            if (_challengeSubtitle != null)
-              Text(
-                _challengeSubtitle!,
-                style: _mutedStyle(fontSize: 12),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () => refreshFeed(showLoading: false),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                sliver: SliverList.list(
+                  children: [
+                    Row(
+                      children: [
+                        const PopLogo(),
+                        const Spacer(),
+                        PopIconButton(
+                          icon: Icons.refresh,
+                          tooltip: l10n.feedRefresh,
+                          busy: _isRefreshing,
+                          onPressed: () => refreshFeed(showLoading: false),
+                        ),
+                      ],
+                    ),
+                    if (challenge != null) ...[
+                      const SizedBox(height: 26),
+                      _ChallengeHero(
+                        challenge: challenge,
+                        endsAt: _currentChallengeEndsAt,
+                        onDoIt: widget.onPublishTap,
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                  ],
+                ),
               ),
-          ],
+              SliverToBoxAdapter(child: _buildChallengeFilter(l10n)),
+              const SliverToBoxAdapter(child: SizedBox(height: 14)),
+              ..._buildFeed(l10n),
+            ],
+          ),
         ),
-        actions: [
-          if (_isRefreshing)
-            const Padding(
-              padding: EdgeInsets.only(right: 16),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.refresh, color: _inkColor),
-              onPressed: () => refreshFeed(showLoading: false),
-              tooltip: l10n.feedRefresh,
-            ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildChallengeFilter(l10n),
-          Expanded(child: _buildBody(l10n)),
-        ],
       ),
     );
   }
 
   Widget _buildChallengeFilter(AppLocalizations l10n) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      color: const Color(0xFFF7EBD1),
-      child: DropdownButton<int>(
-        value: _selectedChallengeId,
-        isExpanded: true,
-        underline: const SizedBox.shrink(),
-        items: [
-          DropdownMenuItem<int>(
-            value: -1,
-            child: Text(l10n.feedAllChallenges),
-          ),
-          ..._availableChallenges.map(
-            (challenge) => DropdownMenuItem<int>(
-              value: challenge.id,
-              child: Text(
-                challenge.label(
-                    l10n.feedGlobalChallenge, l10n.feedFriendChallenge),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
+    final filters = <Widget>[
+      PopChip(
+        label: l10n.feedAllChallenges,
+        selected: _selectedChallengeId == -1,
+        onTap: () => _selectChallenge(-1),
+      ),
+      for (final challenge in _availableChallenges)
+        PopChip(
+          label: challenge.groupName == null
+              ? challenge.title
+              : '${challenge.groupName} · ${challenge.title}',
+          icon: challenge.isGlobal ? Icons.public : Icons.groups_outlined,
+          semanticLabel: challenge.label(
+              l10n.feedGlobalChallenge, l10n.feedFriendChallenge),
+          selected: _selectedChallengeId == challenge.id,
+          onTap: () => _selectChallenge(challenge.id),
+        ),
+    ];
+
+    // Sized by its chips so large text never overflows; the bottom padding
+    // keeps the selected chip's shadow inside the clipped scroll view.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      child: Row(
+        children: [
+          for (var i = 0; i < filters.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            filters[i],
+          ],
         ],
-        onChanged: (id) {
-          if (id != null) _selectChallenge(id);
-        },
       ),
     );
   }
 
-  Widget _buildBody(AppLocalizations l10n) {
+  List<Widget> _buildFeed(AppLocalizations l10n) {
+    const listPadding = EdgeInsets.fromLTRB(16, 4, 16, 28);
+
     if (_isLoading) {
-      return ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-        itemCount: 3,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (_, __) => const PostCardSkeleton(),
-      );
+      return [
+        SliverPadding(
+          padding: listPadding,
+          sliver: SliverList.separated(
+            itemCount: 3,
+            separatorBuilder: (_, __) => const SizedBox(height: 20),
+            itemBuilder: (_, __) => const PostCardSkeleton(),
+          ),
+        ),
+      ];
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.cloud_off_outlined,
-                  size: 48, color: _inkMuted.withValues(alpha: 0.8)),
-              const SizedBox(height: 16),
-              Text(
-                l10n.feedLoadError,
-                style: _mutedStyle(),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: () => refreshFeed(showLoading: true),
-                style: FilledButton.styleFrom(
-                  backgroundColor: _inkColor,
-                  foregroundColor: Colors.white,
-                ),
-                child: Text(l10n.feedRetry),
-              ),
-            ],
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: PopEmptyState(
+            scrollable: false,
+            mascot: PopMascotMood.crying,
+            title: l10n.feedLoadError,
+            action: PopButton(
+              label: l10n.feedRetry,
+              icon: Icons.refresh,
+              onPressed: () => refreshFeed(showLoading: true),
+            ),
           ),
         ),
-      );
+      ];
     }
 
     if (_posts.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: () => refreshFeed(showLoading: false),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            const SizedBox(height: 80),
-            Icon(Icons.photo_camera_outlined,
-                size: 64, color: _inkMuted.withValues(alpha: 0.7)),
-            const SizedBox(height: 16),
-            Center(child: Text(l10n.noPostsYet, style: _mutedStyle())),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                l10n.publishFirstPostHint,
-                style: _mutedStyle(fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (widget.onPublishTap != null)
-              Center(
-                child: FilledButton.icon(
-                  onPressed: widget.onPublishTap,
-                  icon: const Icon(Icons.add_a_photo_outlined),
-                  label: Text(l10n.publishFirstPost),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _inkColor,
-                    foregroundColor: Colors.white,
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: PopEmptyState(
+            scrollable: false,
+            mascot: PopMascotMood.confused,
+            title: l10n.noPostsYet,
+            message: l10n.publishFirstPostHint,
+            action: widget.onPublishTap == null
+                ? null
+                : PopButton(
+                    label: l10n.publishFirstPost,
+                    icon: Icons.add_a_photo_outlined,
+                    onPressed: widget.onPublishTap,
                   ),
-                ),
-              ),
-            const SizedBox(height: 120),
-          ],
+          ),
         ),
-      );
+      ];
     }
 
-    return RefreshIndicator(
-      onRefresh: () => refreshFeed(showLoading: false),
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-        itemCount: _posts.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          final post = _posts[index];
-          return PostCard(
-            post: post,
-            unknownUserLabel: l10n.unknownUser,
-            onUpvote: () => _toggleUpvote(post.id),
-          );
-        },
+    return [
+      SliverPadding(
+        padding: listPadding,
+        sliver: SliverList.separated(
+          // The extra item closes the feed with the "all caught up" card.
+          itemCount: _posts.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(height: 20),
+          itemBuilder: (context, index) {
+            if (index == _posts.length) return const _AllCaughtUpCard();
+            final post = _posts[index];
+            return PostCard(
+              post: post,
+              unknownUserLabel: l10n.unknownUser,
+              onUpvote: () => _toggleUpvote(post.id),
+            );
+          },
+        ),
+      ),
+    ];
+  }
+}
+
+/// Yellow « défi de la semaine » card from the mockup, with its countdown
+/// sticker and the shortcut to the camera.
+class _ChallengeHero extends StatelessWidget {
+  const _ChallengeHero({
+    required this.challenge,
+    required this.endsAt,
+    this.onDoIt,
+  });
+
+  final FeedChallengeSummary challenge;
+  final DateTime? endsAt;
+  final VoidCallback? onDoIt;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final description = challenge.description.trim();
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+          decoration: popCardDecoration(color: popYellow, radius: 26, shadow: 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                challenge.isSpecial
+                    ? l10n.homeSpecialChallenge
+                    : l10n.homeWeeklyChallenge,
+                style: popLabel(fontSize: 13),
+              ),
+              const SizedBox(height: 10),
+              Semantics(
+                header: true,
+                child: Text(challenge.title, style: popDisplay()),
+              ),
+              if (description.isNotEmpty && description != challenge.title) ...[
+                const SizedBox(height: 8),
+                Text(description, style: popBody()),
+              ],
+              if (onDoIt != null) ...[
+                const SizedBox(height: 18),
+                PopButton(
+                  label: l10n.homeDoIt,
+                  icon: Icons.photo_camera_outlined,
+                  color: popInk,
+                  onPressed: onDoIt,
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (endsAt != null)
+          Positioned(
+            top: -14,
+            right: 18,
+            child: _CountdownSticker(endsAt: endsAt!),
+          ),
+      ],
+    );
+  }
+}
+
+class _CountdownSticker extends StatefulWidget {
+  const _CountdownSticker({required this.endsAt});
+
+  final DateTime endsAt;
+
+  @override
+  State<_CountdownSticker> createState() => _CountdownStickerState();
+}
+
+class _CountdownStickerState extends State<_CountdownSticker> {
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    // Minute precision is all the label shows.
+    _ticker = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final left = widget.endsAt.difference(DateTime.now());
+    if (left.isNegative) return const SizedBox.shrink();
+
+    final label = formatTimeLeft(left, l10n);
+    return Semantics(
+      label: l10n.challengeTimeLeft(label),
+      excludeSemantics: true,
+      child: PopSticker(
+        label: label,
+        color: popCoral,
+        icon: Icons.timer_outlined,
+        angle: 0.06,
+        fontSize: 14,
       ),
     );
   }
+}
 
-  TextStyle _titleStyle() {
-    return GoogleFonts.dmSerifDisplay(
-      color: _inkColor,
-      fontSize: 24,
-      letterSpacing: 0.2,
-    );
-  }
+/// Green « Tu es à jour ! » card closing the feed, with the happy bunny
+/// stuck on its corner.
+class _AllCaughtUpCard extends StatelessWidget {
+  const _AllCaughtUpCard();
 
-  TextStyle _mutedStyle({double fontSize = 14}) {
-    return GoogleFonts.karla(
-      color: _inkMuted,
-      fontSize: fontSize,
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      // Room for the bunny, which sticks out above the card.
+      padding: const EdgeInsets.only(top: 44),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(16, 18, 86, 18),
+            decoration: popCardDecoration(color: popGreen),
+            child: Row(
+              children: [
+                Transform.rotate(
+                  angle: -0.08,
+                  child: Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: popCard,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: popInk, width: popStroke),
+                    ),
+                    child: const Icon(Icons.check_rounded, size: 28),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.feedAllCaughtUpTitle, style: popTitle(fontSize: 19)),
+                      const SizedBox(height: 2),
+                      Text(l10n.feedAllCaughtUpMessage, style: popBody(fontSize: 14)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: -46,
+            right: -6,
+            child: Transform.rotate(
+              angle: 0.08,
+              child: const PopMascot(PopMascotMood.happy, size: 104),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
