@@ -58,12 +58,14 @@ class AvailableChallenge {
     required this.title,
     required this.isGlobal,
     this.groupName,
+    this.endsAt,
   });
 
   final int id;
   final String title;
   final bool isGlobal;
   final String? groupName;
+  final DateTime? endsAt;
 
   factory AvailableChallenge.fromJson(Map<String, dynamic> json) {
     final group = json['group'];
@@ -72,6 +74,7 @@ class AvailableChallenge {
       title: json['title']?.toString() ?? '',
       isGlobal: group == null,
       groupName: group is Map ? group['name']?.toString() : null,
+      endsAt: DateTime.tryParse(json['endsAt']?.toString() ?? '')?.toLocal(),
     );
   }
 
@@ -172,15 +175,23 @@ class FeedChallengeSummary {
   const FeedChallengeSummary({
     required this.title,
     required this.description,
+    this.id,
+    this.type = '',
   });
 
+  final int? id;
   final String title;
   final String description;
+  final String type;
+
+  bool get isSpecial => type == 'SPECIAL';
 
   factory FeedChallengeSummary.fromJson(Map<String, dynamic> json) {
     return FeedChallengeSummary(
+      id: json['id'] is int ? json['id'] as int : null,
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
     );
   }
 }
