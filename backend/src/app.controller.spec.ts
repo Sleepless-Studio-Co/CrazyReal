@@ -141,6 +141,7 @@ describe('AppController', () => {
       prismaService.friendship.findMany.mockResolvedValue([
         { userId: 10, friendId: 20, status: 'ACCEPTED' },
       ]);
+      prismaService.challenge.findMany.mockResolvedValue([]);
       prismaService.post.findMany.mockResolvedValue([]);
 
       await appController.getPosts({
@@ -157,6 +158,57 @@ describe('AppController', () => {
           ],
         }),
       }));
+    });
+  });
+
+  describe('getTopPosts', () => {
+    const user = { userId: 10, email: 'user@example.com', username: 'user' };
+
+    it('ranks upvoted posts of completed global challenges only', async () => {
+      const now = Date.now();
+      prismaService.challenge.findMany.mockResolvedValue([
+        // Terminé : commencé il y a 10 jours, durée 24 h.
+        { id: 1, date: new Date(now - 10 * 24 * 3600 * 1000), type: 'SPECIAL', durationHours: null, endsAt: null, isActive: true },
+        // En cours : commencé il y a 1 h.
+        { id: 2, date: new Date(now - 3600 * 1000), type: 'WEEKLY_A', durationHours: null, endsAt: null, isActive: true },
+      ]);
+      prismaService.friendship.findMany.mockResolvedValue([
+        { userId: 20, friendId: 10, status: 'ACCEPTED' },
+      ]);
+      prismaService.post.findMany.mockResolvedValue([]);
+
+      await appController.getTopPosts(user);
+
+      expect(prismaService.challenge.findMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({ conversationId: null }),
+      });
+      const query = prismaService.post.findMany.mock.calls[0][0] as any;
+      expect(query.where.challengeId).toEqual({ in: [1] });
+      expect(query.where.OR).toEqual([
+        { userId: { in: [20, 10] } },
+        { user: { isPrivate: false } },
+      ]);
+      expect(query.where.upVotes).toEqual({ some: {} });
+      expect(query.where.createdAt).toBeUndefined();
+      expect(query.orderBy[0]).toEqual({ upVotes: { _count: 'desc' } });
+    });
+
+    it('restricts posts to the requested period', async () => {
+      prismaService.challenge.findMany.mockResolvedValue([]);
+      prismaService.friendship.findMany.mockResolvedValue([]);
+      prismaService.post.findMany.mockResolvedValue([]);
+
+      const before = Date.now();
+      await appController.getTopPosts(user, 'week');
+
+      const query = prismaService.post.findMany.mock.calls[0][0] as any;
+      const since = query.where.createdAt.gte.getTime();
+      expect(before - since).toBeGreaterThanOrEqual(7 * 24 * 3600 * 1000 - 1000);
+      expect(before - since).toBeLessThanOrEqual(7 * 24 * 3600 * 1000 + 1000);
+    });
+
+    it('rejects an unknown period', async () => {
+      await expect(appController.getTopPosts(user, 'year')).rejects.toThrow(BadRequestException);
     });
   });
 });
