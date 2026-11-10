@@ -658,4 +658,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Could not load challenges';
+
+  @override
+  String get map => 'Map';
+
+  @override
+  String get mapLocationDenied => 'Location denied: showing Paris.';
+
+  @override
+  String mapChallengesWithin(int count, int radius) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count challenges',
+      one: '1 challenge',
+      zero: 'No challenges',
+    );
+    return '$_temp0 within $radius km';
+  }
+
+  @override
+  String mapDistance(String km) {
+    return '$km km away';
+  }
+
+  @override
+  String get mapRecenter => 'Recenter on my position';
+
+  @override
+  String get adminLatitudeLabel => 'Latitude (optional)';
+
+  @override
+  String get adminLongitudeLabel => 'Longitude (optional)';
+
+  @override
+  String get adminLocationInvalid =>
+      'Enter both latitude and longitude, or neither';
+
+  @override
+  String get mapLive => 'Live now';
+
+  @override
+  String get mapUpcoming => 'Upcoming';
+
+  @override
+  String mapStartsIn(String time) {
+    return 'Starts in $time';
+  }
+
+  @override
+  String mapEndsIn(String time) {
+    return 'Ends in $time';
+  }
+
+  @override
+  String get mapRegister => 'Sign up';
+
+  @override
+  String get mapJoin => 'Join';
+
+  @override
+  String get mapRegistered => 'Signed up ✓';
+
+  @override
+  String get mapSendChallenge => 'Send your challenge';
+
+  @override
+  String mapParticipants(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participants',
+      one: '1 participant',
+      zero: 'No one signed up yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String mapCompleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count completed it',
+      one: '1 completed it',
+      zero: 'Not completed yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminIconLabel => 'Map icon';
 }
