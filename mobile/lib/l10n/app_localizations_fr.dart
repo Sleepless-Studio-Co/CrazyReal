@@ -665,4 +665,95 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
+
+  @override
+  String get map => 'Carte';
+
+  @override
+  String get mapLocationDenied => 'Localisation refusée : affichage de Paris.';
+
+  @override
+  String mapChallengesWithin(int count, int radius) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count défis',
+      one: '1 défi',
+      zero: 'Aucun défi',
+    );
+    return '$_temp0 à moins de $radius km';
+  }
+
+  @override
+  String mapDistance(String km) {
+    return 'À $km km';
+  }
+
+  @override
+  String get mapRecenter => 'Recentrer sur ma position';
+
+  @override
+  String get adminLatitudeLabel => 'Latitude (optionnel)';
+
+  @override
+  String get adminLongitudeLabel => 'Longitude (optionnel)';
+
+  @override
+  String get adminLocationInvalid =>
+      'Renseigne la latitude et la longitude, ou aucune des deux';
+
+  @override
+  String get mapLive => 'En cours';
+
+  @override
+  String get mapUpcoming => 'À venir';
+
+  @override
+  String mapStartsIn(String time) {
+    return 'Commence dans $time';
+  }
+
+  @override
+  String mapEndsIn(String time) {
+    return 'Se termine dans $time';
+  }
+
+  @override
+  String get mapRegister => 'S\'inscrire';
+
+  @override
+  String get mapJoin => 'Rejoindre';
+
+  @override
+  String get mapRegistered => 'Inscrit ✓';
+
+  @override
+  String get mapSendChallenge => 'Envoyer ton défi';
+
+  @override
+  String mapParticipants(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participants',
+      one: '1 participant',
+      zero: 'Personne d\'inscrit pour l\'instant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String mapCompleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count l\'ont réalisé',
+      one: '1 l\'a réalisé',
+      zero: 'Pas encore réalisé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminIconLabel => 'Icône sur la carte';
 }
