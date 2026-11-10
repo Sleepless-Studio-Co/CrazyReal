@@ -85,6 +85,9 @@ class AdminChallenge {
     required this.customEndsAt,
     required this.isActive,
     required this.postCount,
+    this.latitude,
+    this.longitude,
+    this.icon,
   });
 
   final int id;
@@ -96,6 +99,9 @@ class AdminChallenge {
   final DateTime? customEndsAt;
   final bool isActive;
   final int postCount;
+  final double? latitude;
+  final double? longitude;
+  final String? icon;
 
   factory AdminChallenge.fromJson(Map<String, dynamic> json) {
     return AdminChallenge(
@@ -110,6 +116,9 @@ class AdminChallenge {
           DateTime.tryParse(json['endsAt']?.toString() ?? '')?.toLocal(),
       isActive: json['isActive'] == true,
       postCount: (json['_count']?['posts'] as int?) ?? 0,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      icon: json['icon']?.toString(),
     );
   }
 
@@ -166,6 +175,9 @@ class AdminService {
     int? durationHours,
     DateTime? customEndsAt,
     bool isActive = true,
+    double? latitude,
+    double? longitude,
+    String? icon,
   }) async {
     final response = await _send(
       (headers) => http.post(
@@ -180,6 +192,9 @@ class AdminService {
           if (customEndsAt != null)
             'endsAt': customEndsAt.toUtc().toIso8601String(),
           'isActive': isActive,
+          if (latitude != null) 'latitude': latitude,
+          if (longitude != null) 'longitude': longitude,
+          if (icon != null) 'icon': icon,
         }),
       ),
     );
@@ -200,6 +215,9 @@ class AdminService {
     bool clearDuration = false,
     bool clearCustomEndsAt = false,
     bool? isActive,
+    double? latitude,
+    double? longitude,
+    String? icon,
   }) async {
     final payload = <String, dynamic>{
       if (title != null) 'title': title,
@@ -211,6 +229,10 @@ class AdminService {
       if (customEndsAt != null || clearCustomEndsAt)
         'endsAt': customEndsAt?.toUtc().toIso8601String(),
       if (isActive != null) 'isActive': isActive,
+      // Toujours envoyé : null efface la position.
+      'latitude': latitude,
+      'longitude': longitude,
+      'icon': icon,
     };
 
     final response = await _send(
