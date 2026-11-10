@@ -4,6 +4,7 @@ import {
   IsDateString,
   IsEnum,
   IsInt,
+  IsNumber,
   Max,
   Min,
   IsOptional,
@@ -45,4 +46,21 @@ export class CreateChallengeDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  @IsOptional()
+  latitude?: number | null;
+
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  @IsOptional()
+  longitude?: number | null;
+
+  @IsString()
+  @MaxLength(30)
+  @IsOptional()
+  icon?: string | null;
 }

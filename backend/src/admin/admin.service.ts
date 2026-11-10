@@ -79,6 +79,9 @@ export class AdminService {
           durationHours: dto.endsAt ? null : dto.durationHours ?? null,
           endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
           isActive: dto.isActive ?? true,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
+          icon: dto.icon ?? null,
         },
       });
       this.notificationGateway.broadcast('challengeCreated', {
@@ -114,6 +117,9 @@ export class AdminService {
             endsAt: null,
           }),
           ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+          ...(dto.latitude !== undefined && { latitude: dto.latitude }),
+          ...(dto.longitude !== undefined && { longitude: dto.longitude }),
+          ...(dto.icon !== undefined && { icon: dto.icon }),
         },
       });
     } catch (e) {
