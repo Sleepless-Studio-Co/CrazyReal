@@ -8,7 +8,7 @@ import 'theme_notifier.dart';
 import 'home_page.dart';
 import 'friend_page.dart';
 import 'new_post_page.dart';
-import 'setting_page.dart';
+import 'map_page.dart';
 import 'account_page.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
@@ -194,13 +194,10 @@ class _MainScreenState extends State<MainScreen> {
         onPublishTap: () => _onItemTapped(2),
       ),
       FriendPage(onUnauthorized: widget.onUnauthorized),
-      NewPage(
+      _buildNewPage(),
+      MapPage(
         onUnauthorized: widget.onUnauthorized,
-        onPostCreated: _onPostCreated,
-      ),
-      SettingPage(
-        onLoggedOut: widget.onLoggedOut,
-        onUnauthorized: widget.onUnauthorized,
+        onSendChallenge: _openCameraFor,
       ),
       AccountPage(
         onLoggedOut: widget.onLoggedOut,
@@ -209,7 +206,20 @@ class _MainScreenState extends State<MainScreen> {
     ];
   }
 
+  Widget _buildNewPage([Map<String, dynamic>? challenge]) => NewPage(
+        onUnauthorized: widget.onUnauthorized,
+        onPostCreated: _onPostCreated,
+        initialChallenge: challenge,
+      );
+
+  // Ouvre la caméra sur un défi précis (depuis la carte).
+  void _openCameraFor(Map<String, dynamic> challenge) {
+    _pages[2] = _buildNewPage(challenge);
+    _onItemTapped(2);
+  }
+
   void _onPostCreated() {
+    _pages[2] = _buildNewPage();
     _homeKey.currentState?.refreshFeed(showLoading: false);
     _onItemTapped(0);
   }
@@ -250,8 +260,8 @@ class _MainScreenState extends State<MainScreen> {
             label: l10n.newPost,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.settings),
-            label: l10n.settings,
+            icon: const Icon(Icons.map),
+            label: l10n.map,
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.account_circle),
@@ -263,7 +273,11 @@ class _MainScreenState extends State<MainScreen> {
         unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
         backgroundColor: Theme.of(context).colorScheme.surface,
         type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
+        onTap: (index) {
+          // Via la barre, la caméra revient sur le défi global.
+          if (index == 2 && _selectedIndex != 2) _pages[2] = _buildNewPage();
+          _onItemTapped(index);
+        },
       ),
     );
   }

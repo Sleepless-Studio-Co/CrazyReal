@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'services/api_exception.dart';
+import 'setting_page.dart';
 import 'utils/media_url.dart';
 import 'widgets/feed_avatar.dart';
 
@@ -486,6 +487,13 @@ class _AccountPageState extends State<AccountPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.account),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: l10n.settings,
+            onPressed: _openSettings,
+          ),
+        ],
       ),
       body: SafeArea(
         child: _isEditing
@@ -494,6 +502,24 @@ class _AccountPageState extends State<AccountPage> {
                 child: _buildContent(l10n),
               )
             : _buildContent(l10n),
+      ),
+    );
+  }
+
+  void _openSettings() {
+    // Déconnexion depuis les paramètres : on referme la page poussée pour
+    // que l'AuthGate puisse afficher l'écran de connexion.
+    void closeThen(VoidCallback callback) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      callback();
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingPage(
+          onLoggedOut: () => closeThen(widget.onLoggedOut),
+          onUnauthorized: () => closeThen(widget.onUnauthorized),
+        ),
       ),
     );
   }
