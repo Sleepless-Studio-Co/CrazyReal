@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
+import '../map_page.dart' show challengeIcons;
 import '../services/admin_service.dart';
 import '../services/api_exception.dart';
 
@@ -118,6 +119,9 @@ class _AdminPageState extends State<AdminPage> {
           durationHours: result.durationHours,
           customEndsAt: result.customEndsAt,
           isActive: result.isActive,
+          latitude: result.latitude,
+          longitude: result.longitude,
+          icon: result.icon,
         );
         _showInfo(l10n.adminChallengeCreated);
       } else {
@@ -132,6 +136,9 @@ class _AdminPageState extends State<AdminPage> {
           clearCustomEndsAt: result.customEndsAt == null,
           clearDuration: result.durationHours == null,
           isActive: result.isActive,
+          latitude: result.latitude,
+          longitude: result.longitude,
+          icon: result.icon,
         );
         _showInfo(l10n.adminChallengeUpdated);
       }
@@ -456,6 +463,9 @@ class _ChallengeDraft {
     required this.durationHours,
     required this.customEndsAt,
     required this.isActive,
+    required this.latitude,
+    required this.longitude,
+    required this.icon,
   });
 
   final String title;
@@ -465,6 +475,9 @@ class _ChallengeDraft {
   final int? durationHours;
   final DateTime? customEndsAt;
   final bool isActive;
+  final double? latitude;
+  final double? longitude;
+  final String? icon;
 }
 
 class _ChallengeEditorSheet extends StatefulWidget {
@@ -479,13 +492,17 @@ class _ChallengeEditorSheet extends StatefulWidget {
 class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
+  late final TextEditingController _latitudeController;
+  late final TextEditingController _longitudeController;
   late DateTime _date;
   late ChallengeType _type;
   late bool _customDuration;
   late DateTime? _customEndsAt;
   late bool _isActive;
+  String? _icon;
   String? _titleError;
   String? _durationError;
+  String? _locationError;
 
   @override
   void initState() {
@@ -494,18 +511,25 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
     _titleController = TextEditingController(text: challenge?.title ?? '');
     _descriptionController =
         TextEditingController(text: challenge?.description ?? '');
+    _latitudeController =
+        TextEditingController(text: challenge?.latitude?.toString() ?? '');
+    _longitudeController =
+        TextEditingController(text: challenge?.longitude?.toString() ?? '');
     _date = challenge?.date ?? DateTime.now();
     _type = challenge?.type ?? ChallengeType.weeklyA;
     _customDuration =
         challenge?.durationHours != null || challenge?.customEndsAt != null;
     _customEndsAt = challenge?.customEndsAt;
     _isActive = challenge?.isActive ?? true;
+    _icon = challenge?.icon;
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
     super.dispose();
   }
 
@@ -578,6 +602,17 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
       return;
     }
 
+    final latText = _latitudeController.text.trim().replaceAll(',', '.');
+    final lngText = _longitudeController.text.trim().replaceAll(',', '.');
+    final latitude = double.tryParse(latText);
+    final longitude = double.tryParse(lngText);
+    final hasLocation = latitude != null && longitude != null;
+    if ((latText.isNotEmpty || lngText.isNotEmpty) &&
+        (!hasLocation || latitude.abs() > 90 || longitude.abs() > 180)) {
+      setState(() => _locationError = l10n.adminLocationInvalid);
+      return;
+    }
+
     Navigator.pop(
       context,
       _ChallengeDraft(
@@ -588,6 +623,9 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
         durationHours: null,
         customEndsAt: _customDuration ? _customEndsAt : null,
         isActive: _isActive,
+        latitude: hasLocation ? latitude : null,
+        longitude: hasLocation ? longitude : null,
+        icon: _icon,
       ),
     );
   }
@@ -636,6 +674,60 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
                 labelText: l10n.adminChallengeDescriptionLabel,
                 border: const OutlineInputBorder(),
               ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                for (final (controller, label) in [
+                  (_latitudeController, l10n.adminLatitudeLabel),
+                  (_longitudeController, l10n.adminLongitudeLabel),
+                ])
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: TextField(
+                        controller: controller,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        onChanged: (_) {
+                          if (_locationError != null) {
+                            setState(() => _locationError = null);
+                          }
+                        },
+                        decoration: InputDecoration(
+                          labelText: label,
+                          border: const OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (_locationError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _locationError!,
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+            const SizedBox(height: 8),
+            Text(l10n.adminIconLabel, style: GoogleFonts.karla(color: _inkColor)),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final entry in challengeIcons.entries)
+                  ChoiceChip(
+                    label: Icon(entry.value, size: 20),
+                    showCheckmark: false,
+                    selected: (_icon ?? 'camera') == entry.key,
+                    onSelected: (_) => setState(() => _icon = entry.key),
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<ChallengeType>(
