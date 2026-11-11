@@ -917,5 +917,47 @@
   "@topPeriodAll": { "description": "Period filter: no limit" },
 
   "topPostsEmpty": "No completed challenge has been upvoted yet.",
-  "@topPostsEmpty": { "description": "Shown when the best challenges page is empty" }
+  "@topPostsEmpty": { "description": "Shown when the best challenges page is empty" },
+
+  "map": "Map",
+
+  "mapLocationDenied": "Location denied: showing Paris.",
+
+  "mapChallengesWithin": "{count, plural, =0{No challenges} =1{1 challenge} other{{count} challenges}} within {radius} km",
+  "@mapChallengesWithin": {"placeholders": {"count": {"type": "int"}, "radius": {"type": "int"}}},
+
+  "mapDistance": "{km} km away",
+  "@mapDistance": {"placeholders": {"km": {"type": "String"}}},
+
+  "mapRecenter": "Recenter on my position",
+
+  "adminLatitudeLabel": "Latitude (optional)",
+
+  "adminLongitudeLabel": "Longitude (optional)",
+
+  "adminLocationInvalid": "Enter both latitude and longitude, or neither",
+
+  "mapLive": "Live now",
+
+  "mapUpcoming": "Upcoming",
+
+  "mapStartsIn": "Starts in {time}",
+  "@mapStartsIn": {"placeholders": {"time": {"type": "String"}}},
+
+  "mapEndsIn": "Ends in {time}",
+  "@mapEndsIn": {"placeholders": {"time": {"type": "String"}}},
+
+  "mapRegister": "Sign up",
+
+  "mapJoin": "Join",
+
+  "mapRegistered": "Signed up ✓",
+
+  "mapSendChallenge": "Send your challenge",
+
+  "mapParticipants": "{count, plural, =0{No one signed up yet} =1{1 participant} other{{count} participants}}",
+  "@mapParticipants": {"placeholders": {"count": {"type": "int"}}},
+  "mapCompleted": "{count, plural, =0{Not completed yet} =1{1 completed it} other{{count} completed it}}",
+  "@mapCompleted": {"placeholders": {"count": {"type": "int"}}},
+  "adminIconLabel": "Map icon"
 }
