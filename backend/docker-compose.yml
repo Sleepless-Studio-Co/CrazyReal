@@ -3,6 +3,8 @@ services:
   api:
     build: .
     command: sh -c "npx prisma db push --accept-data-loss && npm run start:dev"
+    env_file:
+      - .env
     ports:
       - "3000:3000" # Ajuste si ton backend utilise un autre port
     volumes:
@@ -11,6 +13,8 @@ services:
       # Empêche d'écraser le dossier node_modules du conteneur avec celui de ta machine
       - /app/node_modules
     environment:
+      # Firebase Admin can resolve IPv6 first, which is unreachable in some Docker hosts.
+      - NODE_OPTIONS=--dns-result-order=ipv4first
       # L'URL de connexion à la base de données (utilise le nom du service "db" comme hôte)
       - DATABASE_URL=postgresql://crazyuser:crazypassword@db:5432/crazydb?schema=public
     depends_on:

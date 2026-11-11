@@ -1,10 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../auth/auth_service.dart';
-import '../l10n/app_localizations.dart';
 import '../utils/media_url.dart';
-import 'notification_service.dart';
-import '../main.dart';
 
 class GlobalNotificationService {
   GlobalNotificationService._internal();
@@ -13,7 +10,7 @@ class GlobalNotificationService {
   factory GlobalNotificationService() => _instance;
 
   final AuthService _authService = AuthService();
-  IO.Socket? _socket;
+  io.Socket? _socket;
 
   Future<void> connect() async {
     if (_socket != null) return;
@@ -23,9 +20,9 @@ class GlobalNotificationService {
 
     // Use a decoded token to get userId if possible, or just send token
     // For this implementation, we'll assume the backend gets the user from the token.
-    _socket = IO.io(
+    _socket = io.io(
       '$apiBaseUrl/notifications',
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({'token': token})
           .disableAutoConnect()
@@ -39,23 +36,7 @@ class GlobalNotificationService {
         final map = Map<String, dynamic>.from(data as Map);
         final username = map['requesterUsername'] as String;
 
-        final context = navigatorKey.currentContext;
-        String title = 'Demande d\'ami';
-        String body = '$username vous a envoyé une demande d\'ami';
-
-        if (context != null) {
-          final l10n = AppLocalizations.of(context);
-          if (l10n != null) {
-            title = l10n.notificationFriendRequestTitle;
-            body = l10n.notificationFriendRequestBody(username);
-          }
-        }
-
-        NotificationService().showNotification(
-          title: title,
-          body: body,
-          channelId: 'friend_requests',
-        );
+        debugPrint('[notif-socket] friend request from $username');
       } catch (e) {
         debugPrint('[notif-socket] error parsing friendRequestReceived: $e');
       }
@@ -65,22 +46,7 @@ class GlobalNotificationService {
       try {
         final map = Map<String, dynamic>.from(data as Map);
         final title = map['challengeTitle']?.toString() ?? '';
-        final context = navigatorKey.currentContext;
-        var notificationTitle = 'Nouveau défi';
-        var body = title;
-        if (context != null) {
-          final l10n = AppLocalizations.of(context);
-          if (l10n != null) {
-            notificationTitle = l10n.notificationChallengeCreatedTitle;
-            body = l10n.notificationChallengeCreatedBody(title);
-          }
-        }
-        NotificationService().showNotification(
-          id: _notificationId(map['challengeId'], 100000),
-          title: notificationTitle,
-          body: body,
-          channelId: 'challenges',
-        );
+        debugPrint('[notif-socket] challenge created: $title');
       } catch (e) {
         debugPrint('[notif-socket] error parsing challengeCreated: $e');
       }
@@ -91,36 +57,13 @@ class GlobalNotificationService {
         final map = Map<String, dynamic>.from(data as Map);
         final title = map['challengeTitle']?.toString() ?? '';
         final hours = map['hoursRemaining'] as int? ?? 0;
-        final context = navigatorKey.currentContext;
-        var notificationTitle = 'Défi bientôt terminé';
-        var body = '$title : plus que $hours h restantes';
-        if (context != null) {
-          final l10n = AppLocalizations.of(context);
-          if (l10n != null) {
-            notificationTitle = l10n.notificationChallengeReminderTitle;
-            body = l10n.notificationChallengeReminderBody(hours, title);
-          }
-        }
-        NotificationService().showNotification(
-          id: _notificationId(
-              map['challengeId'], hours == 24 ? 200000 : 300000),
-          title: notificationTitle,
-          body: body,
-          channelId: 'challenges',
-        );
+        debugPrint('[notif-socket] challenge reminder: $title ($hours h)');
       } catch (e) {
         debugPrint('[notif-socket] error parsing challengeReminder: $e');
       }
     });
 
     _socket!.connect();
-  }
-
-  int _notificationId(dynamic challengeId, int offset) {
-    return offset +
-        (challengeId is int
-            ? challengeId
-            : challengeId.hashCode.abs() % 100000);
   }
 
   void disconnect() {

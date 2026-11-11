@@ -4,12 +4,14 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import {
   formatPostWithUpvotes,
   postIncludeWithUpvotes,
 } from '../posts/post.utils';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
+import { PushService } from '../bootstrap/push.service';
 
 const MAX_GROUP_MEMBERS = 50;
 
@@ -18,6 +20,7 @@ export class ChatService {
   constructor(
     private prisma: PrismaService,
     private notificationGateway: NotificationGateway,
+    @Optional() private pushService?: PushService,
   ) {}
 
   async getConversationIdsForUser(userId: number): Promise<number[]> {
@@ -117,29 +120,30 @@ export class ChatService {
 
   async getConversations(userId: number, page = 1, limit = 20) {
     const blockedUserIds = await this.getBlockedUserIds(userId);
-    const conversationWhere = blockedUserIds.length === 0
-      ? {
-          participants: {
-            some: {
-              userId: userId,
-            },
-          },
-        }
-      : {
-          OR: [
-            {
-              isGroup: true,
-              participants: { some: { userId } },
-            },
-            {
-              isGroup: false,
-              participants: {
-                some: { userId },
-                none: { userId: { in: blockedUserIds } },
+    const conversationWhere =
+      blockedUserIds.length === 0
+        ? {
+            participants: {
+              some: {
+                userId: userId,
               },
             },
-          ],
-        };
+          }
+        : {
+            OR: [
+              {
+                isGroup: true,
+                participants: { some: { userId } },
+              },
+              {
+                isGroup: false,
+                participants: {
+                  some: { userId },
+                  none: { userId: { in: blockedUserIds } },
+                },
+              },
+            ],
+          };
 
     return this.prisma.conversation.findMany({
       where: conversationWhere,
@@ -439,6 +443,17 @@ export class ChatService {
         isGlobal: false,
       },
     );
+    await this.pushService?.sendToUsers(
+      participants.map((participant) => participant.userId),
+      'Nouveau défi',
+      challenge.title,
+      'challenges',
+      {
+        event: 'challengeCreated',
+        challengeId: String(challenge.id),
+        channelId: 'challenges',
+      },
+    );
     return challenge;
   }
 
@@ -502,7 +517,7 @@ export class ChatService {
       throw new ForbiddenException('Tu ne peux plus écrire à cet utilisateur.');
     }
 
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         content: content,
         senderId: senderId,
@@ -519,6 +534,32 @@ export class ChatService {
         },
       },
     });
+
+    const recipientIds = (
+      await this.prisma.participant.findMany({
+        where: {
+          conversationId,
+          userId: { not: senderId },
+        },
+        select: { userId: true },
+      })
+    ).map((participant) => participant.userId);
+
+    await this.pushService?.sendToUsers(
+      recipientIds,
+      `Nouveau message de ${message.sender.username}`,
+      message.content,
+      'general',
+      {
+        event: 'newMessage',
+        conversationId: String(conversationId),
+        messageId: String(message.id),
+        senderId: String(senderId),
+        channelId: 'general',
+      },
+    );
+
+    return message;
   }
 
   async getMessages(
@@ -571,13 +612,14 @@ export class ChatService {
   }
 
   private async getBlockedUserIds(userId: number): Promise<number[]> {
-    const blocked = (await this.prisma.friendship.findMany({
-      where: {
-        status: 'BLOCKED',
-        OR: [{ userId }, { friendId: userId }],
-      },
-      select: { userId: true, friendId: true },
-    })) ?? [];
+    const blocked =
+      (await this.prisma.friendship.findMany({
+        where: {
+          status: 'BLOCKED',
+          OR: [{ userId }, { friendId: userId }],
+        },
+        select: { userId: true, friendId: true },
+      })) ?? [];
 
     return blocked.map((relation) =>
       relation.userId === userId ? relation.friendId : relation.userId,

@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { ChallengeIdeaStatus, ChallengeType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -11,12 +12,14 @@ import { UpdateChallengeDto } from './dto/update-challenge.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
+import { PushService } from '../bootstrap/push.service';
 
 @Injectable()
 export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationGateway: NotificationGateway,
+    @Optional() private readonly pushService?: PushService,
   ) {}
 
   async importChallengesFromFile(): Promise<{ imported: number }> {
@@ -25,7 +28,13 @@ export class AdminService {
       let file = path.join(process.cwd(), 'prisma', 'challenges.json');
       // Fallback: when process.cwd() is project root's parent, try locating from compiled runtime
       if (!fs.existsSync(file)) {
-        const alt = path.join(__dirname, '..', '..', 'prisma', 'challenges.json');
+        const alt = path.join(
+          __dirname,
+          '..',
+          '..',
+          'prisma',
+          'challenges.json',
+        );
         if (fs.existsSync(alt)) file = alt;
       }
 
@@ -41,13 +50,18 @@ export class AdminService {
         description: c.description || '',
         date: c.date ? new Date(c.date) : new Date(),
         type: c.type || ChallengeType.WEEKLY_A,
-        ...(c.durationHours !== undefined && { durationHours: c.durationHours }),
+        ...(c.durationHours !== undefined && {
+          durationHours: c.durationHours,
+        }),
         isActive: c.isActive !== undefined ? c.isActive : true,
       }));
 
       if (data.length === 0) return { imported: 0 };
 
-      const res = await this.prisma.challenge.createMany({ data, skipDuplicates: true });
+      const res = await this.prisma.challenge.createMany({
+        data,
+        skipDuplicates: true,
+      });
       return { imported: res.count };
     } catch (e: any) {
       if (e instanceof NotFoundException) {
@@ -76,7 +90,7 @@ export class AdminService {
           description: dto.description?.trim() ?? '',
           date: dto.date ? new Date(dto.date) : new Date(),
           type: dto.type ?? ChallengeType.WEEKLY_A,
-          durationHours: dto.endsAt ? null : dto.durationHours ?? null,
+          durationHours: dto.endsAt ? null : (dto.durationHours ?? null),
           endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
           isActive: dto.isActive ?? true,
           latitude: dto.latitude ?? null,
@@ -89,6 +103,18 @@ export class AdminService {
         challengeTitle: challenge.title,
         isGlobal: true,
       });
+      await this.pushService?.sendToTopic(
+        'global',
+        'Nouveau défi global',
+        challenge.title,
+        'challenges',
+        {
+          event: 'challengeCreated',
+          challengeId: String(challenge.id),
+          isGlobal: 'true',
+          channelId: 'challenges',
+        },
+      );
       return challenge;
     } catch (e) {
       throw this.mapPrismaError(e);
@@ -112,10 +138,11 @@ export class AdminService {
             endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
             durationHours: null,
           }),
-          ...(dto.durationHours !== undefined && dto.endsAt === undefined && {
-            durationHours: dto.durationHours,
-            endsAt: null,
-          }),
+          ...(dto.durationHours !== undefined &&
+            dto.endsAt === undefined && {
+              durationHours: dto.durationHours,
+              endsAt: null,
+            }),
           ...(dto.isActive !== undefined && { isActive: dto.isActive }),
           ...(dto.latitude !== undefined && { latitude: dto.latitude }),
           ...(dto.longitude !== undefined && { longitude: dto.longitude }),

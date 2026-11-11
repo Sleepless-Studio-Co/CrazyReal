@@ -11,6 +11,7 @@ import {
   formatPostWithUpvotes,
   postIncludeWithUpvotes,
 } from '../posts/post.utils';
+import type { DeviceTokenDto } from './dto/device-token.dto';
 
 const USER_SELECT = {
   id: true,
@@ -26,11 +27,30 @@ const USER_SELECT = {
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async registerDeviceToken(userId: number, deviceToken: DeviceTokenDto) {
+    return this.prisma.deviceToken.upsert({
+      where: { token: deviceToken.token },
+      update: { userId, platform: deviceToken.platform },
+      create: {
+        userId,
+        token: deviceToken.token,
+        platform: deviceToken.platform,
+      },
+    });
+  }
+
+  async removeDeviceToken(userId: number, token: string) {
+    await this.prisma.deviceToken.deleteMany({ where: { userId, token } });
+    return { success: true };
+  }
+
   private handlePrismaError(error: unknown): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         const target = error.meta?.target;
-        const fields = Array.isArray(target) ? target.join(',') : String(target ?? '');
+        const fields = Array.isArray(target)
+          ? target.join(',')
+          : String(target ?? '');
 
         if (fields.includes('email')) {
           throw new ConflictException('mail already in use');

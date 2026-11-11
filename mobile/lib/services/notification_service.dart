@@ -11,9 +11,11 @@ class NotificationService {
 
   // Navigation key to redirect on notification click
   GlobalKey<NavigatorState>? navigatorKey;
+  bool _initialized = false;
 
   Future<void> init({GlobalKey<NavigatorState>? navKey}) async {
     navigatorKey = navKey;
+    if (_initialized) return;
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notification');
@@ -25,7 +27,8 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
     );
@@ -38,24 +41,28 @@ class NotificationService {
     );
 
     await _createChannels();
+    _initialized = true;
   }
 
   Future<void> _createChannels() async {
-    const AndroidNotificationChannel friendRequestsChannel = AndroidNotificationChannel(
+    const AndroidNotificationChannel friendRequestsChannel =
+        AndroidNotificationChannel(
       'friend_requests',
       'Friend Requests',
       description: 'Notifications for new friend requests',
       importance: Importance.max,
     );
 
-    const AndroidNotificationChannel challengesChannel = AndroidNotificationChannel(
+    const AndroidNotificationChannel challengesChannel =
+        AndroidNotificationChannel(
       'challenges',
       'Challenges',
       description: 'Notifications for new challenges',
       importance: Importance.max,
     );
 
-    const AndroidNotificationChannel generalChannel = AndroidNotificationChannel(
+    const AndroidNotificationChannel generalChannel =
+        AndroidNotificationChannel(
       'general',
       'General Notifications',
       description: 'General application notifications',
@@ -83,6 +90,12 @@ class NotificationService {
     // If we're already in the app, navigatorKey can be used to pop until root or navigate to home.
     if (navigatorKey?.currentState != null) {
       // Pop all until we reach the root route
+      navigatorKey!.currentState!.popUntil((route) => route.isFirst);
+    }
+  }
+
+  void handlePushNavigation(Map<String, dynamic> data) {
+    if (navigatorKey?.currentState != null) {
       navigatorKey!.currentState!.popUntil((route) => route.isFirst);
     }
   }

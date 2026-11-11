@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_links/app_links.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
 import 'theme_notifier.dart';
@@ -19,18 +20,25 @@ import 'guest_share_page.dart';
 import 'services/chat_socket_service.dart';
 import 'services/notification_service.dart';
 import 'services/global_notification_service.dart';
+import 'services/fcm_service.dart';
 import 'widgets/paper.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+  } catch (error) {
+    debugPrint('[firebase] unavailable: $error');
+  }
   await dotenv.load(fileName: ".env");
   final prefs = await SharedPreferences.getInstance();
   final savedLang = prefs.getString('app_locale') ?? 'en';
   appLocale.value = Locale(savedLang, '');
   appThemeMode.value = themeModeFromString(prefs.getString('theme_mode'));
   await NotificationService().init(navKey: navigatorKey);
+  await FcmService.instance.init();
   final initialShareToken = await _readInitialShareToken();
   runApp(MyApp(initialShareToken: initialShareToken));
 }
@@ -100,7 +108,6 @@ class _AuthGateState extends State<AuthGate> {
       }
     });
     _checkAuth();
-    NotificationService().requestPermissions();
   }
 
   @override
@@ -114,6 +121,7 @@ class _AuthGateState extends State<AuthGate> {
     if (!mounted) return;
 
     if (isLoggedIn) {
+      await FcmService.instance.registerForUser();
       _chatSocket.connect();
       GlobalNotificationService().connect();
     }
@@ -122,16 +130,19 @@ class _AuthGateState extends State<AuthGate> {
       _isAuthenticated = isLoggedIn;
       _isLoading = false;
     });
+    FcmService.instance.handlePendingNavigation();
   }
 
   void _handleAuthSuccess() {
     if (!mounted) return;
     _chatSocket.connect();
+    FcmService.instance.registerForUser();
     GlobalNotificationService().connect();
     setState(() {
       _isAuthenticated = true;
       _shareToken = null;
     });
+    FcmService.instance.handlePendingNavigation();
   }
 
   Future<void> _handleUnauthorized() async {
@@ -150,6 +161,7 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _handleLogout() async {
+    await FcmService.instance.unregister();
     _chatSocket.disconnect();
     GlobalNotificationService().disconnect();
     await _authService.logout();

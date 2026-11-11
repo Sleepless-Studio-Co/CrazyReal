@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../auth/auth_service.dart';
-import '../l10n/app_localizations.dart';
 import '../utils/media_url.dart';
-import 'notification_service.dart';
-import '../main.dart';
 
 /// Socket temps réel unique et persistant pour tout le chat.
 ///
@@ -25,13 +22,11 @@ class ChatSocketService {
 
   final AuthService _authService = AuthService();
 
-  IO.Socket? _socket;
+  io.Socket? _socket;
   bool _connecting = false;
 
-  final _messageController =
-      StreamController<Map<String, dynamic>>.broadcast();
-  final _typingController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  final _messageController = StreamController<Map<String, dynamic>>.broadcast();
+  final _typingController = StreamController<Map<String, dynamic>>.broadcast();
   final _connectionController = StreamController<bool>.broadcast();
 
   /// Chaque message reçu (`newMessage`). Contient au moins `id`, `content`,
@@ -60,9 +55,9 @@ class ChatSocketService {
 
     // websocket-only : la bascule polling→websocket provoquait des coupures
     // (mêmes réglages que le socket du feed, qui est stable).
-    final socket = IO.io(
+    final socket = io.io(
       '$apiBaseUrl/chat',
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket'])
           .setAuth({'token': token})
           .enableReconnection()
@@ -92,28 +87,6 @@ class ChatSocketService {
       try {
         final map = Map<String, dynamic>.from(data as Map);
         _messageController.add(map);
-
-        // Show local notification only if not sent by current user
-        final currentUser = await _authService.getUser();
-        final currentUserId = currentUser?['id'];
-        final senderId = map['sender']['id'];
-
-        if (currentUserId != senderId) {
-          final context = navigatorKey.currentContext;
-          String title = 'Nouveau message de ${map['sender']['username']}';
-          if (context != null) {
-            final l10n = AppLocalizations.of(context);
-            if (l10n != null) {
-              title = l10n.notificationNewMessageTitle(map['sender']['username'] as String);
-            }
-          }
-
-          NotificationService().showNotification(
-            title: title,
-            body: map['content'] as String,
-            channelId: 'general',
-          );
-        }
       } catch (e) {
         debugPrint('[chat-socket] newMessage parse error: $e');
       }

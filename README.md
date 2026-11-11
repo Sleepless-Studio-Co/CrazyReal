@@ -14,6 +14,7 @@ Projet **EIP** (Epitech) — monorepo **Flutter** (client) + **NestJS** (API).
 - [Prérequis](#prérequis)
 - [Démarrage rapide](#démarrage-rapide)
 - [Configuration](#configuration)
+- [Notifications push Firebase](#notifications-push-firebase)
 - [Backend (API)](#backend-api)
 - [Application mobile](#application-mobile)
 - [API REST (aperçu)](#api-rest-aperçu)
@@ -136,6 +137,7 @@ Fichier : `backend/.env` (voir `backend/.env.example`).
 | `JWT_SECRET` | Secret de signature JWT | Générer avec `openssl rand -base64 32` |
 | `JWT_ACCESS_EXPIRATION` | Durée du token d’accès | `15m` |
 | `JWT_REFRESH_EXPIRATION` | Durée du refresh token | `30d` |
+| `FIREBASE_SERVICE_ACCOUNT` | JSON du compte de service Firebase Admin |
 | `BOOTSTRAP_ADMIN` | Créer un compte admin au démarrage | `true` / absent |
 | `BOOTSTRAP_ADMIN_EMAIL` | Email admin (si bootstrap actif) | `admin@example.com` |
 | `BOOTSTRAP_ADMIN_PASSWORD` | Mot de passe admin | *(à définir)* |
@@ -167,6 +169,75 @@ API_BASE_URL=http://10.0.2.2:3000
 # Appareil physique (même réseau Wi‑Fi)
 API_BASE_URL=http://192.168.1.42:3000
 ```
+
+## Notifications push Firebase
+
+Les notifications FCM nécessitent une configuration côté mobile et côté API.
+Le fichier `mobile/.env` contient uniquement l’URL de l’API : il ne suffit pas
+à configurer Firebase.
+
+### Configuration mobile
+
+Les fichiers suivants doivent être présents pour utiliser FCM sur Android :
+
+- `mobile/lib/firebase_options.dart`
+- `mobile/android/app/google-services.json`
+
+Chaque collaborateur doit avoir accès au projet Firebase `crazyreal`, puis
+exécuter depuis le dossier `mobile/` :
+
+```bash
+dart pub global activate flutterfire_cli
+npm install --global --prefix "$HOME/.local" firebase-tools
+export PATH="$PATH:$HOME/.pub-cache/bin:$HOME/.local/bin"
+firebase login
+flutterfire configure --project=crazyreal
+flutter clean
+flutter pub get
+```
+
+Si le projet Firebase n’est pas visible, il faut être ajouté au projet avec un
+rôle Firebase/Google Cloud suffisant. Les fichiers générés doivent correspondre
+au projet `crazyreal` et à l’application Android `com.example.mobile`.
+
+### Configuration backend
+
+Le backend utilise Firebase Admin pour envoyer les push. Un responsable du
+projet doit générer une clé dans **Firebase Console > Project settings >
+Service accounts > Generate new private key**, puis la transmettre via un
+canal sécurisé. Ne jamais committer cette clé.
+
+Dans `backend/.env`, ajouter le JSON complet sur une seule ligne :
+
+```env
+FIREBASE_SERVICE_ACCOUNT='{"type":"service_account","project_id":"crazyreal",...}'
+```
+
+Le fichier `backend/docker-compose.yml` charge automatiquement `backend/.env`.
+Après avoir modifié ce fichier, recréer le conteneur API :
+
+```bash
+cd backend
+docker compose up --build --force-recreate -d
+docker compose logs -f api
+```
+
+Le log ne doit pas contenir `FIREBASE_SERVICE_ACCOUNT is not configured`.
+
+### Vérification après installation
+
+```bash
+# Terminal 1
+cd backend
+docker compose up --build
+
+# Terminal 2
+cd mobile
+flutter run
+```
+
+Reconnecter l’utilisateur dans l’application après l’installation : son token
+FCM est alors enregistré automatiquement par l’API.
 
 ---
 

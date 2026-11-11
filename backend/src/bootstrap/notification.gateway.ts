@@ -11,13 +11,16 @@ import { ConfigService } from '@nestjs/config';
 import { JWT_CONFIG_KEYS } from '../auth/jwt.config';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from './push.service';
 
 @WebSocketGateway({
   namespace: '/notifications',
   cors: { origin: '*' },
 })
 @Injectable()
-export class NotificationGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   private reminderTimer?: NodeJS.Timeout;
   private readonly sentReminderKeys = new Set<string>();
 
@@ -25,6 +28,7 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly pushService: PushService,
   ) {}
 
   @WebSocketServer()
@@ -123,31 +127,55 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
     for (const challenge of challenges) {
       const durationHours =
         challenge.durationHours ?? (challenge.type === 'SPECIAL' ? 24 : 84);
-      const endsAt = challenge.endsAt ?? new Date(
-        challenge.date.getTime() + durationHours * 60 * 60 * 1000,
-      );
+      const endsAt =
+        challenge.endsAt ??
+        new Date(challenge.date.getTime() + durationHours * 60 * 60 * 1000);
       const remainingMs = endsAt.getTime() - now.getTime();
       if (remainingMs <= 0) continue;
 
-      for (const thresholdHours of [24, 1]) {
+      const thresholds = [24, 1];
+      for (const [index, thresholdHours] of thresholds.entries()) {
         const thresholdMs = thresholdHours * 60 * 60 * 1000;
-        if (remainingMs > thresholdMs || remainingMs <= thresholdMs - 120_000) {
+        const nextThresholdMs = thresholds[index + 1]
+          ? thresholds[index + 1] * 60 * 60 * 1000
+          : 0;
+        if (
+          remainingMs > thresholdMs ||
+          (nextThresholdMs > 0 && remainingMs <= nextThresholdMs)
+        ) {
           continue;
         }
 
         const key = `${challenge.id}:${thresholdHours}`;
         if (this.sentReminderKeys.has(key)) continue;
-        this.sentReminderKeys.add(key);
-
         const userIds = challenge.conversation
-          ? challenge.conversation.participants.map((participant) => participant.userId)
-          : [...this.userSockets.keys()];
+          ? challenge.conversation.participants.map(
+              (participant) => participant.userId,
+            )
+          : (await this.prisma.user.findMany({ select: { id: true } })).map(
+              (user) => user.id,
+            );
         await this.sendToUsers(userIds, 'challengeReminder', {
           challengeId: challenge.id,
           challengeTitle: challenge.title,
           hoursRemaining: thresholdHours,
           isGlobal: challenge.conversationId == null,
         });
+        const pushDelivered = await this.pushService.sendToUsers(
+          userIds,
+          'Défi bientôt terminé',
+          `${challenge.title} : plus que ${thresholdHours} h restantes`,
+          'challenges',
+          {
+            event: 'challengeReminder',
+            challengeId: String(challenge.id),
+            hoursRemaining: String(thresholdHours),
+            channelId: 'challenges',
+          },
+        );
+        if (pushDelivered || userIds.length === 0) {
+          this.sentReminderKeys.add(key);
+        }
       }
     }
   }

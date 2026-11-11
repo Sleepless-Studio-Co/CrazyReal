@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JWT_CONFIG_KEYS } from '../auth/jwt.config';
 import { PrismaModule } from '../prisma/prisma.module';
 import { NotificationGateway } from './notification.gateway';
+import { PushService } from './push.service';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { NotificationGateway } from './notification.gateway';
       inject: [ConfigService],
     }),
   ],
-  providers: [NotificationGateway],
-  exports: [NotificationGateway],
+  providers: [NotificationGateway, PushService],
+  exports: [NotificationGateway, PushService],
 })
 export class NotificationsModule {}

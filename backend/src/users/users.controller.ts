@@ -30,6 +30,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
 import { UpdatePrivacyDto } from './dto/update-privacy.dto';
 import { UpdateAvatarKeyDto } from './dto/update-avatar-key.dto';
+import { DeviceTokenDto } from './dto/device-token.dto';
 
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/jpeg',
@@ -49,6 +50,26 @@ const ALLOWED_AVATAR_EXTENSIONS = new Set([
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Post('device-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  registerDeviceToken(
+    @CurrentUser() user: ValidatedUser,
+    @Body() body: DeviceTokenDto,
+  ) {
+    return this.usersService.registerDeviceToken(user.userId, body);
+  }
+
+  @Delete('device-token')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  removeDeviceToken(
+    @CurrentUser() user: ValidatedUser,
+    @Body() body: Pick<DeviceTokenDto, 'token'>,
+  ) {
+    return this.usersService.removeDeviceToken(user.userId, body.token);
+  }
 
   // Must be declared before GET :id, otherwise "search" is parsed as an id.
   @Get('search')

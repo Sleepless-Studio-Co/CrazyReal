@@ -1,12 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
+import { PushService } from '../bootstrap/push.service';
 
 @Injectable()
 export class FriendsService {
   constructor(
     private prisma: PrismaService,
     private notificationGateway: NotificationGateway,
+    @Optional() private pushService?: PushService,
   ) {}
 
   // 1. Envoyer une demande d'ami via le pseudo
@@ -17,7 +25,7 @@ export class FriendsService {
     });
 
     if (!targetUser) {
-      throw new NotFoundException("Utilisateur introuvable avec ce pseudo.");
+      throw new NotFoundException('Utilisateur introuvable avec ce pseudo.');
     }
 
     const friendId = targetUser.id;
@@ -37,11 +45,13 @@ export class FriendsService {
     });
 
     if (existingRequest?.status === 'BLOCKED') {
-      throw new ForbiddenException("Impossible d'envoyer une demande à cet utilisateur.");
+      throw new ForbiddenException(
+        "Impossible d'envoyer une demande à cet utilisateur.",
+      );
     }
 
     if (existingRequest) {
-      throw new BadRequestException("Une demande ou une relation existe déjà.");
+      throw new BadRequestException('Une demande ou une relation existe déjà.');
     }
 
     // Étape C : Créer la demande
@@ -60,6 +70,13 @@ export class FriendsService {
     this.notificationGateway.sendToUser(friendId, 'friendRequestReceived', {
       requesterUsername: friendship.requester.username,
     });
+    await this.pushService?.sendToUsers(
+      [friendId],
+      "Demande d'ami",
+      `${friendship.requester.username} vous a envoyé une demande d\'ami`,
+      'friend_requests',
+      { event: 'friendRequestReceived', channelId: 'friend_requests' },
+    );
 
     return friendship;
   }
@@ -70,7 +87,7 @@ export class FriendsService {
     });
 
     if (!request || request.friendId !== userId) {
-      throw new NotFoundException("Demande introuvable ou non autorisée.");
+      throw new NotFoundException('Demande introuvable ou non autorisée.');
     }
 
     if (request.status !== 'PENDING') {
@@ -89,7 +106,7 @@ export class FriendsService {
     });
 
     if (!request || request.friendId !== userId) {
-      throw new NotFoundException("Demande introuvable ou non autorisée.");
+      throw new NotFoundException('Demande introuvable ou non autorisée.');
     }
 
     if (request.status !== 'PENDING') {
@@ -106,11 +123,11 @@ export class FriendsService {
     });
 
     if (!targetUser) {
-      throw new NotFoundException("Utilisateur introuvable avec ce pseudo.");
+      throw new NotFoundException('Utilisateur introuvable avec ce pseudo.');
     }
 
     if (currentUserId === targetUser.id) {
-      throw new BadRequestException("Tu ne peux pas te bloquer toi-même.");
+      throw new BadRequestException('Tu ne peux pas te bloquer toi-même.');
     }
 
     const existingRequest = await this.prisma.friendship.findFirst({
@@ -124,9 +141,13 @@ export class FriendsService {
 
     const blockedRelation = existingRequest
       ? await this.prisma.friendship.update({
-        where: { id: existingRequest.id },
-        data: { userId: currentUserId, friendId: targetUser.id, status: 'BLOCKED' },
-      })
+          where: { id: existingRequest.id },
+          data: {
+            userId: currentUserId,
+            friendId: targetUser.id,
+            status: 'BLOCKED',
+          },
+        })
       : await this.prisma.friendship.create({
           data: {
             userId: currentUserId,
@@ -201,7 +222,7 @@ export class FriendsService {
       },
       include: {
         requester: true,
-        receiver: true, 
+        receiver: true,
       },
     });
 
