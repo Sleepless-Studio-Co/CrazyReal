@@ -917,8 +917,7 @@
   "@topPeriodAll": { "description": "Filtre de période : sans limite" },
 
   "topPostsEmpty": "Aucun défi terminé n'a encore reçu de vote.",
-  "@topPostsEmpty": { "description": "Affiché quand la page des meilleurs défis est vide" }
-  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
+  "@topPostsEmpty": { "description": "Affiché quand la page des meilleurs défis est vide" },
 
   "map": "Carte",
 

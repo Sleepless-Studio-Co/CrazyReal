@@ -728,7 +728,7 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
                 ),
               ),
             const SizedBox(height: 8),
-            Text(l10n.adminIconLabel, style: GoogleFonts.karla(color: _inkColor)),
+            Text(l10n.adminIconLabel, style: GoogleFonts.karla(color: context.paper.ink)),
             const SizedBox(height: 4),
             Wrap(
               spacing: 6,

@@ -10,11 +10,8 @@ import 'package:latlong2/latlong.dart';
 import 'l10n/app_localizations.dart';
 import 'services/api_exception.dart';
 import 'services/feed_service.dart';
+import 'widgets/paper.dart';
 
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
-const Color _cardColor = Color(0xFFFFF7E6);
-const Color _accentColor = Color(0xFFB85C38);
 
 // Centre par défaut si la localisation est refusée.
 const LatLng _paris = LatLng(48.8566, 2.3522);
@@ -176,7 +173,7 @@ class _MapPageState extends State<MapPage> {
             Icon(
               Icons.location_on,
               size: 52,
-              color: live ? _accentColor : _inkMuted,
+              color: live ? context.paper.accent : context.paper.inkMuted,
               shadows: const [Shadow(blurRadius: 4, color: Colors.black38)],
             ),
             // Le trou de location_on est centré à ~19.5px du haut pour size 52.
@@ -192,7 +189,7 @@ class _MapPageState extends State<MapPage> {
                 child: Icon(
                   challengeIcon(challenge['icon']),
                   size: 16,
-                  color: live ? _accentColor : _inkMuted,
+                  color: live ? context.paper.accent : context.paper.inkMuted,
                 ),
               ),
             ),
@@ -203,7 +200,7 @@ class _MapPageState extends State<MapPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color: _inkColor,
+                    color: context.paper.ink,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.white, width: 1.5),
                   ),
@@ -257,8 +254,8 @@ class _MapPageState extends State<MapPage> {
                     point: _center,
                     radius: _radiusKm * 1000,
                     useRadiusInMeter: true,
-                    color: _accentColor.withValues(alpha: 0.06),
-                    borderColor: _accentColor.withValues(alpha: 0.5),
+                    color: context.paper.accent.withValues(alpha: 0.06),
+                    borderColor: context.paper.accent.withValues(alpha: 0.5),
                     borderStrokeWidth: 1.5,
                   ),
                 ],
@@ -299,7 +296,7 @@ class _MapPageState extends State<MapPage> {
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Card(
-                color: _cardColor,
+                color: context.paper.card,
                 elevation: 2,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -313,7 +310,7 @@ class _MapPageState extends State<MapPage> {
                             child: Text(
                               l10n.mapChallengesWithin(_challenges.length, _radiusKm),
                               style: GoogleFonts.karla(
-                                color: _inkColor,
+                                color: context.paper.ink,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -337,7 +334,7 @@ class _MapPageState extends State<MapPage> {
                                 child: ChoiceChip(
                                   label: Text('$km km'),
                                   selected: km == _radiusKm,
-                                  selectedColor: _accentColor.withValues(alpha: 0.3),
+                                  selectedColor: context.paper.accent.withValues(alpha: 0.3),
                                   visualDensity: VisualDensity.compact,
                                   onSelected: (_) => _setRadius(km),
                                 ),
@@ -356,7 +353,7 @@ class _MapPageState extends State<MapPage> {
       floatingActionButton: _myPosition == null
           ? null
           : FloatingActionButton(
-              backgroundColor: _accentColor,
+              backgroundColor: context.paper.accent,
               tooltip: l10n.mapRecenter,
               onPressed: () => _mapController.move(_center, _zoomFor(_radiusKm)),
               child: const Icon(Icons.my_location, color: Colors.white),
@@ -443,10 +440,10 @@ class _ChallengeDialogState extends State<_ChallengeDialog> {
     final distance = (_c['distanceKm'] as num?)?.toDouble() ?? 0;
 
     return AlertDialog(
-      backgroundColor: _cardColor,
+      backgroundColor: context.paper.card,
       title: Text(
         _c['title']?.toString() ?? '',
-        style: GoogleFonts.dmSerifDisplay(color: _inkColor, fontSize: 22),
+        style: GoogleFonts.dmSerifDisplay(color: context.paper.ink, fontSize: 22),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -456,30 +453,30 @@ class _ChallengeDialogState extends State<_ChallengeDialog> {
             avatar: Icon(
               challengeIcon(_c['icon']),
               size: 16,
-              color: live ? Colors.white : _accentColor,
+              color: live ? Colors.white : context.paper.accent,
             ),
             label: Text(live ? l10n.mapLive : l10n.mapUpcoming),
             backgroundColor:
-                live ? _accentColor : _accentColor.withValues(alpha: 0.15),
-            labelStyle: TextStyle(color: live ? Colors.white : _accentColor),
+                live ? context.paper.accent : context.paper.accent.withValues(alpha: 0.15),
+            labelStyle: TextStyle(color: live ? Colors.white : context.paper.accent),
             visualDensity: VisualDensity.compact,
           ),
           const SizedBox(height: 8),
           Text(
             _c['description']?.toString() ?? '',
-            style: GoogleFonts.karla(color: _inkColor, fontSize: 15),
+            style: GoogleFonts.karla(color: context.paper.ink, fontSize: 15),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              const Icon(Icons.timer_outlined, color: _accentColor, size: 20),
+              Icon(Icons.timer_outlined, color: context.paper.accent, size: 20),
               const SizedBox(width: 6),
               Text(
                 live
                     ? l10n.mapEndsIn(_format(_endsAt.difference(now)))
                     : l10n.mapStartsIn(_format(_startsAt.difference(now))),
                 style: GoogleFonts.karla(
-                  color: _inkColor,
+                  color: context.paper.ink,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -492,7 +489,7 @@ class _ChallengeDialogState extends State<_ChallengeDialog> {
             '${l10n.mapDistance(distance.toStringAsFixed(1))} · '
             '${l10n.mapParticipants((_c['participants'] as num?)?.toInt() ?? 0)} · '
             '${l10n.mapCompleted((_c['completed'] as num?)?.toInt() ?? 0)}',
-            style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+            style: GoogleFonts.karla(color: context.paper.inkMuted, fontSize: 13),
           ),
         ],
       ),
@@ -502,7 +499,7 @@ class _ChallengeDialogState extends State<_ChallengeDialog> {
           : [
               OutlinedButton(
                 onPressed: _saving ? null : _toggleRegistration,
-                style: OutlinedButton.styleFrom(foregroundColor: _accentColor),
+                style: OutlinedButton.styleFrom(foregroundColor: context.paper.accent),
                 child: Text(
                   registered
                       ? l10n.mapRegistered
@@ -512,7 +509,7 @@ class _ChallengeDialogState extends State<_ChallengeDialog> {
               if (live)
                 FilledButton.icon(
                   onPressed: widget.onSend,
-                  style: FilledButton.styleFrom(backgroundColor: _accentColor),
+                  style: FilledButton.styleFrom(backgroundColor: context.paper.accent),
                   icon: const Icon(Icons.photo_camera),
                   label: Text(l10n.mapSendChallenge),
                 ),

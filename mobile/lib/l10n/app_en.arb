@@ -917,8 +917,7 @@
   "@topPeriodAll": { "description": "Period filter: no limit" },
 
   "topPostsEmpty": "No completed challenge has been upvoted yet.",
-  "@topPostsEmpty": { "description": "Shown when the best challenges page is empty" }
-    "@deleteAccountConfirmHint": { "description": "Label of the deletion confirmation text field" },
+  "@topPostsEmpty": { "description": "Shown when the best challenges page is empty" },
 
   "map": "Map",
 
