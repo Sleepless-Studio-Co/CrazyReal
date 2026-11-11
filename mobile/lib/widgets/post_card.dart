@@ -199,21 +199,6 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: photoUrl.isEmpty
-                      ? null
-                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
-                  borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Icon(
-                      Icons.share_outlined,
-                      color: _inkMuted,
-                      size: 22,
-                    ),
-                  ),
-                ),
                 const SizedBox(width: 4),
                 InkWell(
                   onTap: widget.onUpvote,
