@@ -12,10 +12,8 @@ import '../utils/time_ago.dart';
 import 'feed_avatar.dart';
 import 'full_screen_photo_page.dart';
 import 'full_screen_video_page.dart';
-
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
-const Color _cardColor = Color(0xFFFFF7E6);
+import '../services/share_service.dart';
+import 'paper.dart';
 
 class PostCard extends StatefulWidget {
   const PostCard({
@@ -23,12 +21,18 @@ class PostCard extends StatefulWidget {
     required this.post,
     required this.unknownUserLabel,
     this.onUpvote,
+    this.linkAvatarToProfile = true,
     this.onReaction,
   });
 
   final FeedPost post;
   final String unknownUserLabel;
   final VoidCallback? onUpvote;
+
+  /// False on the profile's own post list, to avoid stacking the same profile.
+  final bool linkAvatarToProfile;
+  static final ShareService _shareService = ShareService();
+
   final Future<FeedPost> Function(String emoji)? onReaction;
 
   @override
@@ -37,6 +41,18 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   late FeedPost _post;
+
+  Future<void> _share(BuildContext context) async {
+    try {
+      final link = await PostCard._shareService.createShareLink(_post.id);
+      await SharePlus.instance.share(ShareParams(uri: Uri.parse(link)));
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible de créer le lien : $error')),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -65,12 +81,12 @@ class _PostCardState extends State<PostCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: context.paper.card,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0DFC2)),
-        boxShadow: const [
+        border: Border.all(color: context.paper.border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x1F2E1B0F),
+            color: context.paper.shadow,
             blurRadius: 18,
             offset: Offset(0, 10),
           ),
@@ -88,6 +104,7 @@ class _PostCardState extends State<PostCard> {
                   username: _post.user.username,
                   avatarUrl: _post.user.avatarUrl,
                   avatarKey: _post.user.avatarKey,
+                  userId: widget.linkAvatarToProfile ? _post.user.id : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -96,14 +113,14 @@ class _PostCardState extends State<PostCard> {
                     children: [
                       Text(
                         username,
-                        style: _valueStyle(),
+                        style: _valueStyle(context),
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (timeLabel != null) ...[
                         const SizedBox(height: 2),
                         Text(
                           timeLabel,
-                          style: _mutedStyle(fontSize: 12.5),
+                          style: _mutedStyle(context, fontSize: 12.5),
                         ),
                       ],
                     ],
@@ -114,7 +131,7 @@ class _PostCardState extends State<PostCard> {
                     alignment: Alignment.topRight,
                     child: Text(
                       challengeLabel,
-                      style: _labelStyle(),
+                      style: _labelStyle(context),
                       textAlign: TextAlign.right,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -157,7 +174,7 @@ class _PostCardState extends State<PostCard> {
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
                           return Container(
-                            color: const Color(0xFFEEDCC5),
+                            color: context.paper.placeholder,
                             child: const Center(
                               child: CircularProgressIndicator(),
                             ),
@@ -165,11 +182,11 @@ class _PostCardState extends State<PostCard> {
                         },
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            color: const Color(0xFFEEDCC5),
-                            child: const Center(
+                            color: context.paper.placeholder,
+                            child: Center(
                               child: Icon(
                                 Icons.broken_image_outlined,
-                                color: _inkMuted,
+                                color: context.paper.inkMuted,
                                 size: 42,
                               ),
                             ),
@@ -186,15 +203,13 @@ class _PostCardState extends State<PostCard> {
                 Expanded(child: _buildReactions(context)),
                 const SizedBox(width: 8),
                 InkWell(
-                  onTap: photoUrl.isEmpty
-                      ? null
-                      : () => SharePlus.instance.share(ShareParams(uri: Uri.parse(photoUrl))),
+                  onTap: photoUrl.isEmpty ? null : () => _share(context),
                   borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Icon(
                       Icons.share_outlined,
-                      color: _inkMuted,
+                      color: context.paper.inkMuted,
                       size: 22,
                     ),
                   ),
@@ -215,17 +230,17 @@ class _PostCardState extends State<PostCard> {
                               : Icons.favorite_border,
                           color: _post.hasUpvoted
                               ? const Color(0xFFE05252)
-                              : _inkMuted,
+                              : context.paper.inkMuted,
                           size: 22,
                         ),
                         if (_post.upvoteCount > 0) ...[
                           const SizedBox(width: 4),
                           Text(
                             '${_post.upvoteCount}',
-                            style: _labelStyle().copyWith(
+                            style: _labelStyle(context).copyWith(
                               color: _post.hasUpvoted
                                   ? const Color(0xFFE05252)
-                                  : _inkMuted,
+                                  : context.paper.inkMuted,
                             ),
                           ),
                         ],
@@ -250,7 +265,8 @@ class _PostCardState extends State<PostCard> {
         IconButton(
           onPressed:
               widget.onReaction == null ? null : () => _chooseReaction(context),
-          icon: const Icon(Icons.add_reaction_outlined, color: _inkMuted),
+          icon:
+              Icon(Icons.add_reaction_outlined, color: context.paper.inkMuted),
           tooltip: 'Ajouter une réaction',
           visualDensity: VisualDensity.compact,
         ),
@@ -264,14 +280,16 @@ class _PostCardState extends State<PostCard> {
               padding: const EdgeInsets.symmetric(horizontal: 3),
               child: Text(
                 '${reaction.emoji} ${reaction.count}',
-                style: _labelStyle().copyWith(
-                  color: reaction.reactedByMe ? _inkColor : _inkMuted,
+                style: _labelStyle(context).copyWith(
+                  color: reaction.reactedByMe
+                      ? context.paper.ink
+                      : context.paper.inkMuted,
                 ),
               ),
             ),
           ),
         ),
-        if (extraCount > 0) Text('+$extraCount', style: _labelStyle()),
+        if (extraCount > 0) Text('+$extraCount', style: _labelStyle(context)),
       ],
     );
   }
@@ -279,7 +297,7 @@ class _PostCardState extends State<PostCard> {
   Future<void> _chooseReaction(BuildContext context) async {
     final emoji = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFFF3D7B2),
+      backgroundColor: context.paper.card,
       isScrollControlled: true,
       builder: (context) => SafeArea(
         child: SizedBox(
@@ -288,28 +306,28 @@ class _PostCardState extends State<PostCard> {
             onEmojiSelected: (category, emoji) {
               Navigator.pop(context, emoji.emoji);
             },
-            config: const emoji_picker.Config(
+            config: emoji_picker.Config(
               height: double.infinity,
               checkPlatformCompatibility: true,
               emojiViewConfig: emoji_picker.EmojiViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
+                backgroundColor: context.paper.card,
                 columns: 8,
                 emojiSizeMax: 28,
               ),
               categoryViewConfig: emoji_picker.CategoryViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                indicatorColor: _inkColor,
-                iconColorSelected: _inkColor,
-                iconColor: _inkMuted,
+                backgroundColor: context.paper.card,
+                indicatorColor: context.paper.ink,
+                iconColorSelected: context.paper.ink,
+                iconColor: context.paper.inkMuted,
               ),
               bottomActionBarConfig: emoji_picker.BottomActionBarConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                buttonColor: Color(0xFFF3D7B2),
-                buttonIconColor: _inkMuted,
+                backgroundColor: context.paper.card,
+                buttonColor: context.paper.card,
+                buttonIconColor: context.paper.inkMuted,
               ),
               searchViewConfig: emoji_picker.SearchViewConfig(
-                backgroundColor: Color(0xFFF3D7B2),
-                buttonIconColor: _inkMuted,
+                backgroundColor: context.paper.card,
+                buttonIconColor: context.paper.inkMuted,
                 hintText: 'Rechercher un emoji',
               ),
             ),
@@ -331,26 +349,26 @@ class _PostCardState extends State<PostCard> {
     if (mounted) setState(() => _post = updated);
   }
 
-  TextStyle _labelStyle() {
+  TextStyle _labelStyle(BuildContext context) {
     return GoogleFonts.karla(
-      color: _inkMuted,
+      color: context.paper.inkMuted,
       fontSize: 12.5,
       letterSpacing: 0.2,
       fontWeight: FontWeight.w600,
     );
   }
 
-  TextStyle _valueStyle() {
+  TextStyle _valueStyle(BuildContext context) {
     return GoogleFonts.karla(
-      color: _inkColor,
+      color: context.paper.ink,
       fontSize: 16,
       fontWeight: FontWeight.w700,
     );
   }
 
-  TextStyle _mutedStyle({double fontSize = 14}) {
+  TextStyle _mutedStyle(BuildContext context, {double fontSize = 14}) {
     return GoogleFonts.karla(
-      color: _inkMuted,
+      color: context.paper.inkMuted,
       fontSize: fontSize,
     );
   }

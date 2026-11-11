@@ -877,26 +877,48 @@
   "adminLoadError": "Could not load challenges",
   "@adminLoadError": { "description": "Error shown when the challenge list fails to load" },
 
-  "deleteAccountConfirmWord": "DELETE",
-  "@deleteAccountConfirmWord": { "description": "Word the user must type to confirm account deletion" },
+  "viewProfile": "View {username}'s profile",
+  "@viewProfile": {"description": "Screen reader label for the tappable avatar", "placeholders": {"username": {"type": "String"}}},
 
-  "deleteAccountConfirmPrompt": "To confirm, type {word} below.",
-  "@deleteAccountConfirmPrompt": {
-    "description": "Prompt asking the user to type the confirmation word",
-    "placeholders": { "word": { "type": "String" } }
-  },
+  "profilePostsCount": "{count, plural, =0{challenges} =1{challenge} other{challenges}}",
+  "@profilePostsCount": {"description": "Label under the completed challenges count", "placeholders": {"count": {"type": "int"}}},
 
-  "newGroup": "New group",
-  "@newGroup": { "description": "Create a new group chat button" },
+  "profileFriendsCount": "{count, plural, =0{followers} =1{follower} other{followers}}",
+  "@profileFriendsCount": {"description": "Label under the followers (friends) count", "placeholders": {"count": {"type": "int"}}},
 
-  "acceptRequest": "Accept",
-  "@acceptRequest": { "description": "Accept friend request button" },
+  "profileNoPosts": "No challenges completed yet",
+  "@profileNoPosts": {"description": "Profile without posts"},
 
-  "messages": "Messages",
-  "@messages": { "description": "Messages / conversations screen title" },
+  "profilePrivateTitle": "This account is private",
+  "@profilePrivateTitle": {"description": "Locked private profile"},
 
-  "deleteAccountConfirmHint": "Confirmation word",
-  "@deleteAccountConfirmHint": { "description": "Label of the deletion confirmation text field" },
+  "profilePrivateMessage": "Become friends to see their challenges.",
+  "@profilePrivateMessage": {"description": "Private profile explanation"},
+
+  "profileLoadError": "Couldn't load the profile",
+  "@profileLoadError": {"description": "Profile load error"},
+
+  "profilePosts": "Challenges",
+  "@profilePosts": {"description": "Title of a profile's post list"},
+
+  "topPostsTitle": "Best challenges",
+  "@topPostsTitle": { "description": "Title of the page listing the most upvoted posts of completed challenges" },
+
+  "topPostsTooltip": "Best challenges",
+  "@topPostsTooltip": { "description": "Tooltip of the trophy button in the home app bar" },
+
+  "topPeriodWeek": "Week",
+  "@topPeriodWeek": { "description": "Period filter: last 7 days" },
+
+  "topPeriodMonth": "Month",
+  "@topPeriodMonth": { "description": "Period filter: last 30 days" },
+
+  "topPeriodAll": "All time",
+  "@topPeriodAll": { "description": "Period filter: no limit" },
+
+  "topPostsEmpty": "No completed challenge has been upvoted yet.",
+  "@topPostsEmpty": { "description": "Shown when the best challenges page is empty" }
+    "@deleteAccountConfirmHint": { "description": "Label of the deletion confirmation text field" },
 
   "map": "Map",
 
