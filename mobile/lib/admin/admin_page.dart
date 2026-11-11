@@ -6,12 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../map_page.dart' show challengeIcons;
 import '../services/admin_service.dart';
 import '../services/api_exception.dart';
-
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
-const Color _cardColor = Color(0xFFFFF7E6);
-const Color _accentColor = Color(0xFFB85C38);
-const Color _runningColor = Color(0xFF195A3B);
+import '../widgets/paper.dart';
 
 /// Page réservée aux comptes ADMIN : création et gestion des défis globaux.
 class AdminPage extends StatefulWidget {
@@ -100,7 +95,7 @@ class _AdminPageState extends State<AdminPage> {
     final result = await showModalBottomSheet<_ChallengeDraft>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: _cardColor,
+      backgroundColor: context.paper.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -196,22 +191,23 @@ class _AdminPageState extends State<AdminPage> {
       appBar: AppBar(
         title: Text(
           l10n.adminChallengesTitle,
-          style: GoogleFonts.dmSerifDisplay(color: _inkColor, fontSize: 22),
+          style: GoogleFonts.dmSerifDisplay(
+              color: context.paper.ink, fontSize: 22),
         ),
-        backgroundColor: const Color(0xFFF7EBD1),
+        backgroundColor: context.paper.bg,
         elevation: 0,
         actions: [
           IconButton(
             tooltip: l10n.adminImportFromFile,
             onPressed: _isLoading ? null : _importFromFile,
-            icon: const Icon(Icons.file_download_outlined, color: _inkColor),
+            icon: Icon(Icons.file_download_outlined, color: context.paper.ink),
           ),
         ],
       ),
       body: _buildBody(l10n),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(),
-        backgroundColor: _accentColor,
+        backgroundColor: paperAccentStrong,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: Text(l10n.adminNewChallenge),
@@ -233,13 +229,15 @@ class _AdminPageState extends State<AdminPage> {
             children: [
               Text(
                 l10n.adminLoadError,
-                style: GoogleFonts.karla(color: _inkColor, fontSize: 16),
+                style:
+                    GoogleFonts.karla(color: context.paper.ink, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 _loadError!,
-                style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+                style: GoogleFonts.karla(
+                    color: context.paper.inkMuted, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -259,13 +257,14 @@ class _AdminPageState extends State<AdminPage> {
         child: ListView(
           children: [
             const SizedBox(height: 120),
-            const Icon(Icons.emoji_events_outlined, size: 48, color: _inkMuted),
+            Icon(Icons.emoji_events_outlined,
+                size: 48, color: context.paper.inkMuted),
             const SizedBox(height: 12),
             Text(
               l10n.adminNoChallenges,
               textAlign: TextAlign.center,
               style: GoogleFonts.karla(
-                color: _inkColor,
+                color: context.paper.ink,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -274,7 +273,8 @@ class _AdminPageState extends State<AdminPage> {
             Text(
               l10n.adminNoChallengesHint,
               textAlign: TextAlign.center,
-              style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+              style: GoogleFonts.karla(
+                  color: context.paper.inkMuted, fontSize: 13),
             ),
           ],
         ),
@@ -329,20 +329,29 @@ class _ChallengeCard extends StatelessWidget {
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
     final (String statusLabel, Color statusColor) = switch (challenge) {
-      _ when !challenge.isActive => (l10n.adminStatusDisabled, _inkMuted),
-      _ when challenge.isRunning => (l10n.adminStatusRunning, _runningColor),
-      _ when challenge.isUpcoming => (l10n.adminStatusUpcoming, _accentColor),
-      _ => (l10n.adminStatusFinished, _inkMuted),
+      _ when !challenge.isActive => (
+          l10n.adminStatusDisabled,
+          context.paper.inkMuted
+        ),
+      _ when challenge.isRunning => (
+          l10n.adminStatusRunning,
+          context.paper.success
+        ),
+      _ when challenge.isUpcoming => (
+          l10n.adminStatusUpcoming,
+          context.paper.accent
+        ),
+      _ => (l10n.adminStatusFinished, context.paper.inkMuted),
     };
 
     return Container(
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: context.paper.card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0DFC2)),
-        boxShadow: const [
+        border: Border.all(color: context.paper.border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x1F2E1B0F),
+            color: context.paper.shadow,
             blurRadius: 18,
             offset: Offset(0, 10),
           ),
@@ -359,7 +368,7 @@ class _ChallengeCard extends StatelessWidget {
                 child: Text(
                   challenge.title,
                   style: GoogleFonts.karla(
-                    color: _inkColor,
+                    color: context.paper.ink,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
@@ -374,17 +383,20 @@ class _ChallengeCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               challenge.description,
-              style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+              style: GoogleFonts.karla(
+                  color: context.paper.inkMuted, fontSize: 13),
             ),
           ],
           const SizedBox(height: 10),
           Text(
             '${_typeLabel(l10n, challenge.type)} · ${dateFormat.format(challenge.date)}',
-            style: GoogleFonts.karla(color: _inkMuted, fontSize: 12),
+            style:
+                GoogleFonts.karla(color: context.paper.inkMuted, fontSize: 12),
           ),
           Text(
             '${l10n.adminEndsOn(dateFormat.format(challenge.endsAt))} · ${l10n.adminPostsCount(challenge.postCount)}',
-            style: GoogleFonts.karla(color: _inkMuted, fontSize: 12),
+            style:
+                GoogleFonts.karla(color: context.paper.inkMuted, fontSize: 12),
           ),
           Row(
             children: [
@@ -400,19 +412,20 @@ class _ChallengeCard extends StatelessWidget {
               else
                 Switch(
                   value: challenge.isActive,
-                  activeThumbColor: _accentColor,
+                  activeThumbColor: context.paper.accent,
                   onChanged: onToggleActive,
                 ),
               Expanded(
                 child: Text(
                   l10n.adminChallengeActiveLabel,
-                  style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+                  style: GoogleFonts.karla(
+                      color: context.paper.inkMuted, fontSize: 13),
                 ),
               ),
               IconButton(
                 tooltip: l10n.edit,
                 onPressed: busy ? null : onEdit,
-                icon: const Icon(Icons.edit_outlined, color: _accentColor),
+                icon: Icon(Icons.edit_outlined, color: context.paper.accent),
               ),
               IconButton(
                 tooltip: l10n.delete,
@@ -650,7 +663,8 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
           children: [
             Text(
               isEditing ? l10n.adminEditChallenge : l10n.adminNewChallenge,
-              style: GoogleFonts.dmSerifDisplay(color: _inkColor, fontSize: 22),
+              style: GoogleFonts.dmSerifDisplay(
+                  color: context.paper.ink, fontSize: 22),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -752,33 +766,38 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: _customDuration,
-              activeThumbColor: _accentColor,
+              activeThumbColor: context.paper.accent,
               title: Text(
                 l10n.adminCustomDuration,
-                style: GoogleFonts.karla(color: _inkColor, fontSize: 15),
+                style:
+                    GoogleFonts.karla(color: context.paper.ink, fontSize: 15),
               ),
               subtitle: Text(
                 _customDuration
                     ? l10n.adminCustomDurationHint
                     : l10n.adminDurationFromType,
-                style: GoogleFonts.karla(color: _inkMuted, fontSize: 12),
+                style: GoogleFonts.karla(
+                    color: context.paper.inkMuted, fontSize: 12),
               ),
               onChanged: (value) => setState(() => _customDuration = value),
             ),
             if (_customDuration)
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.timer_outlined, color: _accentColor),
+                leading:
+                    Icon(Icons.timer_outlined, color: context.paper.accent),
                 title: Text(
                   l10n.adminCustomEndDate,
-                  style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+                  style: GoogleFonts.karla(
+                      color: context.paper.inkMuted, fontSize: 13),
                 ),
                 subtitle: Text(
                   _customEndsAt == null
                       ? l10n.adminEndDateRequired
                       : dateFormat.format(_customEndsAt!),
                   style: GoogleFonts.karla(
-                    color: _durationError == null ? _inkColor : Colors.red,
+                    color:
+                        _durationError == null ? context.paper.ink : Colors.red,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
@@ -791,15 +810,16 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
             const SizedBox(height: 8),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.event, color: _accentColor),
+              leading: Icon(Icons.event, color: context.paper.accent),
               title: Text(
                 l10n.adminChallengeStartLabel,
-                style: GoogleFonts.karla(color: _inkMuted, fontSize: 13),
+                style: GoogleFonts.karla(
+                    color: context.paper.inkMuted, fontSize: 13),
               ),
               subtitle: Text(
                 dateFormat.format(_date),
                 style: GoogleFonts.karla(
-                  color: _inkColor,
+                  color: context.paper.ink,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
@@ -819,17 +839,18 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
                   ),
                 ),
               ),
-              style: GoogleFonts.karla(color: _inkMuted, fontSize: 12),
+              style: GoogleFonts.karla(
+                  color: context.paper.inkMuted, fontSize: 12),
             ),
             const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: _isActive,
-              activeThumbColor: _accentColor,
+              activeThumbColor: context.paper.accent,
               title: Text(
                 l10n.adminChallengeActiveLabel,
                 style: GoogleFonts.karla(
-                  color: _inkColor,
+                  color: context.paper.ink,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
@@ -848,7 +869,7 @@ class _ChallengeEditorSheetState extends State<_ChallengeEditorSheet> {
                 ElevatedButton(
                   onPressed: _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _accentColor,
+                    backgroundColor: paperAccentStrong,
                     foregroundColor: Colors.white,
                   ),
                   child: Text(l10n.save),

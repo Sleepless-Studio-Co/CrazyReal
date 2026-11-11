@@ -1292,6 +1292,90 @@ abstract class AppLocalizations {
   /// **'Could not load challenges'**
   String get adminLoadError;
 
+  /// Screen reader label for the tappable avatar
+  ///
+  /// In en, this message translates to:
+  /// **'View {username}\'s profile'**
+  String viewProfile(String username);
+
+  /// Label under the completed challenges count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{challenges} =1{challenge} other{challenges}}'**
+  String profilePostsCount(int count);
+
+  /// Label under the followers (friends) count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{followers} =1{follower} other{followers}}'**
+  String profileFriendsCount(int count);
+
+  /// Profile without posts
+  ///
+  /// In en, this message translates to:
+  /// **'No challenges completed yet'**
+  String get profileNoPosts;
+
+  /// Locked private profile
+  ///
+  /// In en, this message translates to:
+  /// **'This account is private'**
+  String get profilePrivateTitle;
+
+  /// Private profile explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Become friends to see their challenges.'**
+  String get profilePrivateMessage;
+
+  /// Profile load error
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the profile'**
+  String get profileLoadError;
+
+  /// Title of a profile's post list
+  ///
+  /// In en, this message translates to:
+  /// **'Challenges'**
+  String get profilePosts;
+
+  /// Title of the page listing the most upvoted posts of completed challenges
+  ///
+  /// In en, this message translates to:
+  /// **'Best challenges'**
+  String get topPostsTitle;
+
+  /// Tooltip of the trophy button in the home app bar
+  ///
+  /// In en, this message translates to:
+  /// **'Best challenges'**
+  String get topPostsTooltip;
+
+  /// Period filter: last 7 days
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get topPeriodWeek;
+
+  /// Period filter: last 30 days
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get topPeriodMonth;
+
+  /// Period filter: no limit
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get topPeriodAll;
+
+  /// Shown when the best challenges page is empty
+  ///
+  /// In en, this message translates to:
+  /// **'No completed challenge has been upvoted yet.'**
+  String get topPostsEmpty;
+
   /// No description provided for @map.
   ///
   /// In en, this message translates to:

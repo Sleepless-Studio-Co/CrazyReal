@@ -98,7 +98,9 @@ class _ChatListPageState extends State<ChatListPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        final message = e is ApiException ? e.message : 'Erreur lors du chargement des discussions';
+        final message = e is ApiException
+            ? e.message
+            : 'Erreur lors du chargement des discussions';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
@@ -106,7 +108,8 @@ class _ChatListPageState extends State<ChatListPage> {
     }
   }
 
-  Future<void> _openConversation(dynamic conv, String name, bool isGroup) async {
+  Future<void> _openConversation(
+      dynamic conv, String name, bool isGroup) async {
     final convId = conv['id'] as int;
     setState(() {
       _openConversationId = convId;
@@ -152,7 +155,9 @@ class _ChatListPageState extends State<ChatListPage> {
       _loadConversations();
     } catch (e) {
       if (mounted) {
-        final message = e is ApiException ? e.message : 'Erreur lors de la sortie du groupe';
+        final message = e is ApiException
+            ? e.message
+            : 'Erreur lors de la sortie du groupe';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
@@ -175,13 +180,14 @@ class _ChatListPageState extends State<ChatListPage> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: paperBg,
-      appBar: paperAppBar(title: l10n.messages),
+      backgroundColor: context.paper.bg,
+      appBar: paperAppBar(context, title: l10n.messages),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: paperAccent))
+          ? Center(
+              child: CircularProgressIndicator(color: context.paper.accent))
           : RefreshIndicator(
               onRefresh: _loadConversations,
-              color: paperAccent,
+              color: context.paper.accent,
               child: _conversations.isEmpty
                   ? const PaperEmptyState(
                       icon: Icons.forum_outlined,
@@ -215,8 +221,7 @@ class _ChatListPageState extends State<ChatListPage> {
                               preview ?? '${participants.length} membre(s)',
                           unread: unread,
                           onTap: () => _openConversation(conv, name, isGroup),
-                          onLeave:
-                              isGroup ? () => _leaveGroup(convId) : null,
+                          onLeave: isGroup ? () => _leaveGroup(convId) : null,
                         );
                       },
                     ),
@@ -226,7 +231,8 @@ class _ChatListPageState extends State<ChatListPage> {
         backgroundColor: paperAccentStrong,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.group_add_outlined),
-        label: Text(l10n.newGroup, style: paperValue(color: Colors.white)),
+        label: Text(l10n.newGroup,
+            style: paperValue(context, color: Colors.white)),
       ),
     );
   }
@@ -256,7 +262,7 @@ class _ConversationCard extends StatelessWidget {
     final hasUnread = unread > 0;
 
     return Container(
-      decoration: paperCardDecoration(),
+      decoration: paperCardDecoration(context),
       clipBehavior: Clip.antiAlias,
       child: Material(
         color: Colors.transparent,
@@ -266,25 +272,26 @@ class _ConversationCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                ExcludeSemantics(
-                  child: isGroup
-                      ? Container(
+                isGroup
+                    ? ExcludeSemantics(
+                        child: Container(
                           width: 48,
                           height: 48,
-                          decoration: const BoxDecoration(
-                            color: paperChip,
+                          decoration: BoxDecoration(
+                            color: context.paper.chip,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.groups_outlined,
-                              color: paperAccentStrong),
-                        )
-                      : FeedAvatar(
-                          username: other?['username']?.toString() ?? name,
-                          avatarUrl: other?['avatarUrl']?.toString(),
-                          avatarKey: other?['avatarKey']?.toString(),
-                          size: 48,
+                          child: Icon(Icons.groups_outlined,
+                              color: context.paper.accent),
                         ),
-                ),
+                      )
+                    : FeedAvatar(
+                        username: other?['username']?.toString() ?? name,
+                        avatarUrl: other?['avatarUrl']?.toString(),
+                        avatarKey: other?['avatarKey']?.toString(),
+                        size: 48,
+                        userId: other?['id'] as int?,
+                      ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: MergeSemantics(
@@ -293,7 +300,7 @@ class _ConversationCard extends StatelessWidget {
                       children: [
                         Text(
                           name,
-                          style: paperValue(fontSize: 16),
+                          style: paperValue(context, fontSize: 16),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -305,8 +312,9 @@ class _ConversationCard extends StatelessWidget {
                           // Unread threads are bolder *and* badged — colour is
                           // never the only signal.
                           style: hasUnread
-                              ? paperValue(fontSize: 13, color: paperInk)
-                              : paperMuted(),
+                              ? paperValue(context,
+                                  fontSize: 13, color: context.paper.ink)
+                              : paperMuted(context),
                         ),
                       ],
                     ),
@@ -330,7 +338,8 @@ class _ConversationCard extends StatelessWidget {
                         child: Text(
                           '$unread',
                           textAlign: TextAlign.center,
-                          style: paperValue(fontSize: 12, color: Colors.white),
+                          style: paperValue(context,
+                              fontSize: 12, color: Colors.white),
                         ),
                       ),
                     ),
@@ -339,7 +348,7 @@ class _ConversationCard extends StatelessWidget {
                 if (onLeave != null)
                   IconButton(
                     icon: const Icon(Icons.logout),
-                    color: paperDanger,
+                    color: context.paper.danger,
                     tooltip: 'Quitter le groupe $name',
                     onPressed: onLeave,
                   ),

@@ -667,6 +667,69 @@ class AppLocalizationsFr extends AppLocalizations {
   String get adminLoadError => 'Impossible de charger les défis';
 
   @override
+  String viewProfile(String username) {
+    return 'Voir le profil de $username';
+  }
+
+  @override
+  String profilePostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'défis',
+      one: 'défi',
+      zero: 'défi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'abonnés',
+      one: 'abonné',
+      zero: 'abonné',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profileNoPosts => 'Aucun défi réalisé pour le moment';
+
+  @override
+  String get profilePrivateTitle => 'Ce compte est privé';
+
+  @override
+  String get profilePrivateMessage =>
+      'Deviens ami avec cette personne pour voir ses défis.';
+
+  @override
+  String get profileLoadError => 'Impossible de charger le profil';
+
+  @override
+  String get profilePosts => 'Défis';
+
+  @override
+  String get topPostsTitle => 'Meilleurs défis';
+
+  @override
+  String get topPostsTooltip => 'Meilleurs défis';
+
+  @override
+  String get topPeriodWeek => 'Semaine';
+
+  @override
+  String get topPeriodMonth => 'Mois';
+
+  @override
+  String get topPeriodAll => 'Tout';
+
+  @override
+  String get topPostsEmpty => 'Aucun défi terminé n\'a encore reçu de vote.';
+
+  @override
   String get map => 'Carte';
 
   @override

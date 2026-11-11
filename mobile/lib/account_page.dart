@@ -10,11 +10,7 @@ import 'services/api_exception.dart';
 import 'setting_page.dart';
 import 'utils/media_url.dart';
 import 'widgets/feed_avatar.dart';
-
-const Color _inkColor = Color(0xFF3B2A21);
-const Color _inkMuted = Color(0xFF6A4A3B);
-const Color _cardColor = Color(0xFFFFF7E6);
-const Color _accentColor = Color(0xFFB85C38);
+import 'widgets/paper.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({
@@ -165,9 +161,8 @@ class _AccountPageState extends State<AccountPage> {
       final updatedUser = result['user'];
       if (!mounted) return;
       setState(() {
-        _isPrivate = updatedUser is Map
-            ? updatedUser['isPrivate'] == true
-            : value;
+        _isPrivate =
+            updatedUser is Map ? updatedUser['isPrivate'] == true : value;
         if (updatedUser is Map<String, dynamic>) {
           _user = updatedUser;
         }
@@ -334,9 +329,8 @@ class _AccountPageState extends State<AccountPage> {
     });
 
     try {
-      final filename = image.name.isNotEmpty
-          ? image.name
-          : image.path.split('/').last;
+      final filename =
+          image.name.isNotEmpty ? image.name : image.path.split('/').last;
       final result = await _authService.uploadAvatarImage(
         bytes: bytes,
         filename: filename.isEmpty ? 'avatar.jpg' : filename,
@@ -398,7 +392,7 @@ class _AccountPageState extends State<AccountPage> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      backgroundColor: _cardColor,
+      backgroundColor: context.paper.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -445,7 +439,8 @@ class _AccountPageState extends State<AccountPage> {
                     await _pickCustomAvatar();
                   },
                   leading: const Icon(Icons.photo_library_outlined),
-                  title: Text(l10n.chooseFromGallery, style: _valueStyle(context)),
+                  title:
+                      Text(l10n.chooseFromGallery, style: _valueStyle(context)),
                 ),
                 if (_avatarUrl != null)
                   ListTile(
@@ -453,7 +448,8 @@ class _AccountPageState extends State<AccountPage> {
                       Navigator.pop(sheetContext);
                       await _removeCustomAvatar();
                     },
-                    leading: const Icon(Icons.delete_outline, color: Colors.red),
+                    leading:
+                        const Icon(Icons.delete_outline, color: Colors.red),
                     title: Text(l10n.removePhoto, style: _valueStyle(context)),
                   ),
               ],
@@ -553,12 +549,12 @@ class _AccountPageState extends State<AccountPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFF0DFC2),
+              color: context.paper.border,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               _isPrivate ? Icons.lock_outline : Icons.public,
-              color: _accentColor,
+              color: context.paper.accent,
             ),
           ),
           const SizedBox(width: 14),
@@ -591,7 +587,7 @@ class _AccountPageState extends State<AccountPage> {
                 )
               : Switch(
                   value: _isPrivate,
-                  activeColor: _accentColor,
+                  activeColor: context.paper.accent,
                   onChanged: _togglePrivacy,
                 ),
         ],
@@ -603,9 +599,9 @@ class _AccountPageState extends State<AccountPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7E6),
+        color: context.paper.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _accentColor.withOpacity(0.4)),
+        border: Border.all(color: context.paper.accent.withOpacity(0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -613,7 +609,8 @@ class _AccountPageState extends State<AccountPage> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.mark_email_unread_outlined, color: _accentColor),
+              Icon(Icons.mark_email_unread_outlined,
+                  color: context.paper.accent),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -624,7 +621,7 @@ class _AccountPageState extends State<AccountPage> {
                       style: GoogleFonts.nunito(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: _inkColor,
+                        color: context.paper.ink,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -632,7 +629,7 @@ class _AccountPageState extends State<AccountPage> {
                       l10n.emailNotVerifiedMessage,
                       style: GoogleFonts.nunito(
                         fontSize: 13,
-                        color: _inkMuted,
+                        color: context.paper.inkMuted,
                       ),
                     ),
                   ],
@@ -645,8 +642,9 @@ class _AccountPageState extends State<AccountPage> {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed:
-                      _isResendingVerification ? null : _resendVerificationEmail,
+                  onPressed: _isResendingVerification
+                      ? null
+                      : _resendVerificationEmail,
                   icon: _isResendingVerification
                       ? const SizedBox(
                           width: 16,
@@ -659,7 +657,8 @@ class _AccountPageState extends State<AccountPage> {
                       : const Icon(Icons.send_outlined, size: 18),
                   label: Text(l10n.resendVerificationEmail),
                   style: FilledButton.styleFrom(
-                    backgroundColor: _accentColor,
+                    backgroundColor: paperAccentStrong,
+                    foregroundColor: Colors.white,
                   ),
                 ),
               ),
@@ -668,7 +667,8 @@ class _AccountPageState extends State<AccountPage> {
                 onPressed: _refreshProfile,
                 icon: const Icon(Icons.refresh, size: 18),
                 label: Text(l10n.refresh),
-                style: OutlinedButton.styleFrom(foregroundColor: _inkColor),
+                style: OutlinedButton.styleFrom(
+                    foregroundColor: context.paper.ink),
               ),
             ],
           ),
@@ -685,17 +685,14 @@ class _AccountPageState extends State<AccountPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFF2D9),
-            Color(0xFFF0D0A8),
-          ],
+          colors: [context.paper.heroStart, context.paper.heroEnd],
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x332E1B0F),
+            color: context.paper.shadow,
             blurRadius: 24,
             offset: Offset(0, 12),
           ),
@@ -750,9 +747,10 @@ class _AccountPageState extends State<AccountPage> {
                       icon: const Icon(Icons.edit_outlined, size: 18),
                       label: Text(l10n.edit),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: _inkColor,
-                        backgroundColor: Colors.white.withOpacity(0.7),
-                        side: const BorderSide(color: Color(0xFFDFC5A1)),
+                        foregroundColor: context.paper.ink,
+                        backgroundColor:
+                            context.paper.field.withValues(alpha: 0.7),
+                        side: BorderSide(color: context.paper.fieldBorder),
                         textStyle: _labelStyle(context),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -833,7 +831,7 @@ class _AccountPageState extends State<AccountPage> {
             child: ElevatedButton(
               onPressed: _isSaving ? null : _saveProfile,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _accentColor,
+                backgroundColor: paperAccentStrong,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -858,9 +856,9 @@ class _AccountPageState extends State<AccountPage> {
             child: OutlinedButton(
               onPressed: _isSaving ? null : _cancelEditing,
               style: OutlinedButton.styleFrom(
-                foregroundColor: _inkColor,
+                foregroundColor: context.paper.ink,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: Color(0xFFDFC5A1)),
+                side: BorderSide(color: context.paper.fieldBorder),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -883,7 +881,7 @@ class _AccountPageState extends State<AccountPage> {
           icon: const Icon(Icons.logout),
           label: Text(l10n.logout),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFB54132),
+            backgroundColor: paperDanger,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
@@ -900,12 +898,12 @@ class _AccountPageState extends State<AccountPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: context.paper.card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFF0DFC2)),
-        boxShadow: const [
+        border: Border.all(color: context.paper.border),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x1F2E1B0F),
+            color: context.paper.shadow,
             blurRadius: 18,
             offset: Offset(0, 10),
           ),
@@ -914,7 +912,6 @@ class _AccountPageState extends State<AccountPage> {
       child: child,
     );
   }
-
 
   Widget _buildAvatar({double size = 96, bool showBadge = false}) {
     final option = _resolveAvatarOption();
@@ -1053,10 +1050,11 @@ class _AccountPageState extends State<AccountPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? context.paper.field : Colors.transparent,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? _accentColor : const Color(0xFFE0CBA7),
+            color:
+                isSelected ? context.paper.accent : context.paper.fieldBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -1075,7 +1073,7 @@ class _AccountPageState extends State<AccountPage> {
 
   TextStyle _titleStyle(BuildContext context) {
     return GoogleFonts.dmSerifDisplay(
-      color: _inkColor,
+      color: context.paper.ink,
       fontSize: 26,
       letterSpacing: 0.2,
     );
@@ -1083,7 +1081,7 @@ class _AccountPageState extends State<AccountPage> {
 
   TextStyle _labelStyle(BuildContext context) {
     return GoogleFonts.karla(
-      color: _inkMuted,
+      color: context.paper.inkMuted,
       fontSize: 13,
       letterSpacing: 0.2,
       fontWeight: FontWeight.w600,
@@ -1092,7 +1090,7 @@ class _AccountPageState extends State<AccountPage> {
 
   TextStyle _valueStyle(BuildContext context) {
     return GoogleFonts.karla(
-      color: _inkColor,
+      color: context.paper.ink,
       fontSize: 16,
       fontWeight: FontWeight.w700,
     );
@@ -1100,7 +1098,7 @@ class _AccountPageState extends State<AccountPage> {
 
   TextStyle _mutedStyle(BuildContext context) {
     return GoogleFonts.karla(
-      color: _inkMuted,
+      color: context.paper.inkMuted,
       fontSize: 14,
     );
   }
@@ -1110,18 +1108,18 @@ class _AccountPageState extends State<AccountPage> {
       labelText: label,
       labelStyle: _labelStyle(context),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: context.paper.field,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
+        borderSide: BorderSide(color: context.paper.fieldBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: _accentColor, width: 1.5),
+        borderSide: BorderSide(color: context.paper.accent, width: 1.5),
       ),
     );
   }
