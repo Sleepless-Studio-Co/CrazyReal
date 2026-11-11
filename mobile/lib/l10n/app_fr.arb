@@ -928,5 +928,23 @@
   "@streakStartHint": {"description": "État vide de la carte de série"},
 
   "streakRestartHint": "Ta série est terminée — poste sur le prochain défi pour repartir.",
-  "@streakRestartHint": {"description": "Affiché après une série cassée"}
+  "@streakRestartHint": {"description": "Affiché après une série cassée"},
+
+  "topPostsTitle": "Meilleurs défis",
+  "@topPostsTitle": { "description": "Titre de la page des posts les plus upvotés des défis terminés" },
+
+  "topPostsTooltip": "Meilleurs défis",
+  "@topPostsTooltip": { "description": "Tooltip du bouton trophée de l'accueil" },
+
+  "topPeriodWeek": "Semaine",
+  "@topPeriodWeek": { "description": "Filtre de période : 7 derniers jours" },
+
+  "topPeriodMonth": "Mois",
+  "@topPeriodMonth": { "description": "Filtre de période : 30 derniers jours" },
+
+  "topPeriodAll": "Tout",
+  "@topPeriodAll": { "description": "Filtre de période : sans limite" },
+
+  "topPostsEmpty": "Aucun défi terminé n'a encore reçu de vote.",
+  "@topPostsEmpty": { "description": "Affiché quand la page des meilleurs défis est vide" }
 }

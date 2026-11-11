@@ -733,4 +733,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get streakRestartHint =>
       'Your streak ended — post in the next challenge to start again.';
+
+  @override
+  String get topPostsTitle => 'Best challenges';
+
+  @override
+  String get topPostsTooltip => 'Best challenges';
+
+  @override
+  String get topPeriodWeek => 'Week';
+
+  @override
+  String get topPeriodMonth => 'Month';
+
+  @override
+  String get topPeriodAll => 'All time';
+
+  @override
+  String get topPostsEmpty => 'No completed challenge has been upvoted yet.';
 }

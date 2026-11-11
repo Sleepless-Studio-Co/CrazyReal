@@ -928,5 +928,23 @@
   "@streakStartHint": {"description": "Empty state of the streak card"},
 
   "streakRestartHint": "Your streak ended — post in the next challenge to start again.",
-  "@streakRestartHint": {"description": "Shown after a streak has been broken"}
+  "@streakRestartHint": {"description": "Shown after a streak has been broken"},
+
+  "topPostsTitle": "Best challenges",
+  "@topPostsTitle": { "description": "Title of the page listing the most upvoted posts of completed challenges" },
+
+  "topPostsTooltip": "Best challenges",
+  "@topPostsTooltip": { "description": "Tooltip of the trophy button in the home app bar" },
+
+  "topPeriodWeek": "Week",
+  "@topPeriodWeek": { "description": "Period filter: last 7 days" },
+
+  "topPeriodMonth": "Month",
+  "@topPeriodMonth": { "description": "Period filter: last 30 days" },
+
+  "topPeriodAll": "All time",
+  "@topPeriodAll": { "description": "Period filter: no limit" },
+
+  "topPostsEmpty": "No completed challenge has been upvoted yet.",
+  "@topPostsEmpty": { "description": "Shown when the best challenges page is empty" }
 }

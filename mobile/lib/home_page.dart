@@ -8,6 +8,7 @@ import 'l10n/app_localizations.dart';
 import 'models/feed_post.dart';
 import 'services/api_exception.dart';
 import 'services/feed_service.dart';
+import 'top_posts_page.dart';
 import 'utils/media_url.dart';
 import 'widgets/post_card.dart';
 import 'widgets/post_card_skeleton.dart';
@@ -382,6 +383,16 @@ class HomePageState extends State<HomePage> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.emoji_events_outlined, color: context.paper.ink),
+            tooltip: l10n.topPostsTooltip,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    TopPostsPage(onUnauthorized: widget.onUnauthorized),
+              ),
+            ),
+          ),
           IconButton(
             onPressed: _isSubmittingIdea ? null : () => _openIdeaBox(l10n),
             tooltip: l10n.challengeIdeaOpen,
