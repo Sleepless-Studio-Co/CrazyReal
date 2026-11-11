@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'admin/admin_page.dart';
 import 'admin/challenge_ideas_page.dart';
 import 'auth/auth_service.dart';
+import 'blocked_users_page.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
 import 'theme_notifier.dart';
@@ -73,6 +74,12 @@ class _SettingPageState extends State<SettingPage> {
           onUnauthorized: widget.onUnauthorized,
         ),
       ),
+    );
+  }
+
+  void _openBlockedUsers() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const BlockedUsersPage()),
     );
   }
 
@@ -171,13 +178,6 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  void _showComingSoon() {
-    final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.comingSoon)),
-    );
-  }
-
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -242,7 +242,7 @@ class _SettingPageState extends State<SettingPage> {
             _NavTile(
               icon: Icons.block,
               title: l10n.blockedUsers,
-              onTap: _showComingSoon,
+              onTap: _openBlockedUsers,
             ),
           ]),
           const SizedBox(height: 16),

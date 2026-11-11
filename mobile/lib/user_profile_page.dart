@@ -4,6 +4,7 @@ import 'l10n/app_localizations.dart';
 import 'models/feed_post.dart';
 import 'services/api_exception.dart';
 import 'services/feed_service.dart';
+import 'services/friend_service.dart';
 import 'utils/media_url.dart';
 import 'widgets/feed_avatar.dart';
 import 'widgets/paper.dart';
@@ -28,6 +29,7 @@ class UserProfilePage extends StatefulWidget {
 
 class _UserProfilePageState extends State<UserProfilePage> {
   final FeedService _feedService = FeedService();
+  final FriendService _friendService = FriendService();
   UserProfile? _profile;
   String? _error;
 
@@ -60,7 +62,35 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     return Scaffold(
       backgroundColor: context.paper.bg,
-      appBar: paperAppBar(context, title: profile?.user.username ?? ''),
+      appBar: paperAppBar(
+        context,
+        title: profile?.user.username ?? '',
+        actions: profile == null || profile.isSelf
+            ? null
+            : [
+                PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value != 'block') return;
+                    try {
+                      await _friendService.blockUser(profile.user.username);
+                      if (mounted) Navigator.of(context).pop();
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      }
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'block',
+                      child: Text(l10n.blockUser),
+                    ),
+                  ],
+                ),
+              ],
+      ),
       body: profile == null
           ? (_error == null
               ? Center(

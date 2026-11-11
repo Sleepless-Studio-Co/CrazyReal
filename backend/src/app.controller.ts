@@ -74,6 +74,21 @@ export class AppController {
     );
   }
 
+  private async getBlockedUserIds(userId: number): Promise<number[]> {
+    const blocked = (await this.prisma.friendship.findMany({
+      where: {
+        status: 'BLOCKED',
+        OR: [{ userId }, { friendId: userId }],
+      },
+    })) ?? [];
+
+    return blocked
+      .filter((relation) => relation.status === 'BLOCKED')
+      .map((relation) =>
+      relation.userId === userId ? relation.friendId : relation.userId,
+      );
+  }
+
   private isChallengeActiveNow(
     challenge: {
       date: Date;
@@ -546,7 +561,10 @@ export class AppController {
     @Query('challengeId') challengeIdRaw?: string,
     @Query('scope') scope?: string,
   ) {
-    const friendIds = await this.getAcceptedFriendIds(user.userId);
+    const [friendIds, blockedUserIds] = await Promise.all([
+      this.getAcceptedFriendIds(user.userId),
+      this.getBlockedUserIds(user.userId),
+    ]);
     const feedUserIds = [...new Set([...friendIds, user.userId])];
 
     const now = new Date();
@@ -595,12 +613,25 @@ export class AppController {
       challengeIds = [challengeId];
     }
 
-    const posts = await this.prisma.post.findMany({
-      where: {
-        OR: [
+    const authorFilters = blockedUserIds.length === 0
+      ? [
           { userId: { in: [...new Set([...friendIds, user.userId])] } },
           { user: { isPrivate: false } },
-        ],
+        ]
+      : [
+          {
+            userId: {
+              in: [...new Set([...friendIds, user.userId])].filter(
+                (id) => !blockedUserIds.includes(id),
+              ),
+            },
+          },
+          { user: { isPrivate: false, id: { notIn: blockedUserIds } } },
+        ];
+
+    const posts = await this.prisma.post.findMany({
+      where: {
+        OR: authorFilters,
         challengeId: { in: challengeIds },
       },
       orderBy: {
@@ -647,15 +678,31 @@ export class AppController {
       .filter((challenge) => !this.isChallengeActiveNow(challenge, now))
       .map((challenge) => challenge.id);
 
-    const friendIds = await this.getAcceptedFriendIds(user.userId);
+    const [friendIds, blockedUserIds] = await Promise.all([
+      this.getAcceptedFriendIds(user.userId),
+      this.getBlockedUserIds(user.userId),
+    ]);
+
+    const authorFilters = blockedUserIds.length === 0
+      ? [
+          { userId: { in: [...new Set([...friendIds, user.userId])] } },
+          { user: { isPrivate: false } },
+        ]
+      : [
+          {
+            userId: {
+              in: [...new Set([...friendIds, user.userId])].filter(
+                (id) => !blockedUserIds.includes(id),
+              ),
+            },
+          },
+          { user: { isPrivate: false, id: { notIn: blockedUserIds } } },
+        ];
 
     const posts = await this.prisma.post.findMany({
       where: {
         // Même règle de visibilité que le feed : publics, amis et soi-même.
-        OR: [
-          { userId: { in: [...new Set([...friendIds, user.userId])] } },
-          { user: { isPrivate: false } },
-        ],
+        OR: authorFilters,
         challengeId: { in: completedChallengeIds },
         upVotes: { some: {} },
         ...(since ? { createdAt: { gte: since } } : {}),

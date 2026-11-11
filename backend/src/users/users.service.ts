@@ -160,7 +160,7 @@ export class UsersService {
 
   async searchByUsername(query: string, requesterId: number) {
     try {
-      return this.prisma.user.findMany({
+      const users = await this.prisma.user.findMany({
         where: {
           username: { contains: query, mode: 'insensitive' },
           NOT: { id: requesterId },
@@ -175,6 +175,22 @@ export class UsersService {
         orderBy: { username: 'asc' },
         take: 20,
       });
+
+      const visibleUsers: typeof users = [];
+      for (const user of users) {
+        const blockedCount = await this.prisma.friendship.count({
+          where: {
+            status: 'BLOCKED',
+            OR: [
+              { userId: requesterId, friendId: user.id },
+              { userId: user.id, friendId: requesterId },
+            ],
+          },
+        });
+        if (blockedCount === 0) visibleUsers.push(user);
+      }
+
+      return visibleUsers;
     } catch (error) {
       this.handlePrismaError(error);
     }
@@ -294,6 +310,32 @@ export class UsersService {
             ],
           },
         })) > 0;
+
+      const isBlocked =
+        !isFriend &&
+        (await this.prisma.friendship.count({
+          where: {
+            status: 'BLOCKED',
+            OR: [
+              { userId: requesterId, friendId: targetId },
+              { userId: targetId, friendId: requesterId },
+            ],
+          },
+        })) > 0;
+
+      if (isBlocked) {
+        return {
+          id: target.id,
+          username: target.username,
+          avatarUrl: target.avatarUrl,
+          avatarKey: target.avatarKey,
+          isPrivate: true,
+          isFriend: false,
+          isSelf: false,
+          friendCount: 0,
+          posts: [],
+        };
+      }
       // ponytail: "abonnés" = amis acceptés, the app has no follow model.
       const friendCount = await this.prisma.friendship.count({
         where: {

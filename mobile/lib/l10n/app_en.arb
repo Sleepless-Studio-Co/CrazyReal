@@ -686,6 +686,18 @@
   "blockedUsers": "Blocked users",
   "@blockedUsers": { "description": "Blocked users setting tile" },
 
+  "blockUser": "Block user",
+  "@blockUser": { "description": "Profile action to block a user" },
+
+  "unblock": "Unblock",
+  "@unblock": { "description": "Button to unblock a user" },
+
+  "noBlockedUsers": "You have not blocked anyone.",
+  "@noBlockedUsers": { "description": "Empty blocked users list" },
+
+  "userUnblocked": "User unblocked.",
+  "@userUnblocked": { "description": "Confirmation after unblocking a user" },
+
   "permissions": "Permissions",
   "@permissions": { "description": "Permissions settings section header" },
 

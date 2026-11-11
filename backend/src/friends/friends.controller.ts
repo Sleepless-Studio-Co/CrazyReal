@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Get, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Delete, Param, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { FriendsService } from './friends.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -49,5 +49,18 @@ export class FriendsController {
   @Get('requests')
   getPendingRequests(@CurrentUser() user: ValidatedUser) {
     return this.friendsService.getPendingRequests(user.userId);
+  }
+
+  @Get('blocked')
+  getBlockedUsers(@CurrentUser() user: ValidatedUser) {
+    return this.friendsService.getBlockedUsers(user.userId);
+  }
+
+  @Delete('blocked/:userId')
+  unblockUser(
+    @CurrentUser() user: ValidatedUser,
+    @Param('userId', ParseIntPipe) blockedUserId: number,
+  ) {
+    return this.friendsService.unblockUser(user.userId, blockedUserId);
   }
 }

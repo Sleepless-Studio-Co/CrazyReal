@@ -122,20 +122,75 @@ export class FriendsService {
       },
     });
 
-    if (existingRequest) {
-      return this.prisma.friendship.update({
+    const blockedRelation = existingRequest
+      ? await this.prisma.friendship.update({
         where: { id: existingRequest.id },
         data: { userId: currentUserId, friendId: targetUser.id, status: 'BLOCKED' },
-      });
-    }
+      })
+      : await this.prisma.friendship.create({
+          data: {
+            userId: currentUserId,
+            friendId: targetUser.id,
+            status: 'BLOCKED',
+          },
+        });
 
-    return this.prisma.friendship.create({
-      data: {
-        userId: currentUserId,
-        friendId: targetUser.id,
-        status: 'BLOCKED',
+    await this.leaveSharedGroups(currentUserId, targetUser.id);
+    return blockedRelation;
+  }
+
+  private async leaveSharedGroups(userId: number, blockedUserId: number) {
+    const sharedGroups = await this.prisma.conversation.findMany({
+      where: {
+        isGroup: true,
+        AND: [
+          { participants: { some: { userId } } },
+          { participants: { some: { userId: blockedUserId } } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (sharedGroups.length === 0) return;
+
+    await this.prisma.participant.deleteMany({
+      where: {
+        conversationId: { in: sharedGroups.map((group) => group.id) },
+        userId,
       },
     });
+  }
+
+  async getBlockedUsers(userId: number) {
+    const blocked = await this.prisma.friendship.findMany({
+      where: { userId, status: 'BLOCKED' },
+      include: {
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+            avatarKey: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return blocked.map((relation) => relation.receiver);
+  }
+
+  async unblockUser(userId: number, blockedUserId: number) {
+    const relation = await this.prisma.friendship.findFirst({
+      where: { userId, friendId: blockedUserId, status: 'BLOCKED' },
+    });
+
+    if (!relation) {
+      throw new NotFoundException("Cet utilisateur n'est pas bloqué.");
+    }
+
+    await this.prisma.friendship.delete({ where: { id: relation.id } });
+    return { success: true };
   }
 
   async getFriends(userId: number) {

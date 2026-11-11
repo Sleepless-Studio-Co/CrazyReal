@@ -436,6 +436,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get blockedUsers => 'Utilisateurs bloqués';
 
   @override
+  String get blockUser => 'Bloquer l\'utilisateur';
+
+  @override
+  String get unblock => 'Débloquer';
+
+  @override
+  String get noBlockedUsers => 'Tu n\'as bloqué personne.';
+
+  @override
+  String get userUnblocked => 'Utilisateur débloqué.';
+
+  @override
   String get permissions => 'Autorisations';
 
   @override

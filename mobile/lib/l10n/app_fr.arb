@@ -686,6 +686,18 @@
   "blockedUsers": "Utilisateurs bloqués",
   "@blockedUsers": { "description": "Tuile utilisateurs bloqués" },
 
+  "blockUser": "Bloquer l'utilisateur",
+  "@blockUser": { "description": "Action du profil pour bloquer un utilisateur" },
+
+  "unblock": "Débloquer",
+  "@unblock": { "description": "Bouton pour débloquer un utilisateur" },
+
+  "noBlockedUsers": "Tu n'as bloqué personne.",
+  "@noBlockedUsers": { "description": "Liste des utilisateurs bloqués vide" },
+
+  "userUnblocked": "Utilisateur débloqué.",
+  "@userUnblocked": { "description": "Confirmation après un déblocage" },
+
   "permissions": "Autorisations",
   "@permissions": { "description": "En-tête de section autorisations" },
 

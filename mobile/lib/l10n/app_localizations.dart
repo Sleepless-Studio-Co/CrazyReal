@@ -890,6 +890,30 @@ abstract class AppLocalizations {
   /// **'Blocked users'**
   String get blockedUsers;
 
+  /// Profile action to block a user
+  ///
+  /// In en, this message translates to:
+  /// **'Block user'**
+  String get blockUser;
+
+  /// Button to unblock a user
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock'**
+  String get unblock;
+
+  /// Empty blocked users list
+  ///
+  /// In en, this message translates to:
+  /// **'You have not blocked anyone.'**
+  String get noBlockedUsers;
+
+  /// Confirmation after unblocking a user
+  ///
+  /// In en, this message translates to:
+  /// **'User unblocked.'**
+  String get userUnblocked;
+
   /// Permissions settings section header
   ///
   /// In en, this message translates to:
