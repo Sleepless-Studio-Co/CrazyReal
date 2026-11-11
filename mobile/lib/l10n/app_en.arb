@@ -135,6 +135,11 @@
     "description": "Label for base avatar options"
   },
 
+  "useLetterAvatar": "Use my letter",
+  "@useLetterAvatar": {
+    "description": "Reset the profile photo to the default letter avatar"
+  },
+
   "chooseFromGallery": "Choose from gallery",
   "@chooseFromGallery": {
     "description": "Action to pick a custom photo"
@@ -899,5 +904,29 @@
   "@profileLoadError": {"description": "Profile load error"},
 
   "profilePosts": "Challenges",
-  "@profilePosts": {"description": "Title of a profile's post list"}
+  "@profilePosts": {"description": "Title of a profile's post list"},
+
+  "streakCurrent": "Current streak",
+  "@streakCurrent": {"description": "Label above the streak counter"},
+
+  "streakInARow": "challenges in a row",
+  "@streakInARow": {"description": "Unit shown next to the streak counter"},
+
+  "streakBest": "Best",
+  "@streakBest": {"description": "Label of the best streak record"},
+
+  "streakAtRisk": "Streak at risk — post before the challenge ends!",
+  "@streakAtRisk": {"description": "Warning shown during the grace period of an active streak"},
+
+  "streakKeepGoing": "Keep posting in the current challenge to grow your streak.",
+  "@streakKeepGoing": {"description": "Encouragement when the current challenge is answered"},
+
+  "streakNoChallenge": "No challenge running right now — your streak is safe until the next one.",
+  "@streakNoChallenge": {"description": "Shown when a streak exists but no global challenge is currently open"},
+
+  "streakStartHint": "Post in a global challenge to start your streak.",
+  "@streakStartHint": {"description": "Empty state of the streak card"},
+
+  "streakRestartHint": "Your streak ended — post in the next challenge to start again.",
+  "@streakRestartHint": {"description": "Shown after a streak has been broken"}
 }

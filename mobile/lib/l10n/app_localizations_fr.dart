@@ -92,6 +92,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get baseAvatars => 'Avatars de base';
 
   @override
+  String get useLetterAvatar => 'Utiliser ma lettre';
+
+  @override
   String get chooseFromGallery => 'Choisir depuis la galerie';
 
   @override
@@ -710,4 +713,32 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get profilePosts => 'Défis';
+
+  @override
+  String get streakCurrent => 'Série en cours';
+
+  @override
+  String get streakInARow => 'défis d\'affilée';
+
+  @override
+  String get streakBest => 'Record';
+
+  @override
+  String get streakAtRisk => 'Série en jeu — poste avant la fin du défi !';
+
+  @override
+  String get streakKeepGoing =>
+      'Continue sur le défi en cours pour faire grandir ta série.';
+
+  @override
+  String get streakNoChallenge =>
+      'Aucun défi en cours — ta série est en sécurité jusqu\'au prochain.';
+
+  @override
+  String get streakStartHint =>
+      'Poste sur un défi global pour lancer ta série.';
+
+  @override
+  String get streakRestartHint =>
+      'Ta série est terminée — poste sur le prochain défi pour repartir.';
 }

@@ -61,8 +61,18 @@ void main() {
   ];
 
   FakeApi api() => FakeApi({
+        'GET /users/1': (_) => json(profileJson(
+            id: 1,
+            username: 'alice',
+            friendCount: 3,
+            posts: posts,
+            streak: streakJson(current: 3, best: 5))),
         'GET /users/2': (_) => json(profileJson(
-            friendCount: 12, isPrivate: true, isFriend: true, posts: posts)),
+            friendCount: 12,
+            isPrivate: true,
+            isFriend: true,
+            posts: posts,
+            streak: streakJson(current: 3, best: 5))),
         'GET /users/3': (_) => json(profileJson(
             id: 3, username: 'carol', isPrivate: true, friendCount: 4)),
         'GET /users/4': (_) => json(profileJson(id: 4, username: 'dan')),
@@ -206,7 +216,7 @@ void main() {
   audit('Settings', SettingPage(onLoggedOut: () {}, onUnauthorized: () {}),
       shows: find.text('Administration'));
   audit('Account', AccountPage(onLoggedOut: () {}, onUnauthorized: () {}),
-      shows: find.text('alice@example.com'));
+      shows: find.text('alice'));
   audit('Admin', AdminPage(onUnauthorized: () {}),
       shows: find.text('Défi global'));
   audit('Login', const LoginPage(), shows: find.byType(TextField));

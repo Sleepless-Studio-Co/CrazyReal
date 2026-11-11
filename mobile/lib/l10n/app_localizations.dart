@@ -260,6 +260,12 @@ abstract class AppLocalizations {
   /// **'Base avatars'**
   String get baseAvatars;
 
+  /// Reset the profile photo to the default letter avatar
+  ///
+  /// In en, this message translates to:
+  /// **'Use my letter'**
+  String get useLetterAvatar;
+
   /// Action to pick a custom photo
   ///
   /// In en, this message translates to:
@@ -1339,6 +1345,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Challenges'**
   String get profilePosts;
+
+  /// Label above the streak counter
+  ///
+  /// In en, this message translates to:
+  /// **'Current streak'**
+  String get streakCurrent;
+
+  /// Unit shown next to the streak counter
+  ///
+  /// In en, this message translates to:
+  /// **'challenges in a row'**
+  String get streakInARow;
+
+  /// Label of the best streak record
+  ///
+  /// In en, this message translates to:
+  /// **'Best'**
+  String get streakBest;
+
+  /// Warning shown during the grace period of an active streak
+  ///
+  /// In en, this message translates to:
+  /// **'Streak at risk — post before the challenge ends!'**
+  String get streakAtRisk;
+
+  /// Encouragement when the current challenge is answered
+  ///
+  /// In en, this message translates to:
+  /// **'Keep posting in the current challenge to grow your streak.'**
+  String get streakKeepGoing;
+
+  /// Shown when a streak exists but no global challenge is currently open
+  ///
+  /// In en, this message translates to:
+  /// **'No challenge running right now — your streak is safe until the next one.'**
+  String get streakNoChallenge;
+
+  /// Empty state of the streak card
+  ///
+  /// In en, this message translates to:
+  /// **'Post in a global challenge to start your streak.'**
+  String get streakStartHint;
+
+  /// Shown after a streak has been broken
+  ///
+  /// In en, this message translates to:
+  /// **'Your streak ended — post in the next challenge to start again.'**
+  String get streakRestartHint;
 }
 
 class _AppLocalizationsDelegate

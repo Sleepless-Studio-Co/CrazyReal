@@ -1,3 +1,5 @@
+import 'user_streak.dart';
+
 class FeedUser {
   const FeedUser({
     required this.id,
@@ -232,6 +234,7 @@ class UserProfile {
     required this.isSelf,
     required this.friendCount,
     required this.posts,
+    this.streak,
   });
 
   final FeedUser user;
@@ -240,10 +243,13 @@ class UserProfile {
   final bool isSelf;
   final int friendCount;
   final List<FeedPost> posts;
+  final UserStreak? streak;
 
   bool get isLocked => isPrivate && !isFriend && !isSelf;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final streakJson = json['streak'];
+
     return UserProfile(
       user: FeedUser.fromJson(json),
       isPrivate: json['isPrivate'] == true,
@@ -251,6 +257,9 @@ class UserProfile {
       isSelf: json['isSelf'] == true,
       friendCount: json['friendCount'] is int ? json['friendCount'] as int : 0,
       posts: FeedPost.listFromJson(json['posts']),
+      streak: streakJson is Map
+          ? UserStreak.fromJson(Map<String, dynamic>.from(streakJson))
+          : null,
     );
   }
 }

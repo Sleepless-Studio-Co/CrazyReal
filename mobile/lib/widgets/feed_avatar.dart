@@ -148,8 +148,7 @@ class _FallbackAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final option = _resolveAvatarOption(username, avatarKey);
-    // Modification ici : utilisation de ?.isNotEmpty == true
+    final option = resolveAvatarOption(username, avatarKey);
     final isBaseAvatar = avatarKey?.isNotEmpty == true;
     final label = username.isNotEmpty ? username[0].toUpperCase() : '?';
 
@@ -168,26 +167,29 @@ class _FallbackAvatar extends StatelessWidget {
             ),
     );
   }
+}
 
-  AvatarOption _resolveAvatarOption(String username, String? avatarKey) {
-    // Modification ici aussi pour harmoniser et éviter le même problème
-    if (avatarKey?.isNotEmpty == true) {
-      return kAvatarOptions.firstWhere(
-        (option) => option.id == avatarKey,
-        orElse: () => kAvatarOptions.first,
-      );
-    }
-
-    final avatarIndex = _hashString(username) % kAvatarOptions.length;
-    return kAvatarOptions[avatarIndex];
+/// Picks the palette used by the fallback avatar.
+///
+/// A chosen base avatar always wins. Without one, the letter keeps a stable,
+/// username-derived colour so every screen shows the same default avatar.
+AvatarOption resolveAvatarOption(String username, String? avatarKey) {
+  if (avatarKey?.isNotEmpty == true) {
+    return kAvatarOptions.firstWhere(
+      (option) => option.id == avatarKey,
+      orElse: () => kAvatarOptions.first,
+    );
   }
 
-  int _hashString(String value) {
-    if (value.isEmpty) return 0;
-    var hash = 0;
-    for (final code in value.codeUnits) {
-      hash = (hash * 31 + code) & 0x7fffffff;
-    }
-    return hash;
+  final avatarIndex = _hashString(username) % kAvatarOptions.length;
+  return kAvatarOptions[avatarIndex];
+}
+
+int _hashString(String value) {
+  if (value.isEmpty) return 0;
+  var hash = 0;
+  for (final code in value.codeUnits) {
+    hash = (hash * 31 + code) & 0x7fffffff;
   }
+  return hash;
 }

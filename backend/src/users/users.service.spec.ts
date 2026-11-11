@@ -17,19 +17,36 @@ describe('UsersService', () => {
     _count: { upVotes: 3 },
     upVotes: [{ id: 1 }],
   };
+  const streak = {
+    current: 4,
+    best: 9,
+    status: 'active',
+    hasPostedInCurrentEdition: true,
+    currentEdition: null,
+    participatedEditions: 7,
+  };
   let prisma: {
     user: { findUnique: jest.Mock; findMany: jest.Mock; update: jest.Mock };
     friendship: { count: jest.Mock };
     post: { findMany: jest.Mock };
   };
+  let streakService: { getStreakForUser: jest.Mock };
   let service: UsersService;
 
   /// Le service appelle `friendship.count` deux fois : lien d'amitié
   /// viewer↔cible (sauf pour soi-même), puis nombre d'amis de la cible.
-  function mockFriendship({ isFriend, friendCount }: { isFriend: boolean; friendCount: number }) {
+  function mockFriendship({
+    isFriend,
+    friendCount,
+  }: {
+    isFriend: boolean;
+    friendCount: number;
+  }) {
     prisma.friendship.count.mockImplementation(({ where }) =>
       Promise.resolve(
-        where.OR.length === 2 && 'friendId' in where.OR[0] && 'userId' in where.OR[0]
+        where.OR.length === 2 &&
+          'friendId' in where.OR[0] &&
+          'userId' in where.OR[0]
           ? Number(isFriend)
           : friendCount,
       ),
@@ -42,14 +59,22 @@ describe('UsersService', () => {
       friendship: { count: jest.fn() },
       post: { findMany: jest.fn().mockResolvedValue([rawPost]) },
     };
-    service = new UsersService(prisma as unknown as PrismaService);
+    streakService = {
+      getStreakForUser: jest.fn().mockResolvedValue(streak),
+    };
+    service = new UsersService(
+      prisma as unknown as PrismaService,
+      streakService as any,
+    );
   });
 
   describe('findPublicProfile', () => {
     it('should throw NotFoundException (not a 500) for an unknown user', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.findPublicProfile(99, 1)).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.findPublicProfile(99, 1)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('should show a public profile and its posts to anyone', async () => {
@@ -65,6 +90,7 @@ describe('UsersService', () => {
         isFriend: false,
         isSelf: false,
         friendCount: 4,
+        streak,
       });
       expect(profile?.posts).toHaveLength(1);
     });
@@ -87,6 +113,7 @@ describe('UsersService', () => {
         posts: [],
       });
       expect(prisma.post.findMany).not.toHaveBeenCalled();
+      expect(streakService.getStreakForUser).not.toHaveBeenCalled();
     });
 
     it('should not leak createdAt on a locked profile', async () => {
@@ -104,7 +131,12 @@ describe('UsersService', () => {
 
       const profile = await service.findPublicProfile(2, 1);
 
-      expect(profile).toMatchObject({ isPrivate: true, isFriend: true, isSelf: false });
+      expect(profile).toMatchObject({
+        isPrivate: true,
+        isFriend: true,
+        isSelf: false,
+        streak,
+      });
       expect(profile?.posts).toHaveLength(1);
     });
 
@@ -114,7 +146,7 @@ describe('UsersService', () => {
 
       const profile = await service.findPublicProfile(2, 2);
 
-      expect(profile).toMatchObject({ isSelf: true, isFriend: true });
+      expect(profile).toMatchObject({ isSelf: true, isFriend: true, streak });
       expect(profile?.posts).toHaveLength(1);
     });
 
@@ -145,7 +177,10 @@ describe('UsersService', () => {
       await service.findPublicProfile(2, 1);
 
       const query = prisma.post.findMany.mock.calls[0][0];
-      expect(query.where).toEqual({ userId: 2, challenge: { conversationId: null } });
+      expect(query.where).toEqual({
+        userId: 2,
+        challenge: { conversationId: null },
+      });
       expect(query.orderBy).toEqual({ createdAt: 'desc' });
     });
 
@@ -201,19 +236,29 @@ describe('UsersService', () => {
       await service.searchByUsername('bo', 1);
 
       const { select } = prisma.user.findMany.mock.calls[0][0];
-      expect(select).toMatchObject({ id: true, username: true, isPrivate: true });
+      expect(select).toMatchObject({
+        id: true,
+        username: true,
+        isPrivate: true,
+      });
       expect(select).not.toHaveProperty('email');
     });
   });
 
   describe('updatePrivacy', () => {
-    it.each([true, false])('should store isPrivate=%s for the given user', async (isPrivate) => {
-      prisma.user.update.mockResolvedValue({ id: 1, isPrivate });
+    it.each([true, false])(
+      'should store isPrivate=%s for the given user',
+      async (isPrivate) => {
+        prisma.user.update.mockResolvedValue({ id: 1, isPrivate });
 
-      await expect(service.updatePrivacy(1, isPrivate)).resolves.toEqual({ id: 1, isPrivate });
-      expect(prisma.user.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 1 }, data: { isPrivate } }),
-      );
-    });
+        await expect(service.updatePrivacy(1, isPrivate)).resolves.toEqual({
+          id: 1,
+          isPrivate,
+        });
+        expect(prisma.user.update).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: 1 }, data: { isPrivate } }),
+        );
+      },
+    );
   });
 });

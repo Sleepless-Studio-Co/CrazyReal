@@ -13,13 +13,20 @@ services:
     environment:
       # L'URL de connexion à la base de données (utilise le nom du service "db" comme hôte)
       - DATABASE_URL=postgresql://crazyuser:crazypassword@db:5432/crazydb?schema=public
+    restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   # Ta base de données actuelle
   db:
     image: postgres:15-alpine
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crazyuser -d crazydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     environment:
       POSTGRES_USER: crazyuser
       POSTGRES_PASSWORD: crazypassword

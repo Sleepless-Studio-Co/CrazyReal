@@ -135,6 +135,11 @@
     "description": "Libelle des avatars de base"
   },
 
+  "useLetterAvatar": "Utiliser ma lettre",
+  "@useLetterAvatar": {
+    "description": "Revenir a l'avatar lettre par defaut"
+  },
+
   "chooseFromGallery": "Choisir depuis la galerie",
   "@chooseFromGallery": {
     "description": "Action pour choisir une photo personnalisee"
@@ -899,5 +904,29 @@
   "@profileLoadError": {"description": "Erreur de chargement du profil"},
 
   "profilePosts": "Défis",
-  "@profilePosts": {"description": "Titre de la liste des posts d'un profil"}
+  "@profilePosts": {"description": "Titre de la liste des posts d'un profil"},
+
+  "streakCurrent": "Série en cours",
+  "@streakCurrent": {"description": "Libellé au-dessus du compteur de série"},
+
+  "streakInARow": "défis d'affilée",
+  "@streakInARow": {"description": "Unité affichée à côté du compteur de série"},
+
+  "streakBest": "Record",
+  "@streakBest": {"description": "Libellé du record de série"},
+
+  "streakAtRisk": "Série en jeu — poste avant la fin du défi !",
+  "@streakAtRisk": {"description": "Avertissement affiché pendant la période de grâce d'une série active"},
+
+  "streakKeepGoing": "Continue sur le défi en cours pour faire grandir ta série.",
+  "@streakKeepGoing": {"description": "Encouragement quand le défi en cours est déjà relevé"},
+
+  "streakNoChallenge": "Aucun défi en cours — ta série est en sécurité jusqu'au prochain.",
+  "@streakNoChallenge": {"description": "Affiché quand une série existe mais qu'aucun défi global n'est ouvert"},
+
+  "streakStartHint": "Poste sur un défi global pour lancer ta série.",
+  "@streakStartHint": {"description": "État vide de la carte de série"},
+
+  "streakRestartHint": "Ta série est terminée — poste sur le prochain défi pour repartir.",
+  "@streakRestartHint": {"description": "Affiché après une série cassée"}
 }

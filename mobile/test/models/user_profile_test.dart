@@ -38,6 +38,33 @@ void main() {
       expect(profile.posts, isEmpty);
     });
 
+    test('parses the streak payload', () {
+      final profile = UserProfile.fromJson(profileJson(
+        streak: streakJson(
+          current: 4,
+          best: 9,
+          status: 'at_risk',
+          hasPostedInCurrentEdition: false,
+          participatedEditions: 7,
+          currentEdition: {
+            'id': 42,
+            'title': 'Défi du jour',
+            'participated': false,
+            'startsAt': '2026-11-01T00:00:00.000Z',
+            'endsAt': '2026-11-04T00:00:00.000Z',
+          },
+        ),
+      ));
+
+      expect(profile.streak?.current, 4);
+      expect(profile.streak?.best, 9);
+      expect(profile.streak?.isAtRisk, isTrue);
+      expect(profile.streak?.hasPostedInCurrentEdition, isFalse);
+      expect(profile.streak?.participatedEditions, 7);
+      expect(profile.streak?.currentEdition?.id, 42);
+      expect(profile.streak?.currentEdition?.title, 'Défi du jour');
+    });
+
     test('survives missing or malformed optional fields', () {
       final profile = UserProfile.fromJson({'id': 3, 'username': 'eve'});
 
@@ -45,6 +72,7 @@ void main() {
       expect(profile.posts, isEmpty);
       expect(profile.isPrivate, isFalse);
       expect(profile.isLocked, isFalse);
+      expect(profile.streak, isNull);
 
       final weird = UserProfile.fromJson({
         'id': 3,

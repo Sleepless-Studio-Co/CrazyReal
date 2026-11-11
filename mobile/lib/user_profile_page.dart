@@ -5,9 +5,10 @@ import 'models/feed_post.dart';
 import 'services/api_exception.dart';
 import 'services/feed_service.dart';
 import 'utils/media_url.dart';
-import 'widgets/feed_avatar.dart';
 import 'widgets/paper.dart';
 import 'widgets/post_card.dart';
+import 'widgets/profile_header.dart';
+import 'widgets/streak_card.dart';
 
 /// Public profile: avatar, counters and an Instagram-like grid of the
 /// challenges the user completed. Tapping a tile opens the scrollable list.
@@ -82,7 +83,26 @@ class _UserProfilePageState extends State<UserProfilePage> {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(child: _ProfileHeader(profile: profile)),
+                  SliverToBoxAdapter(
+                    child: ProfileHeader(
+                      username: profile.user.username,
+                      avatarUrl: profile.user.avatarUrl,
+                      avatarKey: profile.user.avatarKey,
+                      isPrivate: profile.isPrivate,
+                      friendCount: profile.friendCount,
+                      challengeCount: profile.isLocked
+                          ? null
+                          : (profile.streak?.participatedEditions ??
+                              profile.posts.length),
+                    ),
+                  ),
+                  if (!profile.isLocked && profile.streak != null)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        child: StreakCard(streak: profile.streak!),
+                      ),
+                    ),
                   ..._buildContent(context, l10n, profile),
                 ],
               ),
@@ -159,124 +179,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
         ),
       ),
     ];
-  }
-}
-
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.profile});
-
-  final UserProfile profile;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final postCount = profile.posts.length;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-      child: Row(
-        children: [
-          // Accent ring, the 2026 social-app way of framing a profile photo.
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [context.paper.accent, Color(0xFFE9B384)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: context.paper.bg,
-              ),
-              child: FeedAvatar(
-                username: profile.user.username,
-                avatarUrl: profile.user.avatarUrl,
-                avatarKey: profile.user.avatarKey,
-                size: 88,
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        profile.user.username,
-                        style: paperTitle(context, fontSize: 24),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (profile.isPrivate) ...[
-                      const SizedBox(width: 6),
-                      Semantics(
-                        label: l10n.privateAccount,
-                        child: Icon(
-                          Icons.lock_outline,
-                          size: 18,
-                          color: context.paper.inkMuted,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    if (!profile.isLocked) ...[
-                      _Stat(
-                        value: postCount,
-                        label: l10n.profilePostsCount(postCount),
-                      ),
-                      const SizedBox(width: 10),
-                    ],
-                    _Stat(
-                      value: profile.friendCount,
-                      label: l10n.profileFriendsCount(profile.friendCount),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.value, required this.label});
-
-  final int value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return MergeSemantics(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: context.paper.card,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: context.paper.border),
-        ),
-        child: Column(
-          children: [
-            Text('$value', style: paperValue(context, fontSize: 18)),
-            Text(label, style: paperMuted(context, fontSize: 12)),
-          ],
-        ),
-      ),
-    );
   }
 }
 

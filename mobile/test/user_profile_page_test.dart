@@ -68,6 +68,110 @@ void main() {
     );
   });
 
+  group('streak', () {
+    testWithApi(
+      'shows the current streak and best streak',
+      () => profileApi(
+        profileJson(
+          friendCount: 12,
+          posts: threePosts,
+          streak: streakJson(current: 4, best: 9),
+        ),
+      ),
+      (tester, api) async {
+        await openProfile(tester);
+
+        expect(find.text('Série en cours'), findsOneWidget);
+        expect(find.text('4'), findsOneWidget);
+        expect(find.text('défis d\'affilée'), findsOneWidget);
+        expect(find.text('Record'), findsOneWidget);
+        expect(find.text('9'), findsOneWidget);
+      },
+    );
+
+    testWithApi(
+      'shows an empty state when there is no streak',
+      () => profileApi(
+        profileJson(
+          posts: threePosts,
+          streak: streakJson(current: 0, best: 0, status: 'none'),
+        ),
+      ),
+      (tester, api) async {
+        await openProfile(tester);
+
+        expect(find.text('Série en cours'), findsOneWidget);
+        expect(
+          find.text('Poste sur un défi global pour lancer ta série.'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWithApi(
+      'offers to restart after a broken streak',
+      () => profileApi(
+        profileJson(
+          posts: threePosts,
+          streak: streakJson(current: 0, best: 5, status: 'none'),
+        ),
+      ),
+      (tester, api) async {
+        await openProfile(tester);
+
+        expect(
+          find.text(
+              'Ta série est terminée — poste sur le prochain défi pour repartir.'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWithApi(
+      'shows a warning when the streak is at risk',
+      () => profileApi(
+        profileJson(
+          posts: threePosts,
+          streak: streakJson(
+            current: 3,
+            best: 5,
+            status: 'at_risk',
+            hasPostedInCurrentEdition: false,
+            currentEdition: {
+              'id': 42,
+              'title': 'Défi du jour',
+              'participated': false,
+              'endsAt': '2026-11-05T00:00:00.000Z',
+            },
+          ),
+        ),
+      ),
+      (tester, api) async {
+        await openProfile(tester);
+
+        expect(
+          find.text('Série en jeu — poste avant la fin du défi !'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWithApi(
+      'hides the streak on a locked private profile',
+      () => profileApi(
+        profileJson(
+          isPrivate: true,
+          streak: streakJson(),
+        ),
+      ),
+      (tester, api) async {
+        await openProfile(tester);
+
+        expect(find.text('Série en cours'), findsNothing);
+      },
+    );
+  });
+
   group('grid', () {
     testWithApi(
       'shows one tile per completed challenge',

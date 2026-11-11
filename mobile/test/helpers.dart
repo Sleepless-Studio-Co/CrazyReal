@@ -117,6 +117,7 @@ Map<String, dynamic> profileJson({
   bool isSelf = false,
   int friendCount = 0,
   List<Map<String, dynamic>> posts = const [],
+  Map<String, dynamic>? streak,
 }) =>
     {
       'id': id,
@@ -128,6 +129,24 @@ Map<String, dynamic> profileJson({
       'isSelf': isSelf,
       'friendCount': friendCount,
       'posts': posts,
+      if (streak != null) 'streak': streak,
+    };
+
+Map<String, dynamic> streakJson({
+  int current = 4,
+  int best = 9,
+  String status = 'active',
+  bool hasPostedInCurrentEdition = true,
+  int participatedEditions = 7,
+  Map<String, dynamic>? currentEdition,
+}) =>
+    {
+      'current': current,
+      'best': best,
+      'status': status,
+      'hasPostedInCurrentEdition': hasPostedInCurrentEdition,
+      'participatedEditions': participatedEditions,
+      'currentEdition': currentEdition,
     };
 
 /// iPhone-sized viewport, so a 4:5 post card fits on screen like on a device.

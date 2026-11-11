@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { StreakService } from '../streak/streak.service';
 import * as bcrypt from 'bcrypt';
 import {
   formatPostWithUpvotes,
@@ -24,13 +25,18 @@ const USER_SELECT = {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly streakService: StreakService,
+  ) {}
 
   private handlePrismaError(error: unknown): never {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         const target = error.meta?.target;
-        const fields = Array.isArray(target) ? target.join(',') : String(target ?? '');
+        const fields = Array.isArray(target)
+          ? target.join(',')
+          : String(target ?? '');
 
         if (fields.includes('email')) {
           throw new ConflictException('mail already in use');
@@ -317,17 +323,21 @@ export class UsersService {
       }
 
       // Group-challenge posts stay inside their group feed.
-      const posts = await this.prisma.post.findMany({
-        where: { userId: targetId, challenge: { conversationId: null } },
-        orderBy: { createdAt: 'desc' },
-        include: postIncludeWithUpvotes(requesterId),
-      });
+      const [posts, streak] = await Promise.all([
+        this.prisma.post.findMany({
+          where: { userId: targetId, challenge: { conversationId: null } },
+          orderBy: { createdAt: 'desc' },
+          include: postIncludeWithUpvotes(requesterId),
+        }),
+        this.streakService.getStreakForUser(targetId),
+      ]);
 
       return {
         ...target,
         isFriend,
         isSelf,
         friendCount,
+        streak,
         posts: posts.map(formatPostWithUpvotes),
       };
     } catch (error) {

@@ -10,6 +10,10 @@ describe('AppController', () => {
   let prismaService: {
     challenge: {
       findMany: jest.Mock<any>;
+      findUnique: jest.Mock<any>;
+    };
+    participant: {
+      findUnique: jest.Mock<any>;
     };
     post: {
       create: jest.Mock<any>;
@@ -27,6 +31,10 @@ describe('AppController', () => {
     prismaService = {
       challenge: {
         findMany: jest.fn(),
+        findUnique: jest.fn(),
+      },
+      participant: {
+        findUnique: jest.fn(),
       },
       post: {
         create: jest.fn(),
@@ -70,14 +78,18 @@ describe('AppController', () => {
       };
       prismaService.challenge.findMany.mockResolvedValue([challenge]);
 
-      await expect(appController.getCurrentChallenge()).resolves.toEqual(challenge);
+      await expect(appController.getCurrentChallenge()).resolves.toEqual(
+        challenge,
+      );
       expect(prismaService.challenge.findMany).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when no active challenge exists', async () => {
       prismaService.challenge.findMany.mockResolvedValue([]);
 
-      await expect(appController.getCurrentChallenge()).rejects.toThrow(NotFoundException);
+      await expect(appController.getCurrentChallenge()).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -122,6 +134,46 @@ describe('AppController', () => {
       );
     });
 
+    it('should post to an explicit group challenge when the user is a member', async () => {
+      const now = new Date();
+      const file = {
+        filename: 'test-image.jpg',
+        originalname: 'test.jpg',
+      } as Express.Multer.File;
+      const user = {
+        userId: 123,
+        email: 'user@example.com',
+        username: 'test-user',
+      };
+
+      prismaService.challenge.findUnique.mockResolvedValue({
+        id: 77,
+        title: 'Group challenge',
+        conversationId: 5,
+        date: new Date(now.getTime() - 60 * 60 * 1000),
+        endsAt: new Date(now.getTime() + 60 * 60 * 1000),
+        isActive: true,
+      });
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1 });
+      prismaService.post.create.mockResolvedValue({
+        id: 2,
+        photoUrl: '/uploads/test-image.jpg',
+        challengeId: 77,
+        userId: 123,
+      });
+
+      await appController.uploadPhoto(file, user, '77');
+
+      expect(prismaService.post.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            challengeId: 77,
+            userId: 123,
+          }),
+        }),
+      );
+    });
+
     it('should throw BadRequestException when no active challenge exists', async () => {
       const file = { filename: 'test.jpg' } as Express.Multer.File;
       const user = {
@@ -132,12 +184,15 @@ describe('AppController', () => {
 
       prismaService.challenge.findMany.mockResolvedValue([]);
 
-      await expect(appController.uploadPhoto(file, user)).rejects.toThrow(BadRequestException);
+      await expect(appController.uploadPhoto(file, user)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('getPosts', () => {
     it('uses public, accepted-friend, and own authors in the feed filter', async () => {
+      prismaService.challenge.findMany.mockResolvedValue([]);
       prismaService.friendship.findMany.mockResolvedValue([
         { userId: 10, friendId: 20, status: 'ACCEPTED' },
       ]);
@@ -149,14 +204,13 @@ describe('AppController', () => {
         username: 'user',
       });
 
-      expect(prismaService.post.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({
-          OR: [
-            { userId: { in: [20, 10] } },
-            { user: { isPrivate: false } },
-          ],
+      expect(prismaService.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [{ userId: { in: [20, 10] } }, { user: { isPrivate: false } }],
+          }),
         }),
-      }));
+      );
     });
   });
 });

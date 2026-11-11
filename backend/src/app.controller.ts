@@ -362,7 +362,11 @@ export class AppController {
       },
     }),
   }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
+  async uploadPhoto(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: ValidatedUser,
+    @Body('challengeId') challengeIdRaw?: string,
+  ) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -373,16 +377,28 @@ export class AppController {
         await this.normalizeVideo(file);
       }
 
-      const currentChallenge = await this.getCurrentChallengeForDate(new Date());
-      if (!currentChallenge) {
-        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
+      let challengeId: number | undefined;
+      if (
+        challengeIdRaw !== undefined &&
+        `${challengeIdRaw}`.trim().length > 0
+      ) {
+        const parsed = Number(challengeIdRaw);
+        if (!Number.isInteger(parsed) || parsed < 1) {
+          throw new BadRequestException('challengeId invalide.');
+        }
+        challengeId = parsed;
       }
+
+      const challenge = await this.resolveChallengeForPost(
+        user.userId,
+        challengeId,
+      );
 
       const post = await this.prisma.post.create({
         data: {
           photoUrl: `/uploads/${file.filename}`,
           mediaType,
-          challengeId: currentChallenge.id,
+          challengeId: challenge.id,
           userId: user.userId,
         },
         include: postIncludeWithUpvotes(user.userId),
@@ -391,7 +407,7 @@ export class AppController {
       const formattedPost = formatPostWithUpvotes(post, user.userId);
       // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
     // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
-      if (currentChallenge.conversationId == null) {
+      if (challenge.conversationId == null) {
       this.feedGateway.broadcastNewPost(formattedPost);
       console.log('[posts] created', post.id, file.filename, mediaType);
       }

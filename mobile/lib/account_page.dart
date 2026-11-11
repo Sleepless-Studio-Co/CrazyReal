@@ -6,10 +6,14 @@ import 'package:image_picker/image_picker.dart';
 
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
+import 'models/feed_post.dart';
+import 'models/user_streak.dart';
 import 'services/api_exception.dart';
-import 'utils/media_url.dart';
+import 'services/feed_service.dart';
 import 'widgets/feed_avatar.dart';
 import 'widgets/paper.dart';
+import 'widgets/profile_header.dart';
+import 'widgets/streak_card.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({
@@ -27,6 +31,7 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   final _authService = AuthService();
+  final _feedService = FeedService();
   final _imagePicker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
@@ -43,6 +48,7 @@ class _AccountPageState extends State<AccountPage> {
   String? _avatarUrl;
   String? _avatarKey;
   Uint8List? _pendingAvatarBytes;
+  UserProfile? _publicProfile;
 
   @override
   void initState() {
@@ -104,6 +110,22 @@ class _AccountPageState extends State<AccountPage> {
       }
     } catch (_) {
       // Non-fatal: keep showing the cached profile.
+    }
+
+    await _loadPublicProfile(_user?['id']);
+  }
+
+  Future<void> _loadPublicProfile(dynamic userId) async {
+    if (userId is! int) return;
+
+    try {
+      final profile = await _feedService.fetchUserProfile(userId);
+      if (!mounted) return;
+      setState(() => _publicProfile = profile);
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (_) {
+      // Non-fatal: stats and streak are optional on the account tab.
     }
   }
 
@@ -355,8 +377,30 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<void> _removeCustomAvatar() async {
-    await _selectBaseAvatar(kAvatarOptions.first.id);
+  Future<void> _clearAvatar() async {
+    setState(() {
+      _isAvatarLoading = true;
+      _pendingAvatarBytes = null;
+    });
+
+    try {
+      final result = await _authService.clearAvatar();
+      final updatedUser = result['user'];
+      if (updatedUser is Map<String, dynamic>) {
+        _user = updatedUser;
+        _syncAvatarFromUser(updatedUser);
+        if (!mounted) return;
+        setState(() {});
+      }
+    } catch (e) {
+      _handleAvatarError(e);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAvatarLoading = false;
+        });
+      }
+    }
   }
 
   void _handleAvatarError(Object error) {
@@ -376,15 +420,6 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  AvatarOption _resolveAvatarOption() {
-    final id = _avatarKey;
-    if (id == null) return kAvatarOptions.first;
-    return kAvatarOptions.firstWhere(
-      (option) => option.id == id,
-      orElse: () => kAvatarOptions.first,
-    );
-  }
-
   Future<void> _showAvatarPicker() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -396,6 +431,13 @@ class _AccountPageState extends State<AccountPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
+        final username = _user?['username']?.toString() ?? '';
+        final letterOption = resolveAvatarOption(username, null);
+        final letter = username.isNotEmpty ? username[0].toUpperCase() : '?';
+        final letterSelected = _avatarUrl == null &&
+            _pendingAvatarBytes == null &&
+            _avatarKey == null;
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -431,7 +473,30 @@ class _AccountPageState extends State<AccountPage> {
                       )
                       .toList(),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                ListTile(
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    await _clearAvatar();
+                  },
+                  leading: CircleAvatar(
+                    backgroundColor: letterOption.background,
+                    child: Text(
+                      letter,
+                      style: GoogleFonts.karla(
+                        color: letterOption.foreground,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    l10n.useLetterAvatar,
+                    style: _valueStyle(context),
+                  ),
+                  trailing: letterSelected
+                      ? Icon(Icons.check, color: context.paper.accent)
+                      : null,
+                ),
                 ListTile(
                   onTap: () async {
                     Navigator.pop(sheetContext);
@@ -445,7 +510,7 @@ class _AccountPageState extends State<AccountPage> {
                   ListTile(
                     onTap: () async {
                       Navigator.pop(sheetContext);
-                      await _removeCustomAvatar();
+                      await _clearAvatar();
                     },
                     leading:
                         const Icon(Icons.delete_outline, color: Colors.red),
@@ -478,39 +543,122 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final l10n = AppLocalizations.of(context)!;
+    final username = _user?['username']?.toString() ?? '';
+    final profile = _publicProfile;
+    final challengeCount = profile == null
+        ? null
+        : (profile.streak?.participatedEditions ?? profile.posts.length);
+    final friendCount = profile?.friendCount;
+    final streak = profile?.streak;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.account),
+      backgroundColor: context.paper.bg,
+      appBar: paperAppBar(
+        context,
+        title: username.isNotEmpty ? username : l10n.account,
+        subtitle: l10n.account,
+        actions: [
+          IconButton(
+            onPressed: _refreshProfile,
+            icon: const Icon(Icons.refresh),
+            tooltip: l10n.refresh,
+          ),
+        ],
       ),
       body: SafeArea(
         child: _isEditing
             ? Form(
                 key: _formKey,
-                child: _buildContent(l10n),
+                child: _buildContent(
+                  l10n,
+                  username: username,
+                  challengeCount: challengeCount,
+                  friendCount: friendCount,
+                  streak: streak,
+                ),
               )
-            : _buildContent(l10n),
+            : _buildContent(
+                l10n,
+                username: username,
+                challengeCount: challengeCount,
+                friendCount: friendCount,
+                streak: streak,
+              ),
       ),
     );
   }
 
-  Widget _buildContent(AppLocalizations l10n) {
+  Widget _buildContent(
+    AppLocalizations l10n, {
+    required String username,
+    required int? challengeCount,
+    required int? friendCount,
+    required UserStreak? streak,
+  }) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.only(bottom: 24),
       children: [
-        _buildProfileHeader(l10n),
-        const SizedBox(height: 16),
-        _buildPrivacyCard(l10n),
-        if (!_isEmailVerified) ...[
-          const SizedBox(height: 16),
-          _buildVerificationBanner(l10n),
-        ],
-        if (_isEditing) ...[
-          const SizedBox(height: 16),
-          _buildEditCard(l10n),
-        ],
-        const SizedBox(height: 16),
-        _isEditing ? _buildSaveCard(l10n) : _buildLogoutCard(l10n),
+        ProfileHeader(
+          username: username,
+          avatarUrl: _avatarUrl,
+          avatarKey: _avatarKey,
+          avatarOverride: _pendingAvatarBytes == null
+              ? null
+              : ClipOval(
+                  child: Image.memory(
+                    _pendingAvatarBytes!,
+                    width: 88,
+                    height: 88,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+          isPrivate: _isPrivate,
+          friendCount: friendCount,
+          challengeCount: challengeCount,
+          onAvatarTap: _showAvatarPicker,
+          avatarLoading: _isAvatarLoading,
+          action: OutlinedButton.icon(
+            onPressed: _isSaving ? null : _startEditing,
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: Text(l10n.edit),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: context.paper.ink,
+              backgroundColor: context.paper.field.withValues(alpha: 0.7),
+              side: BorderSide(color: context.paper.fieldBorder),
+              textStyle: _labelStyle(context),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+        ),
+        if (streak != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            child: StreakCard(streak: streak),
+          ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              _buildPrivacyCard(l10n),
+              if (!_isEmailVerified) ...[
+                const SizedBox(height: 16),
+                _buildVerificationBanner(l10n),
+              ],
+              if (_isEditing) ...[
+                const SizedBox(height: 16),
+                _buildEditCard(l10n),
+              ],
+              const SizedBox(height: 16),
+              _isEditing ? _buildSaveCard(l10n) : _buildLogoutCard(l10n),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -537,16 +685,12 @@ class _AccountPageState extends State<AccountPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  // TODO: move to AppLocalizations once the key is added
-                  // to the .arb files (e.g. l10n.privateAccount).
-                  _isPrivate ? 'Compte privé' : 'Compte public',
+                  _isPrivate ? l10n.privateAccount : l10n.publicAccount,
                   style: _valueStyle(context),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _isPrivate
-                      ? 'Seuls tes amis acceptés voient ton profil et tes défis.'
-                      : 'Tout le monde peut voir ton profil et tes défis.',
+                  _isPrivate ? l10n.privateAccountDesc : l10n.publicAccountDesc,
                   style: _mutedStyle(context),
                 ),
               ],
@@ -643,100 +787,6 @@ class _AccountPageState extends State<AccountPage> {
                 label: Text(l10n.refresh),
                 style: OutlinedButton.styleFrom(
                     foregroundColor: context.paper.ink),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader(AppLocalizations l10n) {
-    final username = _user?['username']?.toString() ?? '';
-    final email = _user?['email']?.toString() ?? '';
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [context.paper.heroStart, context.paper.heroEnd],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: context.paper.shadow,
-            blurRadius: 24,
-            offset: Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -30,
-            top: -40,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.25),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            left: -20,
-            bottom: -30,
-            child: Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: _showAvatarPicker,
-                child: _buildAvatar(size: 88, showBadge: true),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l10n.profile, style: _titleStyle(context)),
-                    const SizedBox(height: 6),
-                    Text(username, style: _valueStyle(context)),
-                    const SizedBox(height: 4),
-                    Text(email, style: _mutedStyle(context)),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _isSaving ? null : _startEditing,
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: Text(l10n.edit),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: context.paper.ink,
-                        backgroundColor:
-                            context.paper.field.withValues(alpha: 0.7),
-                        side: BorderSide(color: context.paper.fieldBorder),
-                        textStyle: _labelStyle(context),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -884,131 +934,6 @@ class _AccountPageState extends State<AccountPage> {
         ],
       ),
       child: child,
-    );
-  }
-
-  Widget _buildAvatar({double size = 96, bool showBadge = false}) {
-    final option = _resolveAvatarOption();
-    Widget avatarInner;
-
-    if (_pendingAvatarBytes != null) {
-      avatarInner = ClipOval(
-        child: Image.memory(
-          _pendingAvatarBytes!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        ),
-      );
-    } else if (_avatarUrl != null && _avatarUrl!.isNotEmpty) {
-      final resolvedAvatarUrl = resolveMediaUrl(_avatarUrl!)!;
-      avatarInner = ClipOval(
-        child: Image.network(
-          resolvedAvatarUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, progress) {
-            if (progress == null) return child;
-            return Container(
-              width: size,
-              height: size,
-              color: option.background,
-              child: const Center(child: CircularProgressIndicator()),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: option.background,
-              ),
-              child: Icon(
-                option.icon,
-                color: option.foreground,
-                size: size * 0.45,
-              ),
-            );
-          },
-        ),
-      );
-    } else {
-      avatarInner = Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: option.background,
-        ),
-        child: Icon(option.icon, color: option.foreground, size: size * 0.45),
-      );
-    }
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: size + 8,
-          height: size + 8,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFFFFFFFF),
-                Color(0xFFE8D0B0),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        ClipOval(
-          child: Container(
-            width: size,
-            height: size,
-            color: Colors.white,
-            child: avatarInner,
-          ),
-        ),
-        if (_isAvatarLoading)
-          Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black.withOpacity(0.35),
-            ),
-            child: const Center(
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        if (showBadge)
-          Positioned(
-            bottom: 2,
-            right: 2,
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Colors.black87,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.camera_alt_outlined,
-                color: Colors.white,
-                size: 14,
-              ),
-            ),
-          ),
-      ],
     );
   }
 

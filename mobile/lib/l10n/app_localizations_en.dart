@@ -92,6 +92,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get baseAvatars => 'Base avatars';
 
   @override
+  String get useLetterAvatar => 'Use my letter';
+
+  @override
   String get chooseFromGallery => 'Choose from gallery';
 
   @override
@@ -702,4 +705,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profilePosts => 'Challenges';
+
+  @override
+  String get streakCurrent => 'Current streak';
+
+  @override
+  String get streakInARow => 'challenges in a row';
+
+  @override
+  String get streakBest => 'Best';
+
+  @override
+  String get streakAtRisk => 'Streak at risk — post before the challenge ends!';
+
+  @override
+  String get streakKeepGoing =>
+      'Keep posting in the current challenge to grow your streak.';
+
+  @override
+  String get streakNoChallenge =>
+      'No challenge running right now — your streak is safe until the next one.';
+
+  @override
+  String get streakStartHint =>
+      'Post in a global challenge to start your streak.';
+
+  @override
+  String get streakRestartHint =>
+      'Your streak ended — post in the next challenge to start again.';
 }

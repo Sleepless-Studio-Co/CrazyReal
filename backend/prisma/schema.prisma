@@ -56,6 +56,7 @@ model Challenge {
   endsAt         DateTime?
 
   @@unique([date, type, conversationId])
+  @@index([conversationId, date])
 }
 
 model Post {
@@ -70,6 +71,9 @@ model Post {
   upVotes     UpVote[]
   reactions   PostReaction[]
   shareLinks   ShareLink[]
+
+  @@index([userId, createdAt])
+  @@index([userId, challengeId])
 }
 
 model ShareLink {
