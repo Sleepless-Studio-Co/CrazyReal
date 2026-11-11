@@ -21,11 +21,11 @@ class FeedService {
 
   Future<List<FeedPost>> fetchPostsForChallenge(
     int? challengeId, {
-    bool? global,
+    String? scope, // 'global' | 'friends' | 'map'
   }) async {
     final query = <String, String>{};
     if (challengeId != null) query['challengeId'] = '$challengeId';
-    if (global != null) query['scope'] = global ? 'global' : 'friends';
+    if (scope != null) query['scope'] = scope;
     final path = query.isEmpty
         ? '/posts'
         : '/posts?${query.entries.map((entry) => '${entry.key}=${entry.value}').join('&')}';
@@ -49,6 +49,35 @@ class FeedService {
               Map<String, dynamic>.from(item),
             ))
         .toList();
+  }
+
+  /// Défis géolocalisés en cours ou à venir dans [radiusKm] autour de lat/lng,
+  /// triés du plus proche au plus loin (`distanceKm`, `isLive`, `registered`,
+  /// `participants`).
+  Future<List<Map<String, dynamic>>> fetchNearbyChallenges(
+    double lat,
+    double lng,
+    int radiusKm,
+  ) async {
+    final data = await _authedRequest(
+      'GET',
+      '/challenges/nearby?lat=$lat&lng=$lng&radiusKm=$radiusKm',
+    );
+    if (data is! List) return [];
+    return data.whereType<Map>().map(Map<String, dynamic>.from).toList();
+  }
+
+  /// Inscrit (ou désinscrit) l'utilisateur à un défi de la carte.
+  /// Renvoie `{registered, participants}`.
+  Future<Map<String, dynamic>> setChallengeRegistration(
+    int challengeId, {
+    required bool registered,
+  }) async {
+    final data = await _authedRequest(
+      registered ? 'POST' : 'DELETE',
+      '/challenges/$challengeId/registration',
+    );
+    return Map<String, dynamic>.from(data as Map);
   }
 
   /// Feed privé d'un groupe : posts réalisés sur les défis de ce groupe.

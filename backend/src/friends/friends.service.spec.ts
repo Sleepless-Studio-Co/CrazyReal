@@ -19,6 +19,12 @@ describe('FriendsService', () => {
       delete: jest.Mock;
       findMany: jest.Mock;
     };
+    conversation: {
+      findMany: jest.Mock;
+    };
+    participant: {
+      deleteMany: jest.Mock;
+    };
   };
 
   beforeEach(async () => {
@@ -34,6 +40,12 @@ describe('FriendsService', () => {
         update: jest.fn(),
         delete: jest.fn(),
         findMany: jest.fn(),
+      },
+      conversation: {
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      participant: {
+        deleteMany: jest.fn(),
       },
     };
 
@@ -202,6 +214,19 @@ describe('FriendsService', () => {
         data: { userId: 1, friendId: 2, status: 'BLOCKED' },
       });
       expect(result).toEqual({ id: 7, status: 'BLOCKED' });
+    });
+
+    it('should make the blocker leave shared groups without removing the blocked user', async () => {
+      prismaService.user.findUnique.mockResolvedValue({ id: 2, username: 'bob' });
+      prismaService.friendship.findFirst.mockResolvedValue(null);
+      prismaService.friendship.create.mockResolvedValue({ id: 1, status: 'BLOCKED' });
+      prismaService.conversation.findMany.mockResolvedValue([{ id: 42 }]);
+
+      await service.blockUser(1, 'bob');
+
+      expect(prismaService.participant.deleteMany).toHaveBeenCalledWith({
+        where: { conversationId: { in: [42] }, userId: 1 },
+      });
     });
   });
 

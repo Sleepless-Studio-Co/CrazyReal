@@ -890,6 +890,30 @@ abstract class AppLocalizations {
   /// **'Blocked users'**
   String get blockedUsers;
 
+  /// Profile action to block a user
+  ///
+  /// In en, this message translates to:
+  /// **'Block user'**
+  String get blockUser;
+
+  /// Button to unblock a user
+  ///
+  /// In en, this message translates to:
+  /// **'Unblock'**
+  String get unblock;
+
+  /// Empty blocked users list
+  ///
+  /// In en, this message translates to:
+  /// **'You have not blocked anyone.'**
+  String get noBlockedUsers;
+
+  /// Confirmation after unblocking a user
+  ///
+  /// In en, this message translates to:
+  /// **'User unblocked.'**
+  String get userUnblocked;
+
   /// Permissions settings section header
   ///
   /// In en, this message translates to:
@@ -1009,12 +1033,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Messages'**
   String get messages;
-
-  /// Label of the deletion confirmation text field
-  ///
-  /// In en, this message translates to:
-  /// **'Confirmation word'**
-  String get deleteAccountConfirmHint;
 
   /// Admin section header and tile in settings
   ///
@@ -1375,6 +1393,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No completed challenge has been upvoted yet.'**
   String get topPostsEmpty;
+
+  /// Label of the deletion confirmation text field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation word'**
+  String get deleteAccountConfirmHint;
+
+  /// No description provided for @map.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get map;
+
+  /// No description provided for @mapLocationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location denied: showing Paris.'**
+  String get mapLocationDenied;
+
+  /// No description provided for @mapChallengesWithin.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No challenges} =1{1 challenge} other{{count} challenges}} within {radius} km'**
+  String mapChallengesWithin(int count, int radius);
+
+  /// No description provided for @mapDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km away'**
+  String mapDistance(String km);
+
+  /// No description provided for @mapRecenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Recenter on my position'**
+  String get mapRecenter;
+
+  /// No description provided for @adminLatitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude (optional)'**
+  String get adminLatitudeLabel;
+
+  /// No description provided for @adminLongitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude (optional)'**
+  String get adminLongitudeLabel;
+
+  /// No description provided for @adminLocationInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter both latitude and longitude, or neither'**
+  String get adminLocationInvalid;
+
+  /// No description provided for @mapLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live now'**
+  String get mapLive;
+
+  /// No description provided for @mapUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get mapUpcoming;
+
+  /// No description provided for @mapStartsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts in {time}'**
+  String mapStartsIn(String time);
+
+  /// No description provided for @mapEndsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends in {time}'**
+  String mapEndsIn(String time);
+
+  /// No description provided for @mapRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get mapRegister;
+
+  /// No description provided for @mapJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get mapJoin;
+
+  /// No description provided for @mapRegistered.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed up ✓'**
+  String get mapRegistered;
+
+  /// No description provided for @mapSendChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Send your challenge'**
+  String get mapSendChallenge;
+
+  /// No description provided for @mapParticipants.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No one signed up yet} =1{1 participant} other{{count} participants}}'**
+  String mapParticipants(int count);
+
+  /// No description provided for @mapCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Not completed yet} =1{1 completed it} other{{count} completed it}}'**
+  String mapCompleted(int count);
+
+  /// No description provided for @adminIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Map icon'**
+  String get adminIconLabel;
 }
 
 class _AppLocalizationsDelegate

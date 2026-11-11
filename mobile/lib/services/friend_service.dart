@@ -56,11 +56,34 @@ class FriendService {
 
   Future<void> blockUser(String username) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/block/$username'),
+      Uri.parse('$baseUrl/block/${Uri.encodeComponent(username)}'),
       headers: await _headers(),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
+    }
+  }
+
+  Future<List<dynamic>> getBlockedUsers() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/blocked'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw buildApiException(response);
+  }
+
+  Future<void> unblockUser(int userId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/blocked/$userId'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200) {
       throw buildApiException(response);
     }
   }

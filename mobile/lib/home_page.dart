@@ -38,7 +38,9 @@ class HomePageState extends State<HomePage> {
   String? _challengeSubtitle;
   List<AvailableChallenge> _availableChallenges = [];
   int _selectedChallengeId = -1;
-  bool _showingGlobalFeed = true;
+  // 'global' | 'friends' | 'map' (défis géolocalisés de la carte).
+  String _feedScope = 'global';
+  static const List<String> _feedScopes = ['global', 'friends', 'map'];
   bool _isActive = true;
 
   IO.Socket? _socket;
@@ -116,7 +118,7 @@ class HomePageState extends State<HomePage> {
     try {
       final posts = await _feedService.fetchPostsForChallenge(
         _selectedChallengeId == -1 ? null : _selectedChallengeId,
-        global: _selectedChallengeId == -1 ? _showingGlobalFeed : null,
+        scope: _selectedChallengeId == -1 ? _feedScope : null,
       );
       if (!mounted) return;
 
@@ -166,15 +168,16 @@ class HomePageState extends State<HomePage> {
   Future<void> _selectFeedScope(
     BuildContext context,
     AppLocalizations l10n,
-    bool showGlobal,
+    String scope,
   ) async {
-    if (_showingGlobalFeed == showGlobal) {
-      await _openChallengeMenu(context, l10n);
+    if (_feedScope == scope) {
+      // ponytail: pas de sous-filtre par défi pour la carte (non listés dans /challenges/available).
+      if (scope != 'map') await _openChallengeMenu(context, l10n);
       return;
     }
 
     setState(() {
-      _showingGlobalFeed = showGlobal;
+      _feedScope = scope;
       _selectedChallengeId = -1;
     });
     refreshFeed(showLoading: true);
@@ -208,7 +211,7 @@ class HomePageState extends State<HomePage> {
           ),
         ),
         ..._availableChallenges
-            .where((challenge) => challenge.isGlobal == _showingGlobalFeed)
+            .where(_inScope)
             .map(
               (challenge) => PopupMenuItem<int>(
                 value: challenge.id,
@@ -237,8 +240,12 @@ class HomePageState extends State<HomePage> {
           .toList();
     }
 
+    // Les défis de la carte ne sont pas dans _availableChallenges : le
+    // backend a déjà filtré via scope=map.
+    if (_feedScope == 'map') return posts;
+
     final challengeIds = _availableChallenges
-        .where((challenge) => challenge.isGlobal == _showingGlobalFeed)
+        .where(_inScope)
         .map((challenge) => challenge.id)
         .toSet();
     return posts
@@ -297,11 +304,15 @@ class HomePageState extends State<HomePage> {
     }
 
     return _availableChallenges.any(
-      (challenge) =>
-          challenge.id == challengeId &&
-          challenge.isGlobal == _showingGlobalFeed,
+      (challenge) => challenge.id == challengeId && _inScope(challenge),
     );
   }
+
+  bool _inScope(AvailableChallenge challenge) => switch (_feedScope) {
+        'global' => challenge.isGlobal,
+        'friends' => !challenge.isGlobal,
+        _ => false,
+      };
 
   void _startPolling() {
     _pollTimer?.cancel();
@@ -442,9 +453,9 @@ class HomePageState extends State<HomePage> {
         children: [
           Builder(
             builder: (filterContext) => ToggleButtons(
-              isSelected: [_showingGlobalFeed, !_showingGlobalFeed],
+              isSelected: [for (final s in _feedScopes) s == _feedScope],
               onPressed: (index) =>
-                  _selectFeedScope(filterContext, l10n, index == 0),
+                  _selectFeedScope(filterContext, l10n, _feedScopes[index]),
               borderRadius: BorderRadius.circular(8),
               selectedColor: context.paper.bg,
               fillColor: context.paper.ink,
@@ -457,6 +468,10 @@ class HomePageState extends State<HomePage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(l10n.feedFriendChallenge),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(l10n.map),
                 ),
               ],
             ),

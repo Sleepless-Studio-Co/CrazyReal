@@ -686,6 +686,18 @@
   "blockedUsers": "Utilisateurs bloqués",
   "@blockedUsers": { "description": "Tuile utilisateurs bloqués" },
 
+  "blockUser": "Bloquer l'utilisateur",
+  "@blockUser": { "description": "Action du profil pour bloquer un utilisateur" },
+
+  "unblock": "Débloquer",
+  "@unblock": { "description": "Bouton pour débloquer un utilisateur" },
+
+  "noBlockedUsers": "Tu n'as bloqué personne.",
+  "@noBlockedUsers": { "description": "Liste des utilisateurs bloqués vide" },
+
+  "userUnblocked": "Utilisateur débloqué.",
+  "@userUnblocked": { "description": "Confirmation après un déblocage" },
+
   "permissions": "Autorisations",
   "@permissions": { "description": "En-tête de section autorisations" },
 
@@ -875,7 +887,6 @@
   },
 
   "adminLoadError": "Impossible de charger les défis",
-  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
 
   "viewProfile": "Voir le profil de {username}",
   "@viewProfile": {"description": "Libellé lecteur d'écran de l'avatar cliquable", "placeholders": {"username": {"type": "String"}}},
@@ -917,5 +928,49 @@
   "@topPeriodAll": { "description": "Filtre de période : sans limite" },
 
   "topPostsEmpty": "Aucun défi terminé n'a encore reçu de vote.",
-  "@topPostsEmpty": { "description": "Affiché quand la page des meilleurs défis est vide" }
+  "@topPostsEmpty": { "description": "Affiché quand la page des meilleurs défis est vide" },
+
+  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
+
+  "map": "Carte",
+
+  "mapLocationDenied": "Localisation refusée : affichage de Paris.",
+
+  "mapChallengesWithin": "{count, plural, =0{Aucun défi} =1{1 défi} other{{count} défis}} à moins de {radius} km",
+  "@mapChallengesWithin": {"placeholders": {"count": {"type": "int"}, "radius": {"type": "int"}}},
+
+  "mapDistance": "À {km} km",
+  "@mapDistance": {"placeholders": {"km": {"type": "String"}}},
+
+  "mapRecenter": "Recentrer sur ma position",
+
+  "adminLatitudeLabel": "Latitude (optionnel)",
+
+  "adminLongitudeLabel": "Longitude (optionnel)",
+
+  "adminLocationInvalid": "Renseigne la latitude et la longitude, ou aucune des deux",
+
+  "mapLive": "En cours",
+
+  "mapUpcoming": "À venir",
+
+  "mapStartsIn": "Commence dans {time}",
+  "@mapStartsIn": {"placeholders": {"time": {"type": "String"}}},
+
+  "mapEndsIn": "Se termine dans {time}",
+  "@mapEndsIn": {"placeholders": {"time": {"type": "String"}}},
+
+  "mapRegister": "S'inscrire",
+
+  "mapJoin": "Rejoindre",
+
+  "mapRegistered": "Inscrit ✓",
+
+  "mapSendChallenge": "Envoyer ton défi",
+
+  "mapParticipants": "{count, plural, =0{Personne d'inscrit pour l'instant} =1{1 participant} other{{count} participants}}",
+  "@mapParticipants": {"placeholders": {"count": {"type": "int"}}},
+  "mapCompleted": "{count, plural, =0{Pas encore réalisé} =1{1 l'a réalisé} other{{count} l'ont réalisé}}",
+  "@mapCompleted": {"placeholders": {"count": {"type": "int"}}},
+  "adminIconLabel": "Icône sur la carte"
 }

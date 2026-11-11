@@ -116,14 +116,33 @@ export class ChatService {
   }
 
   async getConversations(userId: number, page = 1, limit = 20) {
-    return this.prisma.conversation.findMany({
-      where: {
-        participants: {
-          some: {
-            userId: userId,
+    const blockedUserIds = await this.getBlockedUserIds(userId);
+    const conversationWhere = blockedUserIds.length === 0
+      ? {
+          participants: {
+            some: {
+              userId: userId,
+            },
           },
-        },
-      },
+        }
+      : {
+          OR: [
+            {
+              isGroup: true,
+              participants: { some: { userId } },
+            },
+            {
+              isGroup: false,
+              participants: {
+                some: { userId },
+                none: { userId: { in: blockedUserIds } },
+              },
+            },
+          ],
+        };
+
+    return this.prisma.conversation.findMany({
+      where: conversationWhere,
       include: {
         participants: {
           include: {
@@ -441,8 +460,14 @@ export class ChatService {
       throw new ForbiddenException("Tu n'as pas accès à ce groupe.");
     }
 
+    const blockedUserIds = await this.getBlockedUserIds(userId);
     const posts = await this.prisma.post.findMany({
-      where: { challenge: { is: { conversationId } } },
+      where: {
+        challenge: { is: { conversationId } },
+        ...(blockedUserIds.length > 0
+          ? { userId: { notIn: blockedUserIds } }
+          : {}),
+      },
       orderBy: { createdAt: 'desc' },
       include: postIncludeWithUpvotes(userId),
     });
@@ -464,6 +489,17 @@ export class ChatService {
       throw new ForbiddenException(
         'Tu ne fais pas partie de cette discussion.',
       );
+    }
+
+    const blockedUserIds = await this.getBlockedUserIds(senderId);
+    const hasBlockedParticipant = await this.prisma.participant.findFirst({
+      where: {
+        conversationId,
+        userId: { in: blockedUserIds },
+      },
+    });
+    if (hasBlockedParticipant) {
+      throw new ForbiddenException('Tu ne peux plus écrire à cet utilisateur.');
     }
 
     return this.prisma.message.create({
@@ -532,5 +568,19 @@ export class ChatService {
 
     // `after` already returns ascending (oldest→newest); cursor/initial need reversal
     return after ? messages : messages.reverse();
+  }
+
+  private async getBlockedUserIds(userId: number): Promise<number[]> {
+    const blocked = (await this.prisma.friendship.findMany({
+      where: {
+        status: 'BLOCKED',
+        OR: [{ userId }, { friendId: userId }],
+      },
+      select: { userId: true, friendId: true },
+    })) ?? [];
+
+    return blocked.map((relation) =>
+      relation.userId === userId ? relation.friendId : relation.userId,
+    );
   }
 }
