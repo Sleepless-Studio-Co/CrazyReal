@@ -497,9 +497,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messages => 'Messages';
 
   @override
-  String get deleteAccountConfirmHint => 'Confirmation word';
-
-  @override
   String get administration => 'Administration';
 
   @override
@@ -720,6 +717,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get topPostsEmpty => 'No completed challenge has been upvoted yet.';
+
+  @override
+  String get deleteAccountConfirmHint => 'Confirmation word';
 
   @override
   String get map => 'Map';

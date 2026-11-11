@@ -875,7 +875,6 @@
   },
 
   "adminLoadError": "Impossible de charger les défis",
-  "@adminLoadError": { "description": "Erreur au chargement de la liste" },
 
   "viewProfile": "Voir le profil de {username}",
   "@viewProfile": {"description": "Libellé lecteur d'écran de l'avatar cliquable", "placeholders": {"username": {"type": "String"}}},
@@ -917,7 +916,8 @@
   "@topPeriodAll": { "description": "Filtre de période : sans limite" },
 
   "topPostsEmpty": "Aucun défi terminé n'a encore reçu de vote.",
-  "@topPostsEmpty": { "description": "Affiché quand la page des meilleurs défis est vide" }
+  "@topPostsEmpty": { "description": "Affiché quand la page des meilleurs défis est vide" },
+
   "@adminLoadError": { "description": "Erreur au chargement de la liste" },
 
   "map": "Carte",

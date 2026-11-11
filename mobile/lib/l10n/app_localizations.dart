@@ -1010,12 +1010,6 @@ abstract class AppLocalizations {
   /// **'Messages'**
   String get messages;
 
-  /// Label of the deletion confirmation text field
-  ///
-  /// In en, this message translates to:
-  /// **'Confirmation word'**
-  String get deleteAccountConfirmHint;
-
   /// Admin section header and tile in settings
   ///
   /// In en, this message translates to:
@@ -1375,6 +1369,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No completed challenge has been upvoted yet.'**
   String get topPostsEmpty;
+
+  /// Label of the deletion confirmation text field
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmation word'**
+  String get deleteAccountConfirmHint;
 
   /// No description provided for @map.
   ///
