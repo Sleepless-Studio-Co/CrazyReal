@@ -660,6 +660,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminLoadError => 'Could not load challenges';
 
   @override
+  String get signInWithGoogle => 'Sign in with Google';
+
+  @override
+  String get orDivider => 'or';
+
+  @override
   String viewProfile(String username) {
     return 'View $username\'s profile';
   }

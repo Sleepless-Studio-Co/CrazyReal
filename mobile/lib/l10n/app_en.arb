@@ -877,6 +877,12 @@
   "adminLoadError": "Could not load challenges",
   "@adminLoadError": { "description": "Error shown when the challenge list fails to load" },
 
+  "signInWithGoogle": "Sign in with Google",
+  "@signInWithGoogle": { "description": "Button that starts the Google sign-in flow" },
+
+  "orDivider": "or",
+  "@orDivider": { "description": "Separator label between login methods" },
+
   "viewProfile": "View {username}'s profile",
   "@viewProfile": {"description": "Screen reader label for the tappable avatar", "placeholders": {"username": {"type": "String"}}},
 

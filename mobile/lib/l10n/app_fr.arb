@@ -877,6 +877,12 @@
   "adminLoadError": "Impossible de charger les défis",
   "@adminLoadError": { "description": "Erreur au chargement de la liste" },
 
+  "signInWithGoogle": "Se connecter avec Google",
+  "@signInWithGoogle": { "description": "Bouton de connexion via Google" },
+
+  "orDivider": "ou",
+  "@orDivider": { "description": "Séparateur entre les méthodes de connexion" },
+
   "viewProfile": "Voir le profil de {username}",
   "@viewProfile": {"description": "Libellé lecteur d'écran de l'avatar cliquable", "placeholders": {"username": {"type": "String"}}},
 

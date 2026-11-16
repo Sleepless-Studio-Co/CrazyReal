@@ -10,7 +10,7 @@ export interface AuthUser {
 }
 
 export interface AuthUserWithPassword extends AuthUser {
-  password: string;
+  password: string | null;
 }
 
 export interface ValidatedUser {

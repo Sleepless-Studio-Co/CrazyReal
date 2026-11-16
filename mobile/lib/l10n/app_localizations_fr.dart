@@ -667,6 +667,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get adminLoadError => 'Impossible de charger les défis';
 
   @override
+  String get signInWithGoogle => 'Se connecter avec Google';
+
+  @override
+  String get orDivider => 'ou';
+
+  @override
   String viewProfile(String username) {
     return 'Voir le profil de $username';
   }

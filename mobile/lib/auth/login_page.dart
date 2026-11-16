@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'auth_service.dart';
 import 'register_page.dart';
 import '../l10n/app_localizations.dart';
+import '../services/api_exception.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, this.onAuthSuccess});
@@ -18,6 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   String? _errorMessage;
 
   @override
@@ -61,81 +64,135 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _loginWithGoogle() async {
+    setState(() {
+      _isGoogleLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _authService.loginWithGoogle();
+      if (mounted) {
+        if (widget.onAuthSuccess != null) {
+          widget.onAuthSuccess!();
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        } else {
+          Navigator.of(context).pop(true);
+        }
+      }
+    } on GoogleSignInCancelledException {
+      // The user dismissed the Google sheet: nothing to report.
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.login),
+        title: Text(l10n.login),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.email,
-                  border: const OutlineInputBorder(),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.email,
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return AppLocalizations.of(context)!.pleaseEnterEmail;
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return AppLocalizations.of(context)!
+                          .pleaseEnterValidEmail;
+                    }
+                    return null;
+                  },
                 ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return AppLocalizations.of(context)!.pleaseEnterEmail;
-                  }
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                    return AppLocalizations.of(context)!.pleaseEnterValidEmail;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.password,
-                  border: const OutlineInputBorder(),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.password,
+                    border: const OutlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return AppLocalizations.of(context)!.pleaseEnterPassword;
+                    }
+                    return null;
+                  },
                 ),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return AppLocalizations.of(context)!.pleaseEnterPassword;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              if (_errorMessage != null)
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+                const SizedBox(height: 16),
+                if (_errorMessage != null)
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? const CircularProgressIndicator()
+                        : Text(AppLocalizations.of(context)!.login),
+                  ),
                 ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  child: _isLoading
-                      ? const CircularProgressIndicator()
-                      : Text(AppLocalizations.of(context)!.login),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RegisterPage(
-                        onAuthSuccess: widget.onAuthSuccess,
-                      ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(l10n.orDivider),
                     ),
-                  );
-                },
-                child: Text(AppLocalizations.of(context)!.dontHaveAccount),
-              ),
-            ],
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                GoogleSignInButton(
+                  label: l10n.signInWithGoogle,
+                  onPressed: _loginWithGoogle,
+                  isLoading: _isGoogleLoading,
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => RegisterPage(
+                          onAuthSuccess: widget.onAuthSuccess,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(AppLocalizations.of(context)!.dontHaveAccount),
+                ),
+              ],
+            ),
           ),
         ),
       ),

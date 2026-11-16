@@ -1292,6 +1292,18 @@ abstract class AppLocalizations {
   /// **'Could not load challenges'**
   String get adminLoadError;
 
+  /// Button that starts the Google sign-in flow
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get signInWithGoogle;
+
+  /// Separator label between login methods
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get orDivider;
+
   /// Screen reader label for the tappable avatar
   ///
   /// In en, this message translates to:

@@ -18,7 +18,12 @@ describe('UsersService', () => {
     upVotes: [{ id: 1 }],
   };
   let prisma: {
-    user: { findUnique: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    user: {
+      findUnique: jest.Mock;
+      findMany: jest.Mock;
+      findFirst: jest.Mock;
+      update: jest.Mock;
+    };
     friendship: { count: jest.Mock };
     post: { findMany: jest.Mock };
   };
@@ -38,11 +43,42 @@ describe('UsersService', () => {
 
   beforeEach(() => {
     prisma = {
-      user: { findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+      user: {
+        findUnique: jest.fn(),
+        findMany: jest.fn(),
+        findFirst: jest.fn(),
+        update: jest.fn(),
+      },
       friendship: { count: jest.fn() },
       post: { findMany: jest.fn().mockResolvedValue([rawPost]) },
     };
     service = new UsersService(prisma as unknown as PrismaService);
+  });
+
+  describe('findByEmail', () => {
+    it('matches emails case-insensitively so Google accounts can be linked', async () => {
+      const user = {
+        id: 1,
+        email: 'User@Example.com',
+        username: 'user',
+        avatarUrl: null,
+        avatarKey: null,
+        isPrivate: false,
+        emailVerified: true,
+        createdAt: new Date('2026-01-01'),
+      };
+      prisma.user.findFirst.mockResolvedValue(user);
+
+      await expect(service.findByEmail('user@example.com')).resolves.toBe(user);
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            email: { equals: 'user@example.com', mode: 'insensitive' },
+          },
+        }),
+      );
+    });
   });
 
   describe('findPublicProfile', () => {
