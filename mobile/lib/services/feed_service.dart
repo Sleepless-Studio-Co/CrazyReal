@@ -33,6 +33,13 @@ class FeedService {
     return FeedPost.listFromJson(data);
   }
 
+  /// Posts les plus upvotés des défis globaux terminés.
+  /// [period] : `week`, `month` ou `all`.
+  Future<List<FeedPost>> fetchTopPosts(String period) async {
+    final data = await _authedRequest('GET', '/posts/top?period=$period');
+    return FeedPost.listFromJson(data);
+  }
+
   Future<List<AvailableChallenge>> fetchAvailableChallenges() async {
     final data = await _authedRequest('GET', '/challenges/available');
     if (data is! List) return [];
@@ -48,6 +55,11 @@ class FeedService {
   Future<List<FeedPost>> fetchGroupPosts(int conversationId) async {
     final data = await _authedRequest('GET', '/chat/$conversationId/feed');
     return FeedPost.listFromJson(data);
+  }
+
+  Future<UserProfile> fetchUserProfile(int userId) async {
+    final data = await _authedRequest('GET', '/users/$userId');
+    return UserProfile.fromJson(data as Map<String, dynamic>);
   }
 
   Future<FeedChallengeSummary?> fetchCurrentChallenge() async {
@@ -92,6 +104,14 @@ class FeedService {
       '/posts/$postId/reaction?emoji=${Uri.encodeQueryComponent(emoji)}',
     );
     return FeedPost.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<void> submitChallengeIdea(String content) async {
+    await _authedRequest(
+      'POST',
+      '/challenge-ideas',
+      body: {'content': content},
+    );
   }
 
   Future<FeedPost> _vote(int postId, {required bool remove}) async {

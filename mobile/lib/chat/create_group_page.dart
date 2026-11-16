@@ -49,7 +49,9 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        final message = e is ApiException ? e.message : 'Erreur lors du chargement des amis';
+        final message = e is ApiException
+            ? e.message
+            : 'Erreur lors du chargement des amis';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
@@ -89,7 +91,8 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     final name = _nameController.text.trim();
     if (name.isEmpty || _selectedUserIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nom requis et au moins 1 ami sélectionné')),
+        const SnackBar(
+            content: Text('Nom requis et au moins 1 ami sélectionné')),
       );
       return;
     }
@@ -99,12 +102,15 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Groupe créé !'), backgroundColor: paperSuccess),
+          const SnackBar(
+              content: Text('Groupe créé !'), backgroundColor: paperSuccess),
         );
       }
     } catch (e) {
       if (mounted) {
-        final message = e is ApiException ? e.message : 'Erreur lors de la création du groupe';
+        final message = e is ApiException
+            ? e.message
+            : 'Erreur lors de la création du groupe';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: paperDanger),
         );
@@ -115,17 +121,18 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: paperBg,
-      appBar: paperAppBar(title: 'Nouveau groupe'),
+      backgroundColor: context.paper.bg,
+      appBar: paperAppBar(context, title: 'Nouveau groupe'),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _nameController,
-              style: paperValue(),
+              style: paperValue(context),
               textInputAction: TextInputAction.done,
               decoration: paperInputDecoration(
+                context,
                 label: 'Nom du groupe',
                 prefixIcon: const Icon(Icons.badge_outlined),
               ),
@@ -139,15 +146,16 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 header: true,
                 child: Text(
                   'MEMBRES — ${_selectedUserIds.length} SÉLECTIONNÉ(S)',
-                  style: paperLabel(),
+                  style: paperLabel(context),
                 ),
               ),
             ),
           ),
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: paperAccent),
+                ? Center(
+                    child:
+                        CircularProgressIndicator(color: context.paper.accent),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
@@ -161,7 +169,8 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
 
                       return Container(
                         decoration: paperCardDecoration(
-                          border: isSelected ? paperAccent : null,
+                          context,
+                          border: isSelected ? context.paper.accent : null,
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: CheckboxListTile(
@@ -169,7 +178,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                           onChanged: (_) => _toggleSelection(friend['id']),
                           activeColor: paperAccentStrong,
                           controlAffinity: ListTileControlAffinity.trailing,
-                          title: Text(username, style: paperValue()),
+                          title: Text(username, style: paperValue(context)),
                           secondary: ExcludeSemantics(
                             child: FeedAvatar(
                               username: username,
@@ -190,9 +199,9 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
           // Action principale : un vrai bouton libellé plutôt qu'une icône
           // isolée dans l'AppBar.
           Container(
-            decoration: const BoxDecoration(
-              color: paperCard,
-              border: Border(top: BorderSide(color: paperBorder)),
+            decoration: BoxDecoration(
+              color: context.paper.card,
+              border: Border(top: BorderSide(color: context.paper.border)),
             ),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: SafeArea(
@@ -207,7 +216,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                     backgroundColor: paperAccentStrong,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 52),
-                    textStyle: paperValue(color: Colors.white),
+                    textStyle: paperValue(context, color: Colors.white),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),

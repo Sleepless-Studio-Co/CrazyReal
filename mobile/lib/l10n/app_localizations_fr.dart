@@ -63,13 +63,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get emailNotVerifiedTitle => 'Vérifiez votre e-mail';
 
   @override
-  String get emailNotVerifiedMessage => 'Nous avons envoyé un lien de confirmation à votre adresse e-mail. Vérifiez-la pour sécuriser votre compte.';
+  String get emailNotVerifiedMessage =>
+      'Nous avons envoyé un lien de confirmation à votre adresse e-mail. Vérifiez-la pour sécuriser votre compte.';
 
   @override
   String get resendVerificationEmail => 'Renvoyer l\'e-mail';
 
   @override
-  String get verificationEmailSent => 'E-mail de vérification envoyé. Consultez votre boîte de réception.';
+  String get verificationEmailSent =>
+      'E-mail de vérification envoyé. Consultez votre boîte de réception.';
 
   @override
   String get refresh => 'Actualiser';
@@ -123,7 +125,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get photoUploadError => 'Échec du téléchargement de la photo';
 
   @override
-  String get cameraPermissionRequired => 'La permission de la caméra est requise';
+  String get cameraPermissionRequired =>
+      'La permission de la caméra est requise';
 
   @override
   String get retryUpload => 'Réessayer';
@@ -192,7 +195,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pleaseLoginFirst => '🔒 Veuillez vous connecter d\'abord';
 
   @override
-  String get cameraOnlyMobile => '📱 Caméra disponible uniquement sur iOS/Android';
+  String get cameraOnlyMobile =>
+      '📱 Caméra disponible uniquement sur iOS/Android';
 
   @override
   String serverError(String code) {
@@ -217,7 +221,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pleaseEnterUsername => 'Veuillez entrer un nom d\'utilisateur';
 
   @override
-  String get usernameTooShort => 'Le nom d\'utilisateur doit contenir au moins 3 caractères';
+  String get usernameTooShort =>
+      'Le nom d\'utilisateur doit contenir au moins 3 caractères';
 
   @override
   String get pleaseEnterEmail => 'Veuillez entrer votre email';
@@ -229,7 +234,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pleaseEnterPassword => 'Veuillez entrer un mot de passe';
 
   @override
-  String get passwordTooShort => 'Le mot de passe doit contenir au moins 6 caractères';
+  String get passwordTooShort =>
+      'Le mot de passe doit contenir au moins 6 caractères';
 
   @override
   String get pleaseConfirmPassword => 'Veuillez confirmer votre mot de passe';
@@ -250,7 +256,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get emailLabel => 'Email : ';
 
   @override
-  String get pleaseLoginOrRegister => 'Veuillez vous connecter ou vous inscrire pour continuer';
+  String get pleaseLoginOrRegister =>
+      'Veuillez vous connecter ou vous inscrire pour continuer';
 
   @override
   String get friendRequestAccepted => 'Demande acceptée !';
@@ -273,7 +280,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get friendRequestError => 'Erreur : Utilisateur introuvable ou demande existante.';
+  String get friendRequestError =>
+      'Erreur : Utilisateur introuvable ou demande existante.';
 
   @override
   String get searchUsersHint => 'Rechercher un pseudo';
@@ -336,10 +344,33 @@ class AppLocalizationsFr extends AppLocalizations {
   String get feedFriendChallenge => 'Amis';
 
   @override
+  String get challengeIdeaOpen => 'Proposer un défi';
+
+  @override
+  String get challengeIdeaTitle => 'Boîte à idées';
+
+  @override
+  String get challengeIdeaDescription =>
+      'Une idée de défi ? Partage-la avec l’équipe.';
+
+  @override
+  String get challengeIdeaHint => 'Mon idée de défi...';
+
+  @override
+  String get challengeIdeaSend => 'Envoyer l’idée';
+
+  @override
+  String get challengeIdeaSuccess => 'Merci pour ton idée !';
+
+  @override
+  String get challengeIdeaError => 'Impossible d’envoyer ton idée.';
+
+  @override
   String get publishFirstPost => 'Publier une photo';
 
   @override
-  String get publishFirstPostHint => 'Réponds au challenge du moment pour remplir ton feed.';
+  String get publishFirstPostHint =>
+      'Réponds au challenge du moment pour remplir ton feed.';
 
   @override
   String get feedJustNow => 'À l\'instant';
@@ -395,7 +426,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deleteAccountConfirmTitle => 'Supprimer ton compte ?';
 
   @override
-  String get deleteAccountConfirmBody => 'Toutes tes données seront définitivement supprimées. Cette action est irréversible.';
+  String get deleteAccountConfirmBody =>
+      'Toutes tes données seront définitivement supprimées. Cette action est irréversible.';
 
   @override
   String get privacy => 'Confidentialité';
@@ -407,7 +439,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get permissions => 'Autorisations';
 
   @override
-  String get permissionsInfo => 'Pour gérer l\'accès au micro, à la caméra et à la localisation, va dans Réglages > CrazyReal sur ton téléphone.';
+  String get permissionsInfo =>
+      'Pour gérer l\'accès au micro, à la caméra et à la localisation, va dans Réglages > CrazyReal sur ton téléphone.';
 
   @override
   String get accessibility => 'Accessibilité';
@@ -431,7 +464,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get helpCenter => 'Aide';
 
   @override
-  String get helpInfo => 'Pour toute aide ou retour, contacte-nous à support@crazyreal.app';
+  String get helpInfo =>
+      'Pour toute aide ou retour, contacte-nous à support@crazyreal.app';
 
   @override
   String get privateAccount => 'Compte privé';
@@ -440,10 +474,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get publicAccount => 'Compte public';
 
   @override
-  String get privateAccountDesc => 'Seuls tes amis acceptés voient ton profil et tes défis.';
+  String get privateAccountDesc =>
+      'Seuls tes amis acceptés voient ton profil et tes défis.';
 
   @override
-  String get publicAccountDesc => 'Tout le monde peut voir ton profil et tes défis.';
+  String get publicAccountDesc =>
+      'Tout le monde peut voir ton profil et tes défis.';
 
   @override
   String get comingSoon => 'Bientôt disponible';
@@ -476,6 +512,34 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminChallengesTitle => 'Défis';
+
+  @override
+  String get adminChallengeIdeasTitle => 'Idées de défis';
+
+  @override
+  String get adminChallengeIdeasDesc => 'Valider les idées proposées';
+
+  @override
+  String get adminChallengeIdeasLoadError =>
+      'Impossible de charger les idées de défis.';
+
+  @override
+  String get adminNoChallengeIdeas => 'Aucune idée de défi pour le moment';
+
+  @override
+  String get adminIdeaPending => 'En attente';
+
+  @override
+  String get adminIdeaApproved => 'Validée';
+
+  @override
+  String get adminIdeaRejected => 'Non validée';
+
+  @override
+  String get adminIdeaApprove => 'Valider';
+
+  @override
+  String get adminIdeaReject => 'Refuser';
 
   @override
   String get adminNewChallenge => 'Nouveau défi';
@@ -607,4 +671,67 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get orDivider => 'ou';
+
+  @override
+  String viewProfile(String username) {
+    return 'Voir le profil de $username';
+  }
+
+  @override
+  String profilePostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'défis',
+      one: 'défi',
+      zero: 'défi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'abonnés',
+      one: 'abonné',
+      zero: 'abonné',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profileNoPosts => 'Aucun défi réalisé pour le moment';
+
+  @override
+  String get profilePrivateTitle => 'Ce compte est privé';
+
+  @override
+  String get profilePrivateMessage =>
+      'Deviens ami avec cette personne pour voir ses défis.';
+
+  @override
+  String get profileLoadError => 'Impossible de charger le profil';
+
+  @override
+  String get profilePosts => 'Défis';
+
+  @override
+  String get topPostsTitle => 'Meilleurs défis';
+
+  @override
+  String get topPostsTooltip => 'Meilleurs défis';
+
+  @override
+  String get topPeriodWeek => 'Semaine';
+
+  @override
+  String get topPeriodMonth => 'Mois';
+
+  @override
+  String get topPeriodAll => 'Tout';
+
+  @override
+  String get topPostsEmpty => 'Aucun défi terminé n\'a encore reçu de vote.';
 }

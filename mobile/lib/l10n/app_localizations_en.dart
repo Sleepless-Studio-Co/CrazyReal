@@ -63,13 +63,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emailNotVerifiedTitle => 'Verify your email';
 
   @override
-  String get emailNotVerifiedMessage => 'We sent a confirmation link to your email address. Verify it to secure your account.';
+  String get emailNotVerifiedMessage =>
+      'We sent a confirmation link to your email address. Verify it to secure your account.';
 
   @override
   String get resendVerificationEmail => 'Resend email';
 
   @override
-  String get verificationEmailSent => 'Verification email sent. Check your inbox.';
+  String get verificationEmailSent =>
+      'Verification email sent. Check your inbox.';
 
   @override
   String get refresh => 'Refresh';
@@ -273,7 +275,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get friendRequestError => 'Error: User not found or request already exists.';
+  String get friendRequestError =>
+      'Error: User not found or request already exists.';
 
   @override
   String get searchUsersHint => 'Search by username';
@@ -336,10 +339,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedFriendChallenge => 'Friends';
 
   @override
+  String get challengeIdeaOpen => 'Suggest a challenge';
+
+  @override
+  String get challengeIdeaTitle => 'Idea box';
+
+  @override
+  String get challengeIdeaDescription =>
+      'Have an idea for a challenge? Share it with the team.';
+
+  @override
+  String get challengeIdeaHint => 'My challenge idea...';
+
+  @override
+  String get challengeIdeaSend => 'Send idea';
+
+  @override
+  String get challengeIdeaSuccess => 'Thanks for your idea!';
+
+  @override
+  String get challengeIdeaError => 'Could not send your idea.';
+
+  @override
   String get publishFirstPost => 'Publish a photo';
 
   @override
-  String get publishFirstPostHint => 'Answer the current challenge to fill your feed.';
+  String get publishFirstPostHint =>
+      'Answer the current challenge to fill your feed.';
 
   @override
   String get feedJustNow => 'Just now';
@@ -395,7 +421,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAccountConfirmTitle => 'Delete your account?';
 
   @override
-  String get deleteAccountConfirmBody => 'All your data will be permanently deleted. This cannot be undone.';
+  String get deleteAccountConfirmBody =>
+      'All your data will be permanently deleted. This cannot be undone.';
 
   @override
   String get privacy => 'Privacy';
@@ -407,7 +434,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissions => 'Permissions';
 
   @override
-  String get permissionsInfo => 'To manage microphone, camera and location access for CrazyReal, go to your phone Settings > CrazyReal.';
+  String get permissionsInfo =>
+      'To manage microphone, camera and location access for CrazyReal, go to your phone Settings > CrazyReal.';
 
   @override
   String get accessibility => 'Accessibility';
@@ -431,7 +459,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get helpCenter => 'Help';
 
   @override
-  String get helpInfo => 'For any help or feedback, contact us at support@crazyreal.app';
+  String get helpInfo =>
+      'For any help or feedback, contact us at support@crazyreal.app';
 
   @override
   String get privateAccount => 'Private account';
@@ -440,10 +469,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get publicAccount => 'Public account';
 
   @override
-  String get privateAccountDesc => 'Only accepted friends see your profile and challenges.';
+  String get privateAccountDesc =>
+      'Only accepted friends see your profile and challenges.';
 
   @override
-  String get publicAccountDesc => 'Everyone can see your profile and challenges.';
+  String get publicAccountDesc =>
+      'Everyone can see your profile and challenges.';
 
   @override
   String get comingSoon => 'Coming soon';
@@ -476,6 +507,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminChallengesTitle => 'Challenges';
+
+  @override
+  String get adminChallengeIdeasTitle => 'Challenge ideas';
+
+  @override
+  String get adminChallengeIdeasDesc => 'Review submitted challenge ideas';
+
+  @override
+  String get adminChallengeIdeasLoadError => 'Could not load challenge ideas.';
+
+  @override
+  String get adminNoChallengeIdeas => 'No challenge ideas yet';
+
+  @override
+  String get adminIdeaPending => 'Pending';
+
+  @override
+  String get adminIdeaApproved => 'Approved';
+
+  @override
+  String get adminIdeaRejected => 'Rejected';
+
+  @override
+  String get adminIdeaApprove => 'Approve';
+
+  @override
+  String get adminIdeaReject => 'Reject';
 
   @override
   String get adminNewChallenge => 'New challenge';
@@ -606,4 +664,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get orDivider => 'or';
+
+  @override
+  String viewProfile(String username) {
+    return 'View $username\'s profile';
+  }
+
+  @override
+  String profilePostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'challenges',
+      one: 'challenge',
+      zero: 'challenges',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'followers',
+      one: 'follower',
+      zero: 'followers',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profileNoPosts => 'No challenges completed yet';
+
+  @override
+  String get profilePrivateTitle => 'This account is private';
+
+  @override
+  String get profilePrivateMessage => 'Become friends to see their challenges.';
+
+  @override
+  String get profileLoadError => 'Couldn\'t load the profile';
+
+  @override
+  String get profilePosts => 'Challenges';
+
+  @override
+  String get topPostsTitle => 'Best challenges';
+
+  @override
+  String get topPostsTooltip => 'Best challenges';
+
+  @override
+  String get topPeriodWeek => 'Week';
+
+  @override
+  String get topPeriodMonth => 'Month';
+
+  @override
+  String get topPeriodAll => 'All time';
+
+  @override
+  String get topPostsEmpty => 'No completed challenge has been upvoted yet.';
 }

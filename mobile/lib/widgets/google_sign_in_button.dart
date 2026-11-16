@@ -42,12 +42,16 @@ class GoogleSignInButton extends StatelessWidget {
                 children: [
                   const _GoogleLogo(),
                   const SizedBox(width: 12),
-                  Text(
-                    label,
-                    style: GoogleFonts.karla(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF3B2A21),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.karla(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF3B2A21),
+                      ),
                     ),
                   ),
                 ],
@@ -65,6 +69,9 @@ class _GoogleLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShaderMask(
+      // The gradient replaces the glyph entirely: `srcIn` keeps the child's
+      // shape while the colour painted comes from the shader only.
+      blendMode: BlendMode.srcIn,
       shaderCallback: (bounds) => const SweepGradient(
         colors: [
           Color(0xFF4285F4), // blue
@@ -81,7 +88,9 @@ class _GoogleLogo extends StatelessWidget {
         style: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w700,
-          color: Colors.white,
+          // Irrelevant visually (the shader paints the glyph) but keeps the
+          // contrast audit meaningful on the white button background.
+          color: Color(0xFF3B2A21),
           height: 1,
         ),
       ),

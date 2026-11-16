@@ -28,6 +28,51 @@ extension ChallengeTypeApi on ChallengeType {
       };
 }
 
+enum ChallengeIdeaStatus { pending, approved, rejected }
+
+extension ChallengeIdeaStatusApi on ChallengeIdeaStatus {
+  String get apiValue => switch (this) {
+        ChallengeIdeaStatus.pending => 'PENDING',
+        ChallengeIdeaStatus.approved => 'APPROVED',
+        ChallengeIdeaStatus.rejected => 'REJECTED',
+      };
+
+  static ChallengeIdeaStatus fromApi(String? value) => switch (value) {
+        'APPROVED' => ChallengeIdeaStatus.approved,
+        'REJECTED' => ChallengeIdeaStatus.rejected,
+        _ => ChallengeIdeaStatus.pending,
+      };
+}
+
+class AdminChallengeIdea {
+  const AdminChallengeIdea({
+    required this.id,
+    required this.content,
+    required this.username,
+    required this.status,
+    required this.createdAt,
+  });
+
+  final int id;
+  final String content;
+  final String username;
+  final ChallengeIdeaStatus status;
+  final DateTime createdAt;
+
+  factory AdminChallengeIdea.fromJson(Map<String, dynamic> json) {
+    final user = json['user'];
+    return AdminChallengeIdea(
+      id: json['id'] as int,
+      content: json['content']?.toString() ?? '',
+      username: user is Map ? user['username']?.toString() ?? '' : '',
+      status: ChallengeIdeaStatusApi.fromApi(json['status']?.toString()),
+      createdAt:
+          DateTime.tryParse(json['createdAt']?.toString() ?? '')?.toLocal() ??
+              DateTime.now(),
+    );
+  }
+}
+
 /// Un défi global tel que renvoyé par `/admin/challenges`.
 class AdminChallenge {
   const AdminChallenge({
@@ -185,6 +230,37 @@ class AdminService {
     await _send(
       (headers) =>
           http.delete(Uri.parse('$baseUrl/challenges/$id'), headers: headers),
+    );
+  }
+
+  Future<List<AdminChallengeIdea>> getChallengeIdeas() async {
+    final response = await _send(
+      (headers) => http.get(
+        Uri.parse('$baseUrl/challenge-ideas'),
+        headers: headers,
+      ),
+    );
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) throw ApiException('Unexpected response format');
+    return decoded
+        .map(
+            (item) => AdminChallengeIdea.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<AdminChallengeIdea> updateChallengeIdeaStatus(
+    int id,
+    ChallengeIdeaStatus status,
+  ) async {
+    final response = await _send(
+      (headers) => http.patch(
+        Uri.parse('$baseUrl/challenge-ideas/$id/status'),
+        headers: headers,
+        body: jsonEncode({'status': status.apiValue}),
+      ),
+    );
+    return AdminChallengeIdea.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
     );
   }
 

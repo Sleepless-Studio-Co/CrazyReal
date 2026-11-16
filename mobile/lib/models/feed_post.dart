@@ -167,14 +167,10 @@ class FeedPost {
       upvoteCount: json['upvoteCount'] is int ? json['upvoteCount'] as int : 0,
       hasUpvoted: json['hasUpvoted'] == true,
       mediaType: parsePostMediaType(json['mediaType']?.toString()),
-      reactions: (json['reactions'] is List)
-          ? (json['reactions'] as List)
-              .whereType<Map>()
-              .map((item) => FeedReaction.fromJson(
-                    Map<String, dynamic>.from(item),
-                  ))
-              .toList()
-          : const [],
+      reactions: (json['reactions'] is List ? json['reactions'] as List : [])
+          .whereType<Map>()
+          .map((item) => FeedReaction.fromJson(Map<String, dynamic>.from(item)))
+          .toList(),
     );
   }
 
@@ -222,6 +218,39 @@ class FeedChallengeSummary {
     return FeedChallengeSummary(
       title: json['title']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
+    );
+  }
+}
+
+/// `GET /users/:id`: [posts] is empty when the account is private and the
+/// viewer is not a friend ([isLocked]).
+class UserProfile {
+  const UserProfile({
+    required this.user,
+    required this.isPrivate,
+    required this.isFriend,
+    required this.isSelf,
+    required this.friendCount,
+    required this.posts,
+  });
+
+  final FeedUser user;
+  final bool isPrivate;
+  final bool isFriend;
+  final bool isSelf;
+  final int friendCount;
+  final List<FeedPost> posts;
+
+  bool get isLocked => isPrivate && !isFriend && !isSelf;
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    return UserProfile(
+      user: FeedUser.fromJson(json),
+      isPrivate: json['isPrivate'] == true,
+      isFriend: json['isFriend'] == true,
+      isSelf: json['isSelf'] == true,
+      friendCount: json['friendCount'] is int ? json['friendCount'] as int : 0,
+      posts: FeedPost.listFromJson(json['posts']),
     );
   }
 }
