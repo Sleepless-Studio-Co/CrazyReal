@@ -37,14 +37,17 @@ describe('UsersController', () => {
   });
 
   describe('search', () => {
-    it('returns an empty list for a blank query without hitting the service', () => {
-      expect(controller.search('   ', user)).toEqual([]);
-      expect(usersService.searchByUsername).not.toHaveBeenCalled();
-    });
+    it.each([undefined, '', '   '])(
+      'returns an empty list for %p without hitting the service',
+      (q) => {
+        expect(controller.search(q as string, user)).toEqual([]);
+        expect(usersService.searchByUsername).not.toHaveBeenCalled();
+      },
+    );
 
-    it('delegates a non-empty query to the service', async () => {
+    it('trims the query and passes the requester id', async () => {
       usersService.searchByUsername.mockResolvedValue([{ id: 2 }]);
-      await expect(controller.search('bob', user)).resolves.toEqual([
+      await expect(controller.search('  bob ', user)).resolves.toEqual([
         { id: 2 },
       ]);
       expect(usersService.searchByUsername).toHaveBeenCalledWith('bob', 1);
@@ -52,9 +55,9 @@ describe('UsersController', () => {
   });
 
   describe('findOne', () => {
-    it('delegates to findPublicProfile', async () => {
+    it('delegates to findPublicProfile as the authenticated user', async () => {
       usersService.findPublicProfile.mockResolvedValue({ id: 2 });
-      await controller.findOne(2, user);
+      await expect(controller.findOne(2, user)).resolves.toEqual({ id: 2 });
       expect(usersService.findPublicProfile).toHaveBeenCalledWith(2, 1);
     });
   });

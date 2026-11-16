@@ -101,13 +101,14 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: paperAccent));
+      return Center(
+          child: CircularProgressIndicator(color: context.paper.accent));
     }
 
     if (_posts.isEmpty) {
       return RefreshIndicator(
         onRefresh: _load,
-        color: paperAccent,
+        color: context.paper.accent,
         child: const PaperEmptyState(
           icon: Icons.photo_library_outlined,
           title: 'Aucune photo',
@@ -119,7 +120,7 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: paperAccent,
+      color: context.paper.accent,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),

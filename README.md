@@ -271,6 +271,7 @@ Documentation interactive : **GET** `/api` (Swagger).
 | `GET` | `/challenge/current` | Oui | Challenge actif |
 | `POST` | `/posts` | Oui | Upload photo (`multipart/form-data`, champ `file`) |
 | `GET` | `/posts` | Oui | Liste des posts (avec utilisateur) |
+| `GET` | `/posts/top` | Oui | Meilleurs posts (les plus upvotés) des défis globaux terminés ; `period` = `week`, `month` ou `all` (défaut). Même visibilité que le feed, top 50 |
 
 ### Amis — `/friends`
 

@@ -19,9 +19,47 @@ describe('UsersService', () => {
       delete: jest.Mock;
     };
     friendship: {
-      findFirst: jest.Mock;
+      count: jest.Mock;
+    };
+    post: {
+      findMany: jest.Mock;
     };
   };
+
+  const bob = {
+    id: 2,
+    username: 'bob',
+    avatarUrl: '/uploads/bob.png',
+    avatarKey: null,
+    isPrivate: false,
+    createdAt: new Date('2026-01-01'),
+  };
+  const rawPost = {
+    id: 11,
+    photoUrl: '/uploads/p.jpg',
+    _count: { upVotes: 3 },
+    upVotes: [{ id: 1 }],
+  };
+
+  /// Le service appelle `friendship.count` deux fois : lien d'amitié
+  /// viewer↔cible (sauf pour soi-même), puis nombre d'amis de la cible.
+  function mockFriendship({
+    isFriend,
+    friendCount,
+  }: {
+    isFriend: boolean;
+    friendCount: number;
+  }) {
+    prismaService.friendship.count.mockImplementation(({ where }) =>
+      Promise.resolve(
+        where.OR.length === 2 &&
+          'friendId' in where.OR[0] &&
+          'userId' in where.OR[0]
+          ? Number(isFriend)
+          : friendCount,
+      ),
+    );
+  }
 
   beforeEach(async () => {
     prismaService = {
@@ -33,7 +71,10 @@ describe('UsersService', () => {
         delete: jest.fn(),
       },
       friendship: {
-        findFirst: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
+      },
+      post: {
+        findMany: jest.fn().mockResolvedValue([rawPost]),
       },
     };
 
@@ -99,18 +140,35 @@ describe('UsersService', () => {
   });
 
   describe('searchByUsername', () => {
-    it('searches case-insensitively and excludes the requester', async () => {
+    it('searches case-insensitively, excludes the requester and caps results', async () => {
       prismaService.user.findMany.mockResolvedValue([]);
-      await service.searchByUsername('ali', 5);
-      expect(prismaService.user.findMany).toHaveBeenCalledWith({
-        where: {
-          username: { contains: 'ali', mode: 'insensitive' },
-          NOT: { id: 5 },
-        },
-        select: expect.objectContaining({ username: true, isPrivate: true }),
-        orderBy: { username: 'asc' },
-        take: 20,
+
+      await service.searchByUsername('Bo', 5);
+
+      expect(prismaService.user.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            username: { contains: 'Bo', mode: 'insensitive' },
+            NOT: { id: 5 },
+          },
+          orderBy: { username: 'asc' },
+          take: 20,
+        }),
+      );
+    });
+
+    it('exposes the privacy flag but not the email', async () => {
+      prismaService.user.findMany.mockResolvedValue([]);
+
+      await service.searchByUsername('bo', 1);
+
+      const { select } = prismaService.user.findMany.mock.calls[0][0];
+      expect(select).toMatchObject({
+        id: true,
+        username: true,
+        isPrivate: true,
       });
+      expect(select).not.toHaveProperty('email');
     });
   });
 
@@ -138,15 +196,20 @@ describe('UsersService', () => {
       });
     });
 
-    it('delegates updatePrivacy', async () => {
-      prismaService.user.update.mockResolvedValue({ id: 1, isPrivate: true });
-      await service.updatePrivacy(1, true);
-      expect(prismaService.user.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { isPrivate: true },
-        select: expect.objectContaining({ id: true }),
-      });
-    });
+    it.each([true, false])(
+      'stores isPrivate=%s for the given user',
+      async (isPrivate) => {
+        prismaService.user.update.mockResolvedValue({ id: 1, isPrivate });
+
+        await expect(service.updatePrivacy(1, isPrivate)).resolves.toEqual({
+          id: 1,
+          isPrivate,
+        });
+        expect(prismaService.user.update).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: 1 }, data: { isPrivate } }),
+        );
+      },
+    );
   });
 
   describe('deleteAccount', () => {
@@ -160,69 +223,156 @@ describe('UsersService', () => {
   });
 
   describe('findPublicProfile', () => {
-    it('throws NotFoundException when the target does not exist', async () => {
+    it('throws NotFoundException (not a 500) for an unknown user', async () => {
       prismaService.user.findUnique.mockResolvedValue(null);
+
       await expect(service.findPublicProfile(99, 1)).rejects.toBeInstanceOf(
         NotFoundException,
       );
     });
 
-    it('returns the own profile with isSelf/isFriend flags', async () => {
-      prismaService.user.findUnique.mockResolvedValue({
-        id: 1,
-        username: 'me',
-        isPrivate: true,
-      });
-      await expect(service.findPublicProfile(1, 1)).resolves.toEqual(
-        expect.objectContaining({ id: 1, isSelf: true, isFriend: true }),
-      );
-    });
+    it('shows a public profile and its posts to anyone', async () => {
+      prismaService.user.findUnique.mockResolvedValue(bob);
+      mockFriendship({ isFriend: false, friendCount: 4 });
 
-    it('returns a public profile without needing friendship', async () => {
-      prismaService.user.findUnique.mockResolvedValue({
+      const profile = await service.findPublicProfile(2, 1);
+
+      expect(profile).toMatchObject({
         id: 2,
         username: 'bob',
         isPrivate: false,
+        isFriend: false,
+        isSelf: false,
+        friendCount: 4,
       });
-      await expect(service.findPublicProfile(2, 1)).resolves.toEqual(
-        expect.objectContaining({ id: 2, isSelf: false, isFriend: false }),
-      );
+      expect(profile?.posts).toHaveLength(1);
     });
 
-    it('returns the full profile for an accepted friend of a private user', async () => {
+    it('locks a private profile for a non-friend', async () => {
       prismaService.user.findUnique.mockResolvedValue({
-        id: 2,
-        username: 'bob',
+        ...bob,
         isPrivate: true,
-        avatarUrl: null,
-        avatarKey: null,
       });
-      prismaService.friendship.findFirst.mockResolvedValue({ id: 9 });
+      mockFriendship({ isFriend: false, friendCount: 4 });
 
-      await expect(service.findPublicProfile(2, 1)).resolves.toEqual(
-        expect.objectContaining({ id: 2, isFriend: true, isSelf: false }),
-      );
-    });
+      const profile = await service.findPublicProfile(2, 1);
 
-    it('returns a minimal locked profile for a non-friend private user', async () => {
-      prismaService.user.findUnique.mockResolvedValue({
+      expect(profile).toEqual({
         id: 2,
         username: 'bob',
-        isPrivate: true,
-        avatarUrl: '/uploads/x.png',
-        avatarKey: null,
-      });
-      prismaService.friendship.findFirst.mockResolvedValue(null);
-
-      await expect(service.findPublicProfile(2, 1)).resolves.toEqual({
-        id: 2,
-        username: 'bob',
-        avatarUrl: '/uploads/x.png',
+        avatarUrl: '/uploads/bob.png',
         avatarKey: null,
         isPrivate: true,
         isFriend: false,
         isSelf: false,
+        friendCount: 4,
+        posts: [],
       });
+      expect(prismaService.post.findMany).not.toHaveBeenCalled();
+    });
+
+    it('does not leak createdAt on a locked profile', async () => {
+      prismaService.user.findUnique.mockResolvedValue({
+        ...bob,
+        isPrivate: true,
+      });
+      mockFriendship({ isFriend: false, friendCount: 0 });
+
+      const profile = await service.findPublicProfile(2, 1);
+
+      expect(profile).not.toHaveProperty('createdAt');
+    });
+
+    it('opens a private profile to an accepted friend', async () => {
+      prismaService.user.findUnique.mockResolvedValue({
+        ...bob,
+        isPrivate: true,
+      });
+      mockFriendship({ isFriend: true, friendCount: 4 });
+
+      const profile = await service.findPublicProfile(2, 1);
+
+      expect(profile).toMatchObject({
+        isPrivate: true,
+        isFriend: true,
+        isSelf: false,
+      });
+      expect(profile?.posts).toHaveLength(1);
+    });
+
+    it('always opens your own private profile', async () => {
+      prismaService.user.findUnique.mockResolvedValue({
+        ...bob,
+        isPrivate: true,
+      });
+      mockFriendship({ isFriend: false, friendCount: 0 });
+
+      const profile = await service.findPublicProfile(2, 2);
+
+      expect(profile).toMatchObject({ isSelf: true, isFriend: true });
+      expect(profile?.posts).toHaveLength(1);
+    });
+
+    it('only counts ACCEPTED friendships, in both directions', async () => {
+      prismaService.user.findUnique.mockResolvedValue(bob);
+      mockFriendship({ isFriend: false, friendCount: 0 });
+
+      await service.findPublicProfile(2, 1);
+
+      expect(prismaService.friendship.count).toHaveBeenCalledWith({
+        where: { status: 'ACCEPTED', OR: [{ userId: 2 }, { friendId: 2 }] },
+      });
+      expect(prismaService.friendship.count).toHaveBeenCalledWith({
+        where: {
+          status: 'ACCEPTED',
+          OR: [
+            { userId: 1, friendId: 2 },
+            { userId: 2, friendId: 1 },
+          ],
+        },
+      });
+    });
+
+    it('excludes group-challenge posts, newest first', async () => {
+      prismaService.user.findUnique.mockResolvedValue(bob);
+      mockFriendship({ isFriend: true, friendCount: 1 });
+
+      await service.findPublicProfile(2, 1);
+
+      const query = prismaService.post.findMany.mock.calls[0][0];
+      expect(query.where).toEqual({
+        userId: 2,
+        challenge: { conversationId: null },
+      });
+      expect(query.orderBy).toEqual({ createdAt: 'desc' });
+    });
+
+    it('computes upvotes from the viewer point of view', async () => {
+      prismaService.user.findUnique.mockResolvedValue(bob);
+      mockFriendship({ isFriend: true, friendCount: 1 });
+
+      const profile = await service.findPublicProfile(2, 1);
+
+      const query = prismaService.post.findMany.mock.calls[0][0];
+      expect(query.include.upVotes.where).toEqual({ userId: 1 });
+      expect(profile?.posts[0]).toEqual({
+        id: 11,
+        photoUrl: '/uploads/p.jpg',
+        upvoteCount: 3,
+        hasUpvoted: true,
+        reactions: [],
+      });
+    });
+
+    it('never selects the email or password of the target', async () => {
+      prismaService.user.findUnique.mockResolvedValue(bob);
+      mockFriendship({ isFriend: false, friendCount: 0 });
+
+      await service.findPublicProfile(2, 1);
+
+      const { select } = prismaService.user.findUnique.mock.calls[0][0];
+      expect(select).not.toHaveProperty('email');
+      expect(select).not.toHaveProperty('password');
     });
   });
 
@@ -262,7 +412,9 @@ describe('UsersService', () => {
     });
 
     it('maps a P2025 to NotFoundException', async () => {
-      prismaService.user.update.mockRejectedValue(knownRequestError('P2025'));
+      prismaService.user.update.mockRejectedValue(
+        knownRequestError('P2025'),
+      );
       await expect(service.updateProfile(1, {})).rejects.toThrow(
         'user not found',
       );
