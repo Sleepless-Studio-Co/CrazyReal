@@ -959,5 +959,32 @@
   "@mapParticipants": {"placeholders": {"count": {"type": "int"}}},
   "mapCompleted": "{count, plural, =0{Not completed yet} =1{1 completed it} other{{count} completed it}}",
   "@mapCompleted": {"placeholders": {"count": {"type": "int"}}},
-  "adminIconLabel": "Map icon"
+  "adminIconLabel": "Map icon",
+
+  "adminTranslationsTitle": "Translations",
+  "@adminTranslationsTitle": { "description": "Title of the challenge translations screen and button tooltip" },
+
+  "adminTranslationOriginal": "Original (French)",
+  "@adminTranslationOriginal": { "description": "Header of the original French text on the translations screen" },
+
+  "adminTranslationAuto": "Automatic",
+  "@adminTranslationAuto": { "description": "Status of a DeepL translation" },
+
+  "adminTranslationManual": "Edited by hand",
+  "@adminTranslationManual": { "description": "Status of a translation corrected by an admin" },
+
+  "adminTranslationMissing": "Not translated: French is shown",
+  "@adminTranslationMissing": { "description": "Status when a language has no translation" },
+
+  "adminTranslationHint": "Translations are made by DeepL. A translation you edit is never overwritten, even if the French text changes.",
+  "@adminTranslationHint": { "description": "Explanation at the top of the translations screen" },
+
+  "adminTranslationResetAuto": "Back to automatic",
+  "@adminTranslationResetAuto": { "description": "Button that drops a manual translation and asks DeepL again" },
+
+  "adminTranslationSaved": "Translation saved",
+  "@adminTranslationSaved": { "description": "Snackbar after saving a manual translation" },
+
+  "adminTranslationResetDone": "Automatic translation restored",
+  "@adminTranslationResetDone": { "description": "Snackbar after resetting a translation" }
 }

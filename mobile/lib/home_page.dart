@@ -9,6 +9,7 @@ import 'models/feed_post.dart';
 import 'services/api_exception.dart';
 import 'services/feed_service.dart';
 import 'top_posts_page.dart';
+import 'utils/challenge_locale.dart';
 import 'utils/media_url.dart';
 import 'widgets/post_card.dart';
 import 'widgets/post_card_skeleton.dart';
@@ -283,7 +284,15 @@ class HomePageState extends State<HomePage> {
     if (!_isActive || !mounted) return;
 
     try {
-      final post = FeedPost.fromJson(Map<String, dynamic>.from(data as Map));
+      final json = Map<String, dynamic>.from(data as Map);
+      // Le socket diffuse le même post à tout le monde : on traduit le défi
+      // ici, comme le backend le fait pour les réponses HTTP.
+      final challenge = json['challenge'];
+      if (challenge is Map) {
+        json['challenge'] =
+            localizeChallengeJson(Map<String, dynamic>.from(challenge));
+      }
+      final post = FeedPost.fromJson(json);
       if (!_isPostVisibleForCurrentFilter(post)) return;
       if (_posts.any((existing) => existing.id == post.id)) return;
 

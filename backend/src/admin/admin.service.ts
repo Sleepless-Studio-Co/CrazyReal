@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -15,7 +16,12 @@ import {
   ChallengeTranslationService,
   toTranslationsColumn,
 } from '../translation/challenge-translation.service';
-import { ChallengeTranslations } from '../translation/translation.constants';
+import {
+  ChallengeLocale,
+  ChallengeTranslations,
+  isChallengeLocale,
+} from '../translation/translation.constants';
+import { UpdateChallengeTranslationDto } from './dto/update-challenge-translation.dto';
 
 @Injectable()
 export class AdminService {
@@ -104,6 +110,8 @@ export class AdminService {
       this.notificationGateway.broadcast('challengeCreated', {
         challengeId: challenge.id,
         challengeTitle: challenge.title,
+        // L'app choisit le titre dans sa langue (cf. global_notification_service).
+        challengeTranslations: challenge.translations,
         isGlobal: true,
       });
       return challenge;
@@ -175,6 +183,64 @@ export class AdminService {
 
     await this.prisma.challenge.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  async setManualTranslation(
+    id: number,
+    locale: string,
+    dto: UpdateChallengeTranslationDto,
+  ) {
+    const challengeLocale = this.parseLocale(locale);
+    const challenge = await this.getChallengeOrThrow(id);
+    const translations: ChallengeTranslations = {
+      ...((challenge.translations as ChallengeTranslations | null) ?? {}),
+      [challengeLocale]: {
+        title: dto.title.trim(),
+        description: dto.description?.trim() ?? '',
+        manual: true,
+      },
+    };
+    return this.saveTranslations(id, translations);
+  }
+
+  async resetTranslation(id: number, locale: string) {
+    const challengeLocale = this.parseLocale(locale);
+    const challenge = await this.getChallengeOrThrow(id);
+    const translations: ChallengeTranslations = {
+      ...((challenge.translations as ChallengeTranslations | null) ?? {}),
+    };
+    delete translations[challengeLocale];
+
+    // Si DeepL échoue, la langue retombe simplement sur le français.
+    const automatic = await this.challengeTranslation.translateOne(
+      challenge.title,
+      challenge.description,
+      challengeLocale,
+    );
+    if (automatic) translations[challengeLocale] = automatic;
+
+    return this.saveTranslations(
+      id,
+      Object.keys(translations).length > 0 ? translations : null,
+    );
+  }
+
+  private parseLocale(locale: string): ChallengeLocale {
+    if (!isChallengeLocale(locale)) {
+      throw new BadRequestException(`Langue de traduction inconnue : ${locale}`);
+    }
+    return locale;
+  }
+
+  private saveTranslations(
+    id: number,
+    translations: ChallengeTranslations | null,
+  ) {
+    return this.prisma.challenge.update({
+      where: { id },
+      data: { translations: toTranslationsColumn(translations) },
+      include: { _count: { select: { posts: true } } },
+    });
   }
 
   async listChallengeIdeas() {

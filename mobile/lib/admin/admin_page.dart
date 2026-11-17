@@ -7,6 +7,7 @@ import '../map_page.dart' show challengeIcons;
 import '../services/admin_service.dart';
 import '../services/api_exception.dart';
 import '../widgets/paper.dart';
+import 'challenge_translations_page.dart';
 
 /// Page réservée aux comptes ADMIN : création et gestion des défis globaux.
 class AdminPage extends StatefulWidget {
@@ -138,6 +139,18 @@ class _AdminPageState extends State<AdminPage> {
         _showInfo(l10n.adminChallengeUpdated);
       }
     });
+  }
+
+  Future<void> _openTranslations(AdminChallenge challenge) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ChallengeTranslationsPage(
+          challenge: challenge,
+          onUnauthorized: widget.onUnauthorized,
+        ),
+      ),
+    );
+    if (mounted) await _load(showLoading: false);
   }
 
   Future<void> _toggleActive(AdminChallenge challenge, bool value) async {
@@ -294,6 +307,7 @@ class _AdminPageState extends State<AdminPage> {
             busy: _busyChallengeId == challenge.id,
             onToggleActive: (value) => _toggleActive(challenge, value),
             onEdit: () => _openEditor(challenge: challenge),
+            onTranslations: () => _openTranslations(challenge),
             onDelete: () => _delete(challenge),
           );
         },
@@ -314,6 +328,7 @@ class _ChallengeCard extends StatelessWidget {
     required this.busy,
     required this.onToggleActive,
     required this.onEdit,
+    required this.onTranslations,
     required this.onDelete,
   });
 
@@ -321,6 +336,7 @@ class _ChallengeCard extends StatelessWidget {
   final bool busy;
   final ValueChanged<bool> onToggleActive;
   final VoidCallback onEdit;
+  final VoidCallback onTranslations;
   final VoidCallback onDelete;
 
   @override
@@ -426,6 +442,11 @@ class _ChallengeCard extends StatelessWidget {
                 tooltip: l10n.edit,
                 onPressed: busy ? null : onEdit,
                 icon: Icon(Icons.edit_outlined, color: context.paper.accent),
+              ),
+              IconButton(
+                tooltip: l10n.adminTranslationsTitle,
+                onPressed: busy ? null : onTranslations,
+                icon: Icon(Icons.translate, color: context.paper.accent),
               ),
               IconButton(
                 tooltip: l10n.delete,

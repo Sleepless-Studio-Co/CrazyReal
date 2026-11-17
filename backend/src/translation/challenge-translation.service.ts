@@ -5,6 +5,7 @@ import { DeepLService } from './deepl.service';
 import {
   CHALLENGE_LOCALES,
   ChallengeLocale,
+  ChallengeTranslation,
   ChallengeTranslations,
 } from './translation.constants';
 
@@ -38,7 +39,6 @@ export class ChallengeTranslationService {
     description: string,
     existing?: ChallengeTranslations | null,
   ): Promise<ChallengeTranslations | null> {
-    const texts = description ? [title, description] : [title];
     const result: ChallengeTranslations = {};
 
     await Promise.all(
@@ -50,21 +50,31 @@ export class ChallengeTranslationService {
             return;
           }
 
-          const translated = await this.deepl.translate(
-            texts,
-            CHALLENGE_LOCALES[locale],
-          );
-          if (translated) {
-            result[locale] = {
-              title: translated[0],
-              description: description ? translated[1] : '',
-            };
-          }
+          const translated = await this.translateOne(title, description, locale);
+          if (translated) result[locale] = translated;
         },
       ),
     );
 
     return Object.keys(result).length > 0 ? result : null;
+  }
+
+  /** Traduction automatique dans une seule langue, ou `null` si DeepL échoue. */
+  async translateOne(
+    title: string,
+    description: string,
+    locale: ChallengeLocale,
+  ): Promise<ChallengeTranslation | null> {
+    const texts = description ? [title, description] : [title];
+    const translated = await this.deepl.translate(
+      texts,
+      CHALLENGE_LOCALES[locale],
+    );
+    if (!translated) return null;
+    return {
+      title: translated[0],
+      description: description ? translated[1] : '',
+    };
   }
 
   /**

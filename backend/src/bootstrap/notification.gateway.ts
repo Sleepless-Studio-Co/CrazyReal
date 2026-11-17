@@ -145,6 +145,8 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
         await this.sendToUsers(userIds, 'challengeReminder', {
           challengeId: challenge.id,
           challengeTitle: challenge.title,
+          // null pour les défis de groupe ; l'app choisit sinon le titre dans sa langue.
+          challengeTranslations: challenge.translations,
           hoursRemaining: thresholdHours,
           isGlobal: challenge.conversationId == null,
         });
