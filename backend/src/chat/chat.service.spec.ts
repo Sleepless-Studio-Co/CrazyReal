@@ -32,8 +32,11 @@ describe('ChatService', () => {
     challenge: {
       create: jest.Mock;
       findMany: jest.Mock;
+      findUnique: jest.Mock;
+      delete: jest.Mock;
     };
     post: {
+      deleteMany: jest.Mock;
       findMany: jest.Mock;
     };
     $executeRaw: jest.Mock;
@@ -67,8 +70,11 @@ describe('ChatService', () => {
       challenge: {
         create: jest.fn(),
         findMany: jest.fn(),
+        findUnique: jest.fn(),
+        delete: jest.fn(),
       },
       post: {
+        deleteMany: jest.fn(),
         findMany: jest.fn(),
       },
       $executeRaw: jest.fn(),
@@ -382,9 +388,81 @@ describe('ChatService', () => {
           description: 'desc',
           conversationId: 1,
           endsAt: future,
+          creatorId: 1,
         },
       });
       expect(result).toEqual({ id: 7 });
+    });
+  });
+
+  describe('getGroupChallenges', () => {
+    it('should flag challenges the user can delete', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1, role: 'MEMBER' });
+      prismaService.challenge.findMany.mockResolvedValue([
+        { id: 1, creatorId: 2 },
+        { id: 2, creatorId: 3 },
+      ]);
+
+      const result = await service.getGroupChallenges(1, 2);
+
+      expect(result).toEqual([
+        { id: 1, creatorId: 2, canDelete: true },
+        { id: 2, creatorId: 3, canDelete: false },
+      ]);
+    });
+
+    it('should let admins delete every challenge', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1, role: 'ADMIN' });
+      prismaService.challenge.findMany.mockResolvedValue([{ id: 1, creatorId: null }]);
+
+      const result = await service.getGroupChallenges(1, 2);
+
+      expect(result).toEqual([{ id: 1, creatorId: null, canDelete: true }]);
+    });
+  });
+
+  describe('deleteGroupChallenge', () => {
+    it('should throw ForbiddenException when user is not a participant', async () => {
+      prismaService.participant.findUnique.mockResolvedValue(null);
+
+      await expect(service.deleteGroupChallenge(1, 7, 2)).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prismaService.challenge.delete).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when the challenge belongs to another group', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1, role: 'ADMIN' });
+      prismaService.challenge.findUnique.mockResolvedValue({ id: 7, conversationId: 99, creatorId: 2 });
+
+      await expect(service.deleteGroupChallenge(1, 7, 2)).rejects.toBeInstanceOf(NotFoundException);
+      expect(prismaService.challenge.delete).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException when a member deletes someone else\'s challenge', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1, role: 'MEMBER' });
+      prismaService.challenge.findUnique.mockResolvedValue({ id: 7, conversationId: 1, creatorId: 3 });
+
+      await expect(service.deleteGroupChallenge(1, 7, 2)).rejects.toBeInstanceOf(ForbiddenException);
+      expect(prismaService.challenge.delete).not.toHaveBeenCalled();
+    });
+
+    it('should delete the challenge and its posts for its creator', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1, role: 'MEMBER' });
+      prismaService.challenge.findUnique.mockResolvedValue({ id: 7, conversationId: 1, creatorId: 2 });
+
+      const result = await service.deleteGroupChallenge(1, 7, 2);
+
+      expect(prismaService.post.deleteMany).toHaveBeenCalledWith({ where: { challengeId: 7 } });
+      expect(prismaService.challenge.delete).toHaveBeenCalledWith({ where: { id: 7 } });
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should let a group admin delete any challenge', async () => {
+      prismaService.participant.findUnique.mockResolvedValue({ id: 1, role: 'ADMIN' });
+      prismaService.challenge.findUnique.mockResolvedValue({ id: 7, conversationId: 1, creatorId: 3 });
+
+      await service.deleteGroupChallenge(1, 7, 2);
+
+      expect(prismaService.challenge.delete).toHaveBeenCalledWith({ where: { id: 7 } });
     });
   });
 
@@ -523,7 +601,7 @@ describe('ChatService', () => {
       prismaService.participant.findUnique.mockResolvedValue({ id: 1 });
       prismaService.challenge.findMany.mockResolvedValue([{ id: 3 }]);
 
-      await expect(service.getGroupChallenges(7, 1)).resolves.toEqual([{ id: 3 }]);
+      await expect(service.getGroupChallenges(7, 1)).resolves.toEqual([{ id: 3, canDelete: false }]);
       expect(prismaService.challenge.findMany).toHaveBeenCalledWith({
         where: { conversationId: 7 },
         orderBy: { date: 'desc' },

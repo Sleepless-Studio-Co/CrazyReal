@@ -111,6 +111,15 @@ export class ChatController {
     return this.chatService.getGroupChallenges(conversationId, user.userId);
   }
 
+  @Delete(':id/challenges/:challengeId')
+  deleteGroupChallenge(
+    @Param('id', ParseIntPipe) conversationId: number,
+    @Param('challengeId', ParseIntPipe) challengeId: number,
+    @CurrentUser() user: ValidatedUser,
+  ) {
+    return this.chatService.deleteGroupChallenge(conversationId, challengeId, user.userId);
+  }
+
   @Get(':id/feed')
   getGroupFeed(
     @Param('id', ParseIntPipe) conversationId: number,
