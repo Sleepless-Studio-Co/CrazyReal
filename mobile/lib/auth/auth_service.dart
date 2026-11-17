@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_exception.dart';
+import '../locale_notifier.dart';
 
 class AuthService {
   static const String _accessTokenKey = 'access_token';
@@ -329,6 +330,7 @@ class AuthService {
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
+      ...localeHeaders(),
     };
     final encodedBody = body == null ? null : jsonEncode(body);
 

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../auth/auth_service.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/challenge_locale.dart';
 import '../utils/media_url.dart';
 import 'notification_service.dart';
 import '../main.dart';
@@ -64,7 +65,7 @@ class GlobalNotificationService {
     _socket!.on('challengeCreated', (data) {
       try {
         final map = Map<String, dynamic>.from(data as Map);
-        final title = map['challengeTitle']?.toString() ?? '';
+        final title = localizedNotificationTitle(map);
         final context = navigatorKey.currentContext;
         var notificationTitle = 'Nouveau défi';
         var body = title;
@@ -89,7 +90,7 @@ class GlobalNotificationService {
     _socket!.on('challengeReminder', (data) {
       try {
         final map = Map<String, dynamic>.from(data as Map);
-        final title = map['challengeTitle']?.toString() ?? '';
+        final title = localizedNotificationTitle(map);
         final hours = map['hoursRemaining'] as int? ?? 0;
         final context = navigatorKey.currentContext;
         var notificationTitle = 'Défi bientôt terminé';

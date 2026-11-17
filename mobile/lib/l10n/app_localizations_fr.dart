@@ -819,4 +819,32 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminIconLabel => 'Icône sur la carte';
+
+  @override
+  String get adminTranslationsTitle => 'Traductions';
+
+  @override
+  String get adminTranslationOriginal => 'Original (français)';
+
+  @override
+  String get adminTranslationAuto => 'Automatique';
+
+  @override
+  String get adminTranslationManual => 'Corrigée à la main';
+
+  @override
+  String get adminTranslationMissing => 'Pas traduit : le français est affiché';
+
+  @override
+  String get adminTranslationHint =>
+      'Les traductions sont faites par DeepL. Une traduction que tu corriges n\'est jamais écrasée, même si le texte français change.';
+
+  @override
+  String get adminTranslationResetAuto => 'Revenir à l\'auto';
+
+  @override
+  String get adminTranslationSaved => 'Traduction enregistrée';
+
+  @override
+  String get adminTranslationResetDone => 'Traduction automatique rétablie';
 }

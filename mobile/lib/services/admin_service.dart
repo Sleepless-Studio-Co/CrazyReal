@@ -73,6 +73,36 @@ class AdminChallengeIdea {
   }
 }
 
+/// Langues de traduction des défis, alignées sur `CHALLENGE_LOCALES` côté
+/// backend (translation.constants.ts). Noms affichés dans leur propre langue.
+const challengeTranslationLocales = {
+  'en': 'English',
+  'es': 'Español',
+  'pt': 'Português',
+  'de': 'Deutsch',
+};
+
+/// Traduction d'un défi (DeepL, ou corrigée à la main si [manual]).
+class AdminChallengeTranslation {
+  const AdminChallengeTranslation({
+    required this.title,
+    required this.description,
+    required this.manual,
+  });
+
+  final String title;
+  final String description;
+  final bool manual;
+
+  factory AdminChallengeTranslation.fromJson(Map<String, dynamic> json) {
+    return AdminChallengeTranslation(
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      manual: json['manual'] == true,
+    );
+  }
+}
+
 /// Un défi global tel que renvoyé par `/admin/challenges`.
 class AdminChallenge {
   const AdminChallenge({
@@ -88,6 +118,7 @@ class AdminChallenge {
     this.latitude,
     this.longitude,
     this.icon,
+    this.translations = const {},
   });
 
   final int id;
@@ -102,6 +133,9 @@ class AdminChallenge {
   final double? latitude;
   final double? longitude;
   final String? icon;
+
+  /// Traductions par code de langue (`en`, `es`…) ; absente => français affiché.
+  final Map<String, AdminChallengeTranslation> translations;
 
   factory AdminChallenge.fromJson(Map<String, dynamic> json) {
     return AdminChallenge(
@@ -119,6 +153,14 @@ class AdminChallenge {
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       icon: json['icon']?.toString(),
+      translations: {
+        if (json['translations'] is Map)
+          for (final entry in (json['translations'] as Map).entries)
+            if (entry.value is Map)
+              entry.key.toString(): AdminChallengeTranslation.fromJson(
+                Map<String, dynamic>.from(entry.value as Map),
+              ),
+      },
     );
   }
 
@@ -252,6 +294,38 @@ class AdminService {
     await _send(
       (headers) =>
           http.delete(Uri.parse('$baseUrl/challenges/$id'), headers: headers),
+    );
+  }
+
+  /// Corrige à la main une traduction : DeepL ne l'écrasera plus.
+  Future<AdminChallenge> setChallengeTranslation(
+    int id,
+    String locale, {
+    required String title,
+    required String description,
+  }) async {
+    final response = await _send(
+      (headers) => http.put(
+        Uri.parse('$baseUrl/challenges/$id/translations/$locale'),
+        headers: headers,
+        body: jsonEncode({'title': title, 'description': description}),
+      ),
+    );
+    return AdminChallenge.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
+  /// Abandonne la correction manuelle et redemande une traduction à DeepL.
+  Future<AdminChallenge> resetChallengeTranslation(int id, String locale) async {
+    final response = await _send(
+      (headers) => http.delete(
+        Uri.parse('$baseUrl/challenges/$id/translations/$locale'),
+        headers: headers,
+      ),
+    );
+    return AdminChallenge.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
     );
   }
 

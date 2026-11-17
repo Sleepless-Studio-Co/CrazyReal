@@ -12,6 +12,8 @@ export const postInclude = {
       id: true,
       title: true,
       type: true,
+      // Lu par ChallengeLocaleInterceptor pour traduire le titre.
+      translations: true,
     },
   },
 } as const;

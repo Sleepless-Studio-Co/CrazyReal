@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'l10n/app_localizations.dart';
 import 'auth/auth_service.dart';
+import 'locale_notifier.dart';
 import 'utils/media_url.dart';
 import 'widgets/paper.dart';
 
@@ -152,7 +153,7 @@ class _NewPageState extends State<NewPage> {
 
       final response = await http.get(
         Uri.parse('$baseUrl/challenges/available'),
-        headers: {'Authorization': 'Bearer $token'},
+        headers: {'Authorization': 'Bearer $token', ...localeHeaders()},
       );
 
       if (response.statusCode == 200) {
@@ -333,6 +334,7 @@ class _NewPageState extends State<NewPage> {
           http.MultipartRequest('POST', Uri.parse('$baseUrl/posts'));
 
       request.headers['Authorization'] = 'Bearer $token';
+      request.headers.addAll(localeHeaders());
       request.files.add(await http.MultipartFile.fromPath(
         'file',
         filePath,
