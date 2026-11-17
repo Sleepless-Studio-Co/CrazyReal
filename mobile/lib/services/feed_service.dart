@@ -7,6 +7,7 @@ import '../auth/auth_service.dart';
 import '../models/feed_post.dart';
 import '../utils/media_url.dart';
 import 'api_exception.dart';
+import '../locale_notifier.dart';
 
 class FeedService {
   final AuthService _authService = AuthService();
@@ -101,6 +102,7 @@ class FeedService {
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          ...localeHeaders(),
         },
       );
 
@@ -165,6 +167,7 @@ class FeedService {
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
+      ...localeHeaders(),
     };
 
     http.Response response;

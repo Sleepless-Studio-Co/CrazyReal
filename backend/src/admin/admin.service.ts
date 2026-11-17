@@ -11,12 +11,18 @@ import { UpdateChallengeDto } from './dto/update-challenge.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
+import {
+  ChallengeTranslationService,
+  toTranslationsColumn,
+} from '../translation/challenge-translation.service';
+import { ChallengeTranslations } from '../translation/translation.constants';
 
 @Injectable()
 export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationGateway: NotificationGateway,
+    private readonly challengeTranslation: ChallengeTranslationService,
   ) {}
 
   async importChallengesFromFile(): Promise<{ imported: number }> {
@@ -48,6 +54,8 @@ export class AdminService {
       if (data.length === 0) return { imported: 0 };
 
       const res = await this.prisma.challenge.createMany({ data, skipDuplicates: true });
+      // Traduction en arrière-plan : l'import ne doit pas attendre DeepL.
+      void this.challengeTranslation.translateMissing().catch(() => undefined);
       return { imported: res.count };
     } catch (e: any) {
       if (e instanceof NotFoundException) {
@@ -69,11 +77,20 @@ export class AdminService {
   }
 
   async createChallenge(dto: CreateChallengeDto) {
+    const title = dto.title.trim();
+    const description = dto.description?.trim() ?? '';
+    // Ne lève jamais : sans DeepL, le défi est simplement créé sans traduction.
+    const translations = await this.challengeTranslation.buildTranslations(
+      title,
+      description,
+    );
+
     try {
       const challenge = await this.prisma.challenge.create({
         data: {
-          title: dto.title.trim(),
-          description: dto.description?.trim() ?? '',
+          title,
+          description,
+          translations: toTranslationsColumn(translations),
           date: dto.date ? new Date(dto.date) : new Date(),
           type: dto.type ?? ChallengeType.WEEKLY_A,
           durationHours: dto.endsAt ? null : dto.durationHours ?? null,
@@ -96,7 +113,21 @@ export class AdminService {
   }
 
   async updateChallenge(id: number, dto: UpdateChallengeDto) {
-    await this.getChallengeOrThrow(id);
+    const existing = await this.getChallengeOrThrow(id);
+
+    const title = dto.title?.trim() ?? existing.title;
+    const description = dto.description?.trim() ?? existing.description;
+    const textChanged =
+      title !== existing.title || description !== existing.description;
+    // On ne retraduit que si le texte français a changé (les corrections
+    // manuelles sont conservées par buildTranslations).
+    const translations = textChanged
+      ? await this.challengeTranslation.buildTranslations(
+          title,
+          description,
+          existing.translations as ChallengeTranslations | null,
+        )
+      : undefined;
 
     try {
       return await this.prisma.challenge.update({
@@ -120,6 +151,9 @@ export class AdminService {
           ...(dto.latitude !== undefined && { latitude: dto.latitude }),
           ...(dto.longitude !== undefined && { longitude: dto.longitude }),
           ...(dto.icon !== undefined && { icon: dto.icon }),
+          ...(translations !== undefined && {
+            translations: toTranslationsColumn(translations),
+          }),
         },
       });
     } catch (e) {

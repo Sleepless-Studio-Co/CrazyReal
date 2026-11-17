@@ -15,6 +15,7 @@ import { UpVotesModule } from './upvotes/upvotes.module';
 import { NotificationsModule } from './bootstrap/notifications.module';
 import { ShareModule } from './share/share.module';
 import { ChallengeIdeasModule } from './challenge-ideas/challenge-ideas.module';
+import { TranslationModule } from './translation/translation.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ChallengeIdeasModule } from './challenge-ideas/challenge-ideas.module';
     NotificationsModule,
     ShareModule,
     ChallengeIdeasModule,
+    TranslationModule,
   ],
   controllers: [AppController],
   providers: [

@@ -7,6 +7,7 @@ import '../auth/auth_service.dart';
 import '../models/feed_post.dart';
 import '../utils/media_url.dart';
 import 'api_exception.dart';
+import '../locale_notifier.dart';
 
 class ShareService {
   final AuthService _authService = AuthService();
@@ -35,6 +36,7 @@ class ShareService {
   Future<List<FeedPost>> fetchGuestFeed(String token) async {
     final response = await http.get(
       Uri.parse('$apiBaseUrl/shares/${Uri.encodeComponent(token)}/feed'),
+      headers: localeHeaders(),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw buildApiException(response);
