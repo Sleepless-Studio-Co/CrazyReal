@@ -31,6 +31,12 @@ enum MediaType {
   VIDEO
 }
 
+enum ChallengeIdeaStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -51,6 +57,12 @@ model Challenge {
   // Auteur d'un défi de groupe (null pour les défis globaux ou si le compte a été supprimé).
   creatorId      Int?
   creator        User?         @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  // Position optionnelle : un défi géolocalisé apparaît sur la carte.
+  latitude       Float?
+  longitude      Float?
+  // Clé d'icône affichée sur la carte (cf. challengeIcons côté mobile).
+  icon           String?
+  registrations  ChallengeRegistration[]
 
   @@unique([date, type, conversationId])
 }
@@ -65,6 +77,32 @@ model Post {
   challengeId Int
   createdAt   DateTime  @default(now())
   upVotes     UpVote[]
+  reactions   PostReaction[]
+  shareLinks   ShareLink[]
+}
+
+model ShareLink {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token, expiresAt])
+}
+
+// Inscription d'un utilisateur à un défi géolocalisé (carte).
+model ChallengeRegistration {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  challengeId Int
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
 }
 
 model UpVote {
@@ -77,6 +115,32 @@ model UpVote {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+}
+
+model PostReaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  emoji     String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, emoji])
+  @@index([postId, emoji])
+}
+
+model ChallengeIdea {
+  id        Int                @id @default(autoincrement())
+  content   String             @db.VarChar(500)
+  userId    Int
+  createdAt DateTime           @default(now())
+  status    ChallengeIdeaStatus @default(PENDING)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
 }
 
 model User {
@@ -92,7 +156,10 @@ model User {
   createdAt     DateTime       @default(now())
   role          Role           @default(USER)
   posts         Post[]
+  challengeIdeas ChallengeIdea[]
+  challengeRegistrations ChallengeRegistration[]
   upVotes       UpVote[]
+  reactions     PostReaction[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")

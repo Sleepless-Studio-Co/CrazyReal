@@ -2,9 +2,12 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   NotFoundException,
+  Param,
+  ParseIntPipe,
   Post,
   Query,
   UploadedFile,
@@ -12,7 +15,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiConsumes,
+  ApiBody,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { PrismaService } from './prisma/prisma.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -31,6 +42,14 @@ import {
 } from './posts/post.utils';
 
 const execFileAsync = promisify(execFile);
+
+export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const rad = Math.PI / 180;
+  const a =
+    Math.sin(((lat2 - lat1) * rad) / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lng2 - lng1) * rad) / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(a));
+}
 
 @ApiTags('CrazyReal')
 @ApiBearerAuth('access-token')
@@ -90,6 +109,8 @@ export class AppController {
         // Le "challenge global courant" ne considère que les challenges globaux ;
         // les défis de groupe ont leur propre cycle de vie (fenêtre endsAt).
         conversationId: null,
+        // Les défis géolocalisés vivent sur la carte, pas dans la rotation globale.
+        latitude: null,
         date: {
           lte: now,
           gte: lookbackDate,
@@ -137,14 +158,18 @@ export class AppController {
     const currentChallenge = await this.getCurrentChallengeForDate(now);
 
     if (!currentChallenge) {
-      throw new NotFoundException('Aucun challenge global actif n\'a été trouvé pour la date et l\'heure actuelles.');
+      throw new NotFoundException(
+        "Aucun challenge global actif n'a été trouvé pour la date et l'heure actuelles.",
+      );
     }
 
     return currentChallenge;
   }
 
   @Get('challenges/available')
-  @ApiOperation({ summary: 'Défis réalisables : global courant + défis de mes groupes actifs' })
+  @ApiOperation({
+    summary: 'Défis réalisables : global courant + défis de mes groupes actifs',
+  })
   async getAvailableChallenges(@CurrentUser() user: ValidatedUser) {
     const now = new Date();
 
@@ -152,7 +177,9 @@ export class AppController {
 
     const groupChallenges = await this.prisma.challenge.findMany({
       where: {
-        conversation: { is: { participants: { some: { userId: user.userId } } } },
+        conversation: {
+          is: { participants: { some: { userId: user.userId } } },
+        },
         date: { lte: now },
         endsAt: { gt: now },
       },
@@ -161,25 +188,137 @@ export class AppController {
     });
 
     return [
-      ...globalChallenges.map((global) => ({
-            ...global,
-            endsAt:
-              global.endsAt ??
-              new Date(
-                global.date.getTime() +
-                  (global.durationHours ??
-                    (global.type === 'SPECIAL' ? 24 : 84)) *
-                    60 *
-                    60 *
-                    1000,
-              ),
-            group: null,
-          })),
+      // Les défis géolocalisés se font depuis la carte.
+      ...globalChallenges
+        .filter((global) => global.latitude == null)
+        .map((global) => ({
+          ...global,
+          endsAt: this.getChallengeEndsAt(global),
+          group: null,
+        })),
       ...groupChallenges.map(({ conversation, ...c }) => ({
         ...c,
         group: conversation,
       })),
     ];
+  }
+
+  @Get('challenges/nearby')
+  @ApiOperation({
+    summary:
+      'Défis géolocalisés en cours ou à venir dans un rayon (km, max 30) autour de lat/lng',
+  })
+  async getNearbyChallenges(
+    @CurrentUser() user: ValidatedUser,
+    @Query('lat') latRaw: string,
+    @Query('lng') lngRaw: string,
+    @Query('radiusKm') radiusRaw?: string,
+  ) {
+    const lat = Number(latRaw);
+    const lng = Number(lngRaw);
+    const radiusKm = radiusRaw === undefined ? 10 : Number(radiusRaw);
+    if (
+      !Number.isFinite(lat) || Math.abs(lat) > 90 ||
+      !Number.isFinite(lng) || Math.abs(lng) > 180 ||
+      !Number.isFinite(radiusKm) || radiusKm <= 0 || radiusKm > 30
+    ) {
+      throw new BadRequestException('lat, lng ou radiusKm invalide.');
+    }
+
+    const now = new Date();
+    const maxDurationMs = 8760 * 60 * 60 * 1000;
+    // ponytail: filtre haversine en JS sur les défis géolocalisés ; passer à PostGIS si le volume explose.
+    const challenges = await this.prisma.challenge.findMany({
+      where: {
+        isActive: true,
+        conversationId: null,
+        latitude: { not: null },
+        longitude: { not: null },
+        // En cours ou à venir dans les 30 prochains jours.
+        date: {
+          gte: new Date(now.getTime() - maxDurationMs),
+          lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+        },
+      },
+      include: {
+        registrations: { where: { userId: user.userId }, select: { id: true } },
+        _count: { select: { registrations: true, posts: true } },
+      },
+    });
+
+    return challenges
+      .map(({ registrations, _count, ...c }) => ({
+        ...c,
+        endsAt: this.getChallengeEndsAt(c),
+        isLive: this.isChallengeActiveNow(c, now),
+        registered: registrations.length > 0,
+        participants: _count.registrations,
+        // ponytail: nb de posts ≈ nb de personnes l'ayant réalisé (1 post / user / défi).
+        completed: _count.posts,
+        distanceKm: haversineKm(lat, lng, c.latitude!, c.longitude!),
+      }))
+      .filter((c) => c.endsAt > now && c.distanceKm <= radiusKm)
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+  }
+
+  @Post('challenges/:id/registration')
+  @ApiOperation({ summary: "S'inscrire à un défi géolocalisé" })
+  async registerToChallenge(
+    @CurrentUser() user: ValidatedUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.getRegistrableChallenge(id);
+    await this.prisma.challengeRegistration.upsert({
+      where: { userId_challengeId: { userId: user.userId, challengeId: id } },
+      create: { userId: user.userId, challengeId: id },
+      update: {},
+    });
+    return this.getRegistrationState(user.userId, id);
+  }
+
+  @Delete('challenges/:id/registration')
+  @ApiOperation({ summary: "Se désinscrire d'un défi géolocalisé" })
+  async unregisterFromChallenge(
+    @CurrentUser() user: ValidatedUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    await this.prisma.challengeRegistration.deleteMany({
+      where: { userId: user.userId, challengeId: id },
+    });
+    return this.getRegistrationState(user.userId, id);
+  }
+
+  private getChallengeEndsAt(challenge: {
+    date: Date;
+    type: ChallengeType;
+    durationHours: number | null;
+    endsAt: Date | null;
+  }): Date {
+    const durationHours =
+      challenge.durationHours ?? (challenge.type === 'SPECIAL' ? 24 : 84);
+    return (
+      challenge.endsAt ??
+      new Date(challenge.date.getTime() + durationHours * 60 * 60 * 1000)
+    );
+  }
+
+  private async getRegistrableChallenge(id: number) {
+    const challenge = await this.prisma.challenge.findUnique({ where: { id } });
+    if (!challenge || challenge.latitude == null || challenge.conversationId != null) {
+      throw new NotFoundException('Défi introuvable.');
+    }
+    if (!challenge.isActive || this.getChallengeEndsAt(challenge) <= new Date()) {
+      throw new BadRequestException('Ce défi est terminé.');
+    }
+    return challenge;
+  }
+
+  private async getRegistrationState(userId: number, challengeId: number) {
+    const [registered, participants] = await Promise.all([
+      this.prisma.challengeRegistration.count({ where: { userId, challengeId } }),
+      this.prisma.challengeRegistration.count({ where: { challengeId } }),
+    ]);
+    return { registered: registered > 0, participants };
   }
 
   // Valide qu'un utilisateur peut poster sur un challenge, et le renvoie.
@@ -190,7 +329,9 @@ export class AppController {
     if (challengeId == null) {
       const current = await this.getCurrentChallengeForDate(now);
       if (!current) {
-        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
+        throw new BadRequestException(
+          "Aucun challenge actif n'est disponible pour poster en ce moment.",
+        );
       }
       return current;
     }
@@ -205,7 +346,7 @@ export class AppController {
     if (challenge.conversationId == null) {
       // Challenge global : doit être dans sa fenêtre active.
       if (!this.isChallengeActiveNow(challenge, now)) {
-        throw new BadRequestException('Ce challenge global n\'est plus actif.');
+        throw new BadRequestException("Ce challenge global n'est plus actif.");
       }
       return challenge;
     }
@@ -213,14 +354,17 @@ export class AppController {
     // Défi de groupe : membre du groupe + fenêtre [date, endsAt] active.
     const isMember = await this.prisma.participant.findUnique({
       where: {
-        userId_conversationId: { userId, conversationId: challenge.conversationId },
+        userId_conversationId: {
+          userId,
+          conversationId: challenge.conversationId,
+        },
       },
     });
     if (!isMember) {
       throw new ForbiddenException('Tu ne fais pas partie de ce groupe.');
     }
     if (!challenge.endsAt || challenge.date > now || challenge.endsAt <= now) {
-      throw new BadRequestException('Ce défi n\'est plus actif.');
+      throw new BadRequestException("Ce défi n'est plus actif.");
     }
     return challenge;
   }
@@ -284,7 +428,8 @@ export class AppController {
         },
         challengeId: {
           type: 'string',
-          description: 'Challenge visé (global ou défi de groupe). Absent = global courant.',
+          description:
+            'Challenge visé (global ou défi de groupe). Absent = global courant.',
         },
       },
     },
@@ -344,9 +489,19 @@ export class AppController {
       },
     }),
   }))
-  async uploadPhoto(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: any) {
+  async uploadPhoto(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: any,
+    @Body('challengeId') challengeIdRaw?: string,
+  ) {
     if (!file) {
       throw new BadRequestException('No file provided');
+    }
+    const challengeId =
+      challengeIdRaw == null || challengeIdRaw === '' ? undefined : Number(challengeIdRaw);
+    if (challengeId !== undefined && !Number.isInteger(challengeId)) {
+      await fs.unlink(file.path).catch(() => undefined);
+      throw new BadRequestException('challengeId invalide.');
     }
 
     const mediaType = this.resolveMediaType(file.mimetype, file.originalname);
@@ -355,10 +510,7 @@ export class AppController {
         await this.normalizeVideo(file);
       }
 
-      const currentChallenge = await this.getCurrentChallengeForDate(new Date());
-      if (!currentChallenge) {
-        throw new BadRequestException('Aucun challenge actif n\'est disponible pour poster en ce moment.');
-      }
+      const currentChallenge = await this.resolveChallengeForPost(user.userId, challengeId);
 
       const post = await this.prisma.post.create({
         data: {
@@ -370,10 +522,10 @@ export class AppController {
         include: postIncludeWithUpvotes(user.userId),
       });
 
-      const formattedPost = formatPostWithUpvotes(post);
+      const formattedPost = formatPostWithUpvotes(post, user.userId);
       // Le feed global temps réel ne reçoit que les posts globaux ; les posts de
     // défis de groupe restent dans le feed privé du groupe (rafraîchi au pull).
-      if (currentChallenge.conversationId == null) {
+      if (currentChallenge.conversationId == null && currentChallenge.latitude == null) {
       this.feedGateway.broadcastNewPost(formattedPost);
       console.log('[posts] created', post.id, file.filename, mediaType);
       }
@@ -392,15 +544,21 @@ export class AppController {
   async getPosts(
     @CurrentUser() user: ValidatedUser,
     @Query('challengeId') challengeIdRaw?: string,
+    @Query('scope') scope?: string,
   ) {
     const friendIds = await this.getAcceptedFriendIds(user.userId);
     const feedUserIds = [...new Set([...friendIds, user.userId])];
 
     const now = new Date();
-    const globalChallenges = await this.getActiveGlobalChallenges(now);
+    const activeChallenges = await this.getActiveGlobalChallenges(now);
+    // Les défis géolocalisés ont leur propre onglet (scope=map).
+    const globalChallenges = activeChallenges.filter((c) => c.latitude == null);
+    const mapChallenges = activeChallenges.filter((c) => c.latitude != null);
     const groupChallenges = await this.prisma.challenge.findMany({
       where: {
-        conversation: { is: { participants: { some: { userId: user.userId } } } },
+        conversation: {
+          is: { participants: { some: { userId: user.userId } } },
+        },
         date: { lte: now },
         endsAt: { gt: now },
       },
@@ -409,6 +567,7 @@ export class AppController {
     const selectableChallengeIds = [
       ...globalChallenges.map((challenge) => challenge.id),
       ...groupChallenges.map((challenge) => challenge.id),
+      ...mapChallenges.map((challenge) => challenge.id),
     ];
     const allModeChallengeIds = [
       ...globalChallenges.slice(0, 2).map((challenge) => challenge.id),
@@ -416,13 +575,22 @@ export class AppController {
     ];
 
     let challengeIds = allModeChallengeIds;
+    if (scope === 'global') {
+      challengeIds = globalChallenges.map((challenge) => challenge.id);
+    } else if (scope === 'friends') {
+      challengeIds = groupChallenges.map((challenge) => challenge.id);
+    } else if (scope === 'map') {
+      challengeIds = mapChallenges.map((challenge) => challenge.id);
+    }
     if (challengeIdRaw != null && challengeIdRaw !== 'all') {
       const challengeId = Number(challengeIdRaw);
       if (!Number.isInteger(challengeId)) {
         throw new BadRequestException('challengeId invalide.');
       }
       if (!selectableChallengeIds.includes(challengeId)) {
-        throw new BadRequestException('Ce défi n\'est pas visible dans le feed.');
+        throw new BadRequestException(
+          "Ce défi n'est pas visible dans le feed.",
+        );
       }
       challengeIds = [challengeId];
     }
@@ -438,6 +606,62 @@ export class AppController {
       orderBy: {
         createdAt: 'desc',
       },
+      include: postIncludeWithUpvotes(user.userId),
+    });
+
+    return posts.map((post) => formatPostWithUpvotes(post, user.userId));
+  }
+
+  @Get('posts/top')
+  @ApiOperation({
+    summary: 'Meilleurs posts (les plus upvotés) des défis globaux terminés',
+  })
+  @ApiQuery({ name: 'period', required: false, enum: ['week', 'month', 'all'] })
+  @ApiResponse({ status: 200, description: 'Posts récupérés avec succès' })
+  async getTopPosts(
+    @CurrentUser() user: ValidatedUser,
+    @Query('period') period = 'all',
+  ) {
+    const periodDays: Record<string, number | null> = {
+      week: 7,
+      month: 30,
+      all: null,
+    };
+    if (!(period in periodDays)) {
+      throw new BadRequestException('period invalide (week, month ou all).');
+    }
+
+    const now = new Date();
+    const days = periodDays[period];
+    const since =
+      days == null
+        ? null
+        : new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    // Défi global terminé = déjà commencé mais plus dans sa fenêtre active.
+    // Les défis de groupe restent privés à leur groupe et ne sont pas classés ici.
+    const startedChallenges = await this.prisma.challenge.findMany({
+      where: { isActive: true, conversationId: null, date: { lte: now } },
+    });
+    const completedChallengeIds = startedChallenges
+      .filter((challenge) => !this.isChallengeActiveNow(challenge, now))
+      .map((challenge) => challenge.id);
+
+    const friendIds = await this.getAcceptedFriendIds(user.userId);
+
+    const posts = await this.prisma.post.findMany({
+      where: {
+        // Même règle de visibilité que le feed : publics, amis et soi-même.
+        OR: [
+          { userId: { in: [...new Set([...friendIds, user.userId])] } },
+          { user: { isPrivate: false } },
+        ],
+        challengeId: { in: completedChallengeIds },
+        upVotes: { some: {} },
+        ...(since ? { createdAt: { gte: since } } : {}),
+      },
+      orderBy: [{ upVotes: { _count: 'desc' } }, { createdAt: 'desc' }],
+      take: 50,
       include: postIncludeWithUpvotes(user.userId),
     });
 

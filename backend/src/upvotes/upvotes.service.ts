@@ -58,7 +58,7 @@ export class UpVotesService {
       throw new NotFoundException('Post introuvable.');
     }
 
-    return formatPostWithUpvotes(post);
+    return formatPostWithUpvotes(post, userId);
   }
 
   async upvote(userId: number, postId: number) {
@@ -100,6 +100,27 @@ export class UpVotesService {
       where: { userId_postId: { userId, postId } },
     });
 
+    return this.getFormattedPost(postId, userId);
+  }
+
+  async addReaction(userId: number, postId: number, emoji: string) {
+    await this.assertPostInFeed(userId, postId);
+    await this.prisma.$transaction([
+      this.prisma.postReaction.deleteMany({
+        where: { userId, postId },
+      }),
+      this.prisma.postReaction.create({
+        data: { userId, postId, emoji },
+      }),
+    ]);
+    return this.getFormattedPost(postId, userId);
+  }
+
+  async removeReaction(userId: number, postId: number, emoji: string) {
+    await this.assertPostInFeed(userId, postId);
+    await this.prisma.postReaction.deleteMany({
+      where: { userId, postId, emoji },
+    });
     return this.getFormattedPost(postId, userId);
   }
 }

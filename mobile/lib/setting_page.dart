@@ -3,14 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'admin/admin_page.dart';
+import 'admin/challenge_ideas_page.dart';
 import 'auth/auth_service.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
 import 'theme_notifier.dart';
 import 'services/api_exception.dart';
-
-const Color _accentColor = Color(0xFFB85C38);
-const Color _dangerColor = Color(0xFFB54132);
+import 'widgets/paper.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({
@@ -63,6 +62,16 @@ class _SettingPageState extends State<SettingPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AdminPage(onUnauthorized: widget.onUnauthorized),
+      ),
+    );
+  }
+
+  void _openChallengeIdeas() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChallengeIdeasPage(
+          onUnauthorized: widget.onUnauthorized,
+        ),
       ),
     );
   }
@@ -179,7 +188,8 @@ class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final langLabel = appLocale.value.languageCode == 'fr' ? l10n.french : l10n.english;
+    final langLabel =
+        appLocale.value.languageCode == 'fr' ? l10n.french : l10n.english;
 
     return Scaffold(
       appBar: AppBar(
@@ -205,6 +215,12 @@ class _SettingPageState extends State<SettingPage> {
                 subtitle: l10n.administrationDesc,
                 onTap: _openAdmin,
               ),
+              _NavTile(
+                icon: Icons.lightbulb_outline,
+                title: l10n.adminChallengeIdeasTitle,
+                subtitle: l10n.adminChallengeIdeasDesc,
+                onTap: _openChallengeIdeas,
+              ),
             ]),
             const SizedBox(height: 16),
           ],
@@ -213,7 +229,8 @@ class _SettingPageState extends State<SettingPage> {
             _SwitchTile(
               icon: _isPrivate ? Icons.lock_outline : Icons.public,
               title: _isPrivate ? l10n.privateAccount : l10n.publicAccount,
-              subtitle: _isPrivate ? l10n.privateAccountDesc : l10n.publicAccountDesc,
+              subtitle:
+                  _isPrivate ? l10n.privateAccountDesc : l10n.publicAccountDesc,
               value: _isPrivate,
               loading: _isPrivacySaving,
               onChanged: _togglePrivacy,
@@ -258,8 +275,8 @@ class _SettingPageState extends State<SettingPage> {
             _NavTile(
               icon: Icons.delete_forever_outlined,
               title: l10n.deleteAccount,
-              iconColor: _dangerColor,
-              titleColor: _dangerColor,
+              iconColor: context.paper.danger,
+              titleColor: context.paper.danger,
               loading: _isDeleting,
               onTap: _deleteAccount,
             ),
@@ -306,7 +323,7 @@ class _LangOption extends StatelessWidget {
           SizedBox(
             width: 18,
             child: current == code
-                ? const Icon(Icons.check, size: 18, color: _accentColor)
+                ? Icon(Icons.check, size: 18, color: context.paper.accent)
                 : null,
           ),
           const SizedBox(width: 8),
@@ -348,7 +365,7 @@ class _ThemeOption extends StatelessWidget {
           SizedBox(
             width: 18,
             child: current == mode
-                ? const Icon(Icons.check, size: 18, color: _accentColor)
+                ? Icon(Icons.check, size: 18, color: context.paper.accent)
                 : null,
           ),
           const SizedBox(width: 8),
@@ -399,9 +416,9 @@ class _SettingCard extends StatelessWidget {
         border: Border.all(
           color: Theme.of(context).colorScheme.outlineVariant,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x1F2E1B0F),
+            color: context.paper.shadow,
             blurRadius: 18,
             offset: Offset(0, 10),
           ),
@@ -456,7 +473,7 @@ class _NavTile extends StatelessWidget {
           color: Theme.of(context).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: iconColor ?? _accentColor, size: 20),
+        child: Icon(icon, color: iconColor ?? context.paper.accent, size: 20),
       ),
       title: Text(
         title,
@@ -507,7 +524,7 @@ class _SwitchTile extends StatelessWidget {
           color: Theme.of(context).colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: _accentColor, size: 20),
+        child: Icon(icon, color: context.paper.accent, size: 20),
       ),
       title: Text(
         title,
@@ -534,7 +551,7 @@ class _SwitchTile extends StatelessWidget {
             )
           : Switch(
               value: value,
-              activeThumbColor: _accentColor,
+              activeThumbColor: context.paper.accent,
               onChanged: onChanged,
             ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -632,11 +649,12 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                 fillColor: Theme.of(context).colorScheme.surface,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: Color(0xFFE7D3B5)),
+                  borderSide: BorderSide(color: context.paper.fieldBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: _dangerColor, width: 1.5),
+                  borderSide:
+                      BorderSide(color: context.paper.danger, width: 1.5),
                 ),
               ),
             ),
@@ -659,7 +677,8 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                 value.text.trim().toUpperCase() == word.toUpperCase();
             return TextButton(
               onPressed: matches ? () => Navigator.pop(context, true) : null,
-              style: TextButton.styleFrom(foregroundColor: _dangerColor),
+              style:
+                  TextButton.styleFrom(foregroundColor: context.paper.danger),
               child: Text(l10n.deleteAccount),
             );
           },

@@ -344,6 +344,28 @@ class AppLocalizationsFr extends AppLocalizations {
   String get feedFriendChallenge => 'Amis';
 
   @override
+  String get challengeIdeaOpen => 'Proposer un défi';
+
+  @override
+  String get challengeIdeaTitle => 'Boîte à idées';
+
+  @override
+  String get challengeIdeaDescription =>
+      'Une idée de défi ? Partage-la avec l’équipe.';
+
+  @override
+  String get challengeIdeaHint => 'Mon idée de défi...';
+
+  @override
+  String get challengeIdeaSend => 'Envoyer l’idée';
+
+  @override
+  String get challengeIdeaSuccess => 'Merci pour ton idée !';
+
+  @override
+  String get challengeIdeaError => 'Impossible d’envoyer ton idée.';
+
+  @override
   String get publishFirstPost => 'Publier une photo';
 
   @override
@@ -492,6 +514,34 @@ class AppLocalizationsFr extends AppLocalizations {
   String get adminChallengesTitle => 'Défis';
 
   @override
+  String get adminChallengeIdeasTitle => 'Idées de défis';
+
+  @override
+  String get adminChallengeIdeasDesc => 'Valider les idées proposées';
+
+  @override
+  String get adminChallengeIdeasLoadError =>
+      'Impossible de charger les idées de défis.';
+
+  @override
+  String get adminNoChallengeIdeas => 'Aucune idée de défi pour le moment';
+
+  @override
+  String get adminIdeaPending => 'En attente';
+
+  @override
+  String get adminIdeaApproved => 'Validée';
+
+  @override
+  String get adminIdeaRejected => 'Non validée';
+
+  @override
+  String get adminIdeaApprove => 'Valider';
+
+  @override
+  String get adminIdeaReject => 'Refuser';
+
+  @override
   String get adminNewChallenge => 'Nouveau défi';
 
   @override
@@ -615,4 +665,158 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Impossible de charger les défis';
+
+  @override
+  String viewProfile(String username) {
+    return 'Voir le profil de $username';
+  }
+
+  @override
+  String profilePostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'défis',
+      one: 'défi',
+      zero: 'défi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'abonnés',
+      one: 'abonné',
+      zero: 'abonné',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profileNoPosts => 'Aucun défi réalisé pour le moment';
+
+  @override
+  String get profilePrivateTitle => 'Ce compte est privé';
+
+  @override
+  String get profilePrivateMessage =>
+      'Deviens ami avec cette personne pour voir ses défis.';
+
+  @override
+  String get profileLoadError => 'Impossible de charger le profil';
+
+  @override
+  String get profilePosts => 'Défis';
+
+  @override
+  String get topPostsTitle => 'Meilleurs défis';
+
+  @override
+  String get topPostsTooltip => 'Meilleurs défis';
+
+  @override
+  String get topPeriodWeek => 'Semaine';
+
+  @override
+  String get topPeriodMonth => 'Mois';
+
+  @override
+  String get topPeriodAll => 'Tout';
+
+  @override
+  String get topPostsEmpty => 'Aucun défi terminé n\'a encore reçu de vote.';
+
+  @override
+  String get map => 'Carte';
+
+  @override
+  String get mapLocationDenied => 'Localisation refusée : affichage de Paris.';
+
+  @override
+  String mapChallengesWithin(int count, int radius) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count défis',
+      one: '1 défi',
+      zero: 'Aucun défi',
+    );
+    return '$_temp0 à moins de $radius km';
+  }
+
+  @override
+  String mapDistance(String km) {
+    return 'À $km km';
+  }
+
+  @override
+  String get mapRecenter => 'Recentrer sur ma position';
+
+  @override
+  String get adminLatitudeLabel => 'Latitude (optionnel)';
+
+  @override
+  String get adminLongitudeLabel => 'Longitude (optionnel)';
+
+  @override
+  String get adminLocationInvalid =>
+      'Renseigne la latitude et la longitude, ou aucune des deux';
+
+  @override
+  String get mapLive => 'En cours';
+
+  @override
+  String get mapUpcoming => 'À venir';
+
+  @override
+  String mapStartsIn(String time) {
+    return 'Commence dans $time';
+  }
+
+  @override
+  String mapEndsIn(String time) {
+    return 'Se termine dans $time';
+  }
+
+  @override
+  String get mapRegister => 'S\'inscrire';
+
+  @override
+  String get mapJoin => 'Rejoindre';
+
+  @override
+  String get mapRegistered => 'Inscrit ✓';
+
+  @override
+  String get mapSendChallenge => 'Envoyer ton défi';
+
+  @override
+  String mapParticipants(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participants',
+      one: '1 participant',
+      zero: 'Personne d\'inscrit pour l\'instant',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String mapCompleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count l\'ont réalisé',
+      one: '1 l\'a réalisé',
+      zero: 'Pas encore réalisé',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminIconLabel => 'Icône sur la carte';
 }

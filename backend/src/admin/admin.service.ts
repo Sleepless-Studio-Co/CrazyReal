@@ -4,7 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { ChallengeType, Prisma } from '@prisma/client';
+import { ChallengeIdeaStatus, ChallengeType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
@@ -79,6 +79,9 @@ export class AdminService {
           durationHours: dto.endsAt ? null : dto.durationHours ?? null,
           endsAt: dto.endsAt ? new Date(dto.endsAt) : null,
           isActive: dto.isActive ?? true,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
+          icon: dto.icon ?? null,
         },
       });
       this.notificationGateway.broadcast('challengeCreated', {
@@ -114,6 +117,9 @@ export class AdminService {
             endsAt: null,
           }),
           ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+          ...(dto.latitude !== undefined && { latitude: dto.latitude }),
+          ...(dto.longitude !== undefined && { longitude: dto.longitude }),
+          ...(dto.icon !== undefined && { icon: dto.icon }),
         },
       });
     } catch (e) {
@@ -135,6 +141,24 @@ export class AdminService {
 
     await this.prisma.challenge.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  async listChallengeIdeas() {
+    return this.prisma.challengeIdea.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { username: true } } },
+    });
+  }
+
+  async updateChallengeIdeaStatus(id: number, status: ChallengeIdeaStatus) {
+    const idea = await this.prisma.challengeIdea.findUnique({ where: { id } });
+    if (!idea) throw new NotFoundException('Idée de défi introuvable.');
+
+    return this.prisma.challengeIdea.update({
+      where: { id },
+      data: { status },
+      include: { user: { select: { username: true } } },
+    });
   }
 
   private async getChallengeOrThrow(id: number) {
