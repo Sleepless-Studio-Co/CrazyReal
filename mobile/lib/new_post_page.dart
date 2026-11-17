@@ -16,10 +16,13 @@ class NewPage extends StatefulWidget {
     super.key,
     required this.onUnauthorized,
     this.onPostCreated,
+    this.initialChallenge,
   });
 
   final VoidCallback onUnauthorized;
   final VoidCallback? onPostCreated;
+  // Défi présélectionné (ex. depuis la carte) à la place du défi global.
+  final Map<String, dynamic>? initialChallenge;
 
   @override
   State<NewPage> createState() => _NewPageState();
@@ -166,6 +169,14 @@ class _NewPageState extends State<NewPage> {
               : (_challenges.isNotEmpty
                   ? _challenges.first['id'] as int
                   : null);
+          final initial = widget.initialChallenge;
+          if (initial != null) {
+            // Les défis de la carte ne sont pas dans /challenges/available.
+            _challenges.removeWhere((c) => c['id'] == initial['id']);
+            _challenges.insert(0, {...initial, 'group': null});
+            _selectedChallengeId = initial['id'] as int;
+            _showingGlobalChallenges = true;
+          }
           challengeError = null;
         });
         _updateChallengeTimer();

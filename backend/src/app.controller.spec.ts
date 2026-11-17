@@ -81,6 +81,52 @@ describe('AppController', () => {
     });
   });
 
+  describe('getNearbyChallenges', () => {
+    const user = { userId: 1 } as any;
+
+    it('keeps live and upcoming challenges within the radius, closest first', async () => {
+      const now = Date.now();
+      const base = {
+        type: 'SPECIAL',
+        durationHours: null,
+        endsAt: null,
+        isActive: true,
+        registrations: [],
+        _count: { registrations: 0 },
+      };
+      const hour = 60 * 60 * 1000;
+      prismaService.challenge.findMany.mockResolvedValue([
+        // Tour Eiffel, en cours
+        { ...base, id: 1, date: new Date(now - hour), latitude: 48.8584, longitude: 2.2945 },
+        // Lyon, hors rayon
+        { ...base, id: 2, date: new Date(now - hour), latitude: 45.764, longitude: 4.8357 },
+        // Louvre, à venir + inscrit
+        { ...base, id: 4, date: new Date(now + hour), latitude: 48.8606, longitude: 2.3376,
+          registrations: [{ id: 9 }], _count: { registrations: 3 } },
+        // Terminé
+        { ...base, id: 5, date: new Date(now - 48 * hour), latitude: 48.853, longitude: 2.35 },
+      ]);
+
+      // Notre-Dame
+      const result = await appController.getNearbyChallenges(user, '48.853', '2.3499', '30');
+
+      expect(result.map((c) => c.id)).toEqual([4, 1]);
+      expect(result[0]).toMatchObject({ isLive: false, registered: true, participants: 3 });
+      expect(result[1].isLive).toBe(true);
+      expect(result[1].distanceKm).toBeGreaterThan(3);
+      expect(result[1].distanceKm).toBeLessThan(5);
+    });
+
+    it('rejects invalid coordinates and radius over 30 km', async () => {
+      await expect(appController.getNearbyChallenges(user, 'abc', '2', '10')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(appController.getNearbyChallenges(user, '48', '2', '31')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
   describe('uploadPhoto', () => {
     it('should associate post with the current active challenge', async () => {
       const now = new Date();
