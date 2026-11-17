@@ -442,6 +442,7 @@ export class ChatService {
         challengeTitle: challenge.title,
         isGlobal: false,
       },
+      'notifyNewChallenges',
     );
     await this.pushService?.sendToUsers(
       participants.map((participant) => participant.userId),
@@ -453,6 +454,7 @@ export class ChatService {
         challengeId: String(challenge.id),
         channelId: 'challenges',
       },
+      'notifyNewChallenges',
     );
     return challenge;
   }
@@ -557,6 +559,7 @@ export class ChatService {
         senderId: String(senderId),
         channelId: 'general',
       },
+      'notifyGroupMessages',
     );
 
     return message;

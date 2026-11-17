@@ -1,9 +1,16 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
+import * as dns from 'node:dns';
+import * as https from 'node:https';
 import { PrismaService } from '../prisma/prisma.service';
 
 type PushChannel = 'friend_requests' | 'challenges' | 'general';
+export type NotificationPreference =
+  | 'notifyGroupMessages'
+  | 'notifyChallengeReminders'
+  | 'notifyFriendRequests'
+  | 'notifyNewChallenges';
 
 @Injectable()
 export class PushService implements OnModuleInit {
@@ -16,6 +23,8 @@ export class PushService implements OnModuleInit {
   ) {}
 
   onModuleInit() {
+    dns.setDefaultResultOrder('ipv4first');
+    https.globalAgent.options.family = 4;
     const raw = this.config.get<string>('FIREBASE_SERVICE_ACCOUNT');
     if (!raw) {
       this.logger.warn(
@@ -41,25 +50,35 @@ export class PushService implements OnModuleInit {
     body: string,
     channelId: PushChannel,
     data: Record<string, string> = {},
+    preference?: NotificationPreference,
   ): Promise<boolean> {
     if (!this.app || userIds.length === 0) return false;
     try {
+      const users = await this.prisma.user.findMany({
+        where: {
+          id: { in: [...new Set(userIds)] },
+          ...(preference ? { [preference]: true } : {}),
+        },
+        select: { id: true },
+      });
       const devices = await this.prisma.deviceToken.findMany({
-        where: { userId: { in: [...new Set(userIds)] } },
+        where: { userId: { in: users.map((user) => user.id) } },
         select: { id: true, token: true },
       });
-      let delivered = devices.length === 0;
-      for (let offset = 0; offset < devices.length; offset += 500) {
-        delivered =
-          (await this.sendBatch(
-          devices.slice(offset, offset + 500),
-          title,
-          body,
-          channelId,
-          data,
-          )) || delivered;
-      }
-      return delivered;
+      if (devices.length === 0) return true;
+
+      const results = await Promise.all(
+        Array.from({ length: Math.ceil(devices.length / 500) }, (_, index) =>
+          this.sendBatch(
+            devices.slice(index * 500, (index + 1) * 500),
+            title,
+            body,
+            channelId,
+            data,
+          ),
+        ),
+      );
+      return results.some(Boolean);
     } catch (error) {
       this.logger.error('Unable to send push notification', error);
       return false;
@@ -122,6 +141,13 @@ export class PushService implements OnModuleInit {
     this.logger.log(
       `Push ${channelId}: ${response.successCount} delivered, ${response.failureCount} failed`,
     );
+    response.responses.forEach((result, index) => {
+      if (result.error) {
+        this.logger.warn(
+          `Push ${channelId} failed for device ${devices[index].id}: ${result.error.code} ${result.error.message}`,
+        );
+      }
+    });
     const invalidIds = response.responses
       .map((result, index) => {
         const code = result.error?.code;

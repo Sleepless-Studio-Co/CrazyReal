@@ -12,6 +12,7 @@ import { JWT_CONFIG_KEYS } from '../auth/jwt.config';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from './push.service';
+import type { NotificationPreference } from './push.service';
 
 @WebSocketGateway({
   namespace: '/notifications',
@@ -109,8 +110,19 @@ export class NotificationGateway
     this.server?.emit(event, data);
   }
 
-  async sendToUsers(userIds: number[], event: string, data: any) {
-    for (const userId of userIds) this.sendToUser(userId, event, data);
+  async sendToUsers(
+    userIds: number[],
+    event: string,
+    data: any,
+    preference?: NotificationPreference,
+  ) {
+    const users = preference
+      ? await this.prisma.user.findMany({
+          where: { id: { in: userIds }, [preference]: true },
+          select: { id: true },
+        })
+      : userIds.map((id) => ({ id }));
+    for (const user of users) this.sendToUser(user.id, event, data);
   }
 
   private async sendChallengeReminders() {
@@ -160,7 +172,7 @@ export class NotificationGateway
           challengeTitle: challenge.title,
           hoursRemaining: thresholdHours,
           isGlobal: challenge.conversationId == null,
-        });
+        }, 'notifyChallengeReminders');
         const pushDelivered = await this.pushService.sendToUsers(
           userIds,
           'Défi bientôt terminé',
@@ -172,6 +184,7 @@ export class NotificationGateway
             hoursRemaining: String(thresholdHours),
             channelId: 'challenges',
           },
+          'notifyChallengeReminders',
         );
         if (pushDelivered || userIds.length === 0) {
           this.sentReminderKeys.add(key);

@@ -51,7 +51,11 @@ class FcmService {
     if (Firebase.apps.isEmpty) return;
     _isAvailable = true;
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    FirebaseMessaging.onMessage.listen(_showRemoteMessage);
+    // Foreground notifications are displayed by the authenticated Socket.IO
+    // services. FCM remains responsible for background and terminated states.
+    FirebaseMessaging.onMessage.listen((message) {
+      debugPrint('[fcm] foreground message received: ${message.messageId}');
+    });
     FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedMessage);
     _pendingInitialMessage = await _messaging.getInitialMessage();
     _messaging.onTokenRefresh.listen((token) async {
@@ -70,7 +74,9 @@ class FcmService {
 
     final token = await _messaging.getToken();
     if (token != null) await _registerToken(token);
-    await _messaging.subscribeToTopic('global');
+    // Global notifications are addressed by user ID on the backend so that
+    // each account's notification preference is respected.
+    await _messaging.unsubscribeFromTopic('global');
     _isRegistered = true;
   }
 

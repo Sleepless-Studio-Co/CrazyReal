@@ -31,6 +31,7 @@ import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
 import { UpdatePrivacyDto } from './dto/update-privacy.dto';
 import { UpdateAvatarKeyDto } from './dto/update-avatar-key.dto';
 import { DeviceTokenDto } from './dto/device-token.dto';
+import { UpdateNotificationsDto } from './dto/update-notifications.dto';
 
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/jpeg',
@@ -127,6 +128,18 @@ export class UsersController {
     );
 
     return { user: updatedUser };
+  }
+
+  @Patch('me/notifications')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  updateNotifications(
+    @CurrentUser() user: ValidatedUser,
+    @Body() body: UpdateNotificationsDto,
+  ) {
+    return this.usersService
+      .updateNotifications(user.userId, body)
+      .then((updatedUser) => ({ user: updatedUser }));
   }
 
   @Patch('me/avatar')

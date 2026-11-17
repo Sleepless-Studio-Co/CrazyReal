@@ -148,6 +148,10 @@ model User {
   avatarUrl     String?
   avatarKey     String?
   isPrivate     Boolean        @default(false)
+  notifyGroupMessages       Boolean @default(true)
+  notifyChallengeReminders  Boolean @default(true)
+  notifyFriendRequests      Boolean @default(true)
+  notifyNewChallenges       Boolean @default(true)
   emailVerified Boolean        @default(false)
   emailVerifiedAt DateTime?
   createdAt     DateTime       @default(now())

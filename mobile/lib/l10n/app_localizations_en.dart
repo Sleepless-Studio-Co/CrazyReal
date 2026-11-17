@@ -453,6 +453,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accessibility => 'Accessibility';
 
   @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get notificationGroupMessages => 'Messages in groups';
+
+  @override
+  String get notificationChallengeReminders => 'Challenge reminders';
+
+  @override
+  String get notificationChallengeRemindersDesc =>
+      'Reminders at 24 hours and 1 hour';
+
+  @override
+  String get notificationFriendRequests => 'Friend requests';
+
+  @override
+  String get notificationNewChallenges => 'New challenges';
+
+  @override
   String get theme => 'Appearance';
 
   @override

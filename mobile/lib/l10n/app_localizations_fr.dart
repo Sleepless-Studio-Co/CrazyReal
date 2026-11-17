@@ -458,6 +458,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get accessibility => 'Accessibilité';
 
   @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get notificationGroupMessages => 'Messages dans les groupes';
+
+  @override
+  String get notificationChallengeReminders => 'Rappels de défi';
+
+  @override
+  String get notificationChallengeRemindersDesc =>
+      'Rappels à 24 heures et 1 heure';
+
+  @override
+  String get notificationFriendRequests => 'Demandes d\'amis';
+
+  @override
+  String get notificationNewChallenges => 'Nouveaux défis';
+
+  @override
   String get theme => 'Apparence';
 
   @override

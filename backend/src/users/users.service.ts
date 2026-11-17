@@ -20,6 +20,10 @@ const USER_SELECT = {
   avatarUrl: true,
   avatarKey: true,
   isPrivate: true,
+  notifyGroupMessages: true,
+  notifyChallengeReminders: true,
+  notifyFriendRequests: true,
+  notifyNewChallenges: true,
   createdAt: true,
 } as const;
 
@@ -149,6 +153,10 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          notifyGroupMessages: true,
+          notifyChallengeReminders: true,
+          notifyFriendRequests: true,
+          notifyNewChallenges: true,
           emailVerified: true,
           createdAt: true,
           role: true,
@@ -288,6 +296,22 @@ export class UsersService {
     } catch (error) {
       this.handlePrismaError(error);
     }
+  }
+
+  async updateNotifications(
+    userId: number,
+    updates: {
+      notifyGroupMessages: boolean;
+      notifyChallengeReminders: boolean;
+      notifyFriendRequests: boolean;
+      notifyNewChallenges: boolean;
+    },
+  ) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: updates,
+      select: USER_SELECT,
+    });
   }
 
   async deleteAccount(userId: number) {

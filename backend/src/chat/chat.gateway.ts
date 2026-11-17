@@ -7,6 +7,7 @@ import { ChatService } from './chat.service';
 import { JWT_CONFIG_KEYS } from '../auth/jwt.config';
 import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import type { ValidatedUser } from '../auth/interfaces/auth-user.interface';
+import { PrismaService } from '../prisma/prisma.service';
 
 // Les clients mobiles natifs ne sont pas concernés par CORS ; cette restriction
 // protège uniquement les clients web (Flutter Web) du gateway temps réel.
@@ -26,6 +27,7 @@ export class ChatGateway implements OnGatewayConnection {
     private readonly chatService: ChatService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @WebSocketServer()
@@ -126,9 +128,26 @@ export class ChatGateway implements OnGatewayConnection {
     });
   }
 
-  broadcastNewMessage(conversationId: number, message: any) {
+  async broadcastNewMessage(conversationId: number, message: any) {
     const room = conversationId.toString();
     console.log(`[chat] broadcast newMessage → room ${room} messageId=${(message as any).id}`);
-    this.server.to(room).emit('newMessage', message);
+    const sockets = await this.server.in(room).fetchSockets();
+    const userIds = sockets
+      .map((socket) => (socket.data.user as ValidatedUser | undefined)?.userId)
+      .filter((userId): userId is number => userId !== undefined);
+    const enabledUsers = await this.prisma.user.findMany({
+      where: {
+        id: { in: userIds },
+        notifyGroupMessages: true,
+      },
+      select: { id: true },
+    });
+    const enabledIds = new Set(enabledUsers.map((user) => user.id));
+    for (const socket of sockets) {
+      const userId = (socket.data.user as ValidatedUser | undefined)?.userId;
+      if (userId !== undefined && enabledIds.has(userId)) {
+        socket.emit('newMessage', message);
+      }
+    }
   }
 }

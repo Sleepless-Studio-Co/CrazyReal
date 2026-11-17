@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../auth/auth_service.dart';
+import 'notification_service.dart';
 import '../utils/media_url.dart';
 
 /// Socket temps réel unique et persistant pour tout le chat.
@@ -87,6 +88,21 @@ class ChatSocketService {
       try {
         final map = Map<String, dynamic>.from(data as Map);
         _messageController.add(map);
+        final user = await _authService.getUser();
+        final sender = map['sender'];
+        final senderId = sender is Map ? sender['id'] : null;
+        final currentUserId = user?['id'];
+        if (senderId != null && senderId.toString() != currentUserId?.toString()) {
+          final senderName = sender is Map
+              ? sender['username']?.toString() ?? 'Nouveau message'
+              : 'Nouveau message';
+          unawaited(NotificationService().showNotification(
+            id: map['id']?.hashCode,
+            title: 'Nouveau message de $senderName',
+            body: map['content']?.toString() ?? '',
+            channelId: 'general',
+          ));
+        }
       } catch (e) {
         debugPrint('[chat-socket] newMessage parse error: $e');
       }

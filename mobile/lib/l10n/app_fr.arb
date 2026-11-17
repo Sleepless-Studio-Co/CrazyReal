@@ -707,6 +707,24 @@
   "accessibility": "Accessibilité",
   "@accessibility": { "description": "En-tête de section accessibilité" },
 
+  "notifications": "Notifications",
+  "@notifications": { "description": "En-tête de section notifications" },
+
+  "notificationGroupMessages": "Messages dans les groupes",
+  "@notificationGroupMessages": { "description": "Interrupteur des notifications de groupe" },
+
+  "notificationChallengeReminders": "Rappels de défi",
+  "@notificationChallengeReminders": { "description": "Interrupteur des rappels de défi" },
+
+  "notificationChallengeRemindersDesc": "Rappels à 24 heures et 1 heure",
+  "@notificationChallengeRemindersDesc": { "description": "Horaires des rappels de défi" },
+
+  "notificationFriendRequests": "Demandes d'amis",
+  "@notificationFriendRequests": { "description": "Interrupteur des demandes d'amis" },
+
+  "notificationNewChallenges": "Nouveaux défis",
+  "@notificationNewChallenges": { "description": "Interrupteur des nouveaux défis" },
+
   "theme": "Apparence",
   "@theme": { "description": "Tuile de choix du thème" },
 

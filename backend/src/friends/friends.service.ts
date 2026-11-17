@@ -67,15 +67,19 @@ export class FriendsService {
     });
 
     // Notify target user
-    this.notificationGateway.sendToUser(friendId, 'friendRequestReceived', {
-      requesterUsername: friendship.requester.username,
-    });
+    await this.notificationGateway.sendToUsers(
+      [friendId],
+      'friendRequestReceived',
+      { requesterUsername: friendship.requester.username },
+      'notifyFriendRequests',
+    );
     await this.pushService?.sendToUsers(
       [friendId],
       "Demande d'ami",
       `${friendship.requester.username} vous a envoyé une demande d\'ami`,
       'friend_requests',
       { event: 'friendRequestReceived', channelId: 'friend_requests' },
+      'notifyFriendRequests',
     );
 
     return friendship;

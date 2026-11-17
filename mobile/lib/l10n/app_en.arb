@@ -707,6 +707,24 @@
   "accessibility": "Accessibility",
   "@accessibility": { "description": "Accessibility settings section header" },
 
+  "notifications": "Notifications",
+  "@notifications": { "description": "Notifications settings section header" },
+
+  "notificationGroupMessages": "Messages in groups",
+  "@notificationGroupMessages": { "description": "Group message notification toggle" },
+
+  "notificationChallengeReminders": "Challenge reminders",
+  "@notificationChallengeReminders": { "description": "Challenge reminder notification toggle" },
+
+  "notificationChallengeRemindersDesc": "Reminders at 24 hours and 1 hour",
+  "@notificationChallengeRemindersDesc": { "description": "Challenge reminder timing" },
+
+  "notificationFriendRequests": "Friend requests",
+  "@notificationFriendRequests": { "description": "Friend request notification toggle" },
+
+  "notificationNewChallenges": "New challenges",
+  "@notificationNewChallenges": { "description": "New challenge notification toggle" },
+
   "theme": "Appearance",
   "@theme": { "description": "Theme selection tile" },
 

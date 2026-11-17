@@ -98,13 +98,22 @@ export class AdminService {
           icon: dto.icon ?? null,
         },
       });
-      this.notificationGateway.broadcast('challengeCreated', {
+      const userIds = (
+        await this.prisma.user.findMany({ select: { id: true } })
+      ).map((user) => user.id);
+      const notification = {
         challengeId: challenge.id,
         challengeTitle: challenge.title,
         isGlobal: true,
-      });
-      await this.pushService?.sendToTopic(
-        'global',
+      };
+      await this.notificationGateway.sendToUsers(
+        userIds,
+        'challengeCreated',
+        notification,
+        'notifyNewChallenges',
+      );
+      await this.pushService?.sendToUsers(
+        userIds,
         'Nouveau défi global',
         challenge.title,
         'challenges',
@@ -114,6 +123,7 @@ export class AdminService {
           isGlobal: 'true',
           channelId: 'challenges',
         },
+        'notifyNewChallenges',
       );
       return challenge;
     } catch (e) {

@@ -31,6 +31,11 @@ class _SettingPageState extends State<SettingPage> {
   bool _isPrivate = false;
   bool _isAdmin = false;
   bool _isPrivacySaving = false;
+  bool _isNotificationsSaving = false;
+  bool _notifyGroupMessages = true;
+  bool _notifyChallengeReminders = true;
+  bool _notifyFriendRequests = true;
+  bool _notifyNewChallenges = true;
   bool _isDeleting = false;
 
   @override
@@ -56,6 +61,10 @@ class _SettingPageState extends State<SettingPage> {
     setState(() {
       _isPrivate = user['isPrivate'] == true;
       _isAdmin = user['role'] == 'ADMIN';
+      _notifyGroupMessages = user['notifyGroupMessages'] != false;
+      _notifyChallengeReminders = user['notifyChallengeReminders'] != false;
+      _notifyFriendRequests = user['notifyFriendRequests'] != false;
+      _notifyNewChallenges = user['notifyNewChallenges'] != false;
     });
   }
 
@@ -99,6 +108,49 @@ class _SettingPageState extends State<SettingPage> {
       _showError(e.toString());
     } finally {
       if (mounted) setState(() => _isPrivacySaving = false);
+    }
+  }
+
+  Future<void> _toggleNotification(String name, bool value) async {
+    final previous = <String, bool>{
+      'groupMessages': _notifyGroupMessages,
+      'challengeReminders': _notifyChallengeReminders,
+      'friendRequests': _notifyFriendRequests,
+      'newChallenges': _notifyNewChallenges,
+    }[name]!;
+    setState(() {
+      if (name == 'groupMessages') _notifyGroupMessages = value;
+      if (name == 'challengeReminders') _notifyChallengeReminders = value;
+      if (name == 'friendRequests') _notifyFriendRequests = value;
+      if (name == 'newChallenges') _notifyNewChallenges = value;
+      _isNotificationsSaving = true;
+    });
+    try {
+      final result = await _authService.updateNotificationPreferences(
+        notifyGroupMessages: _notifyGroupMessages,
+        notifyChallengeReminders: _notifyChallengeReminders,
+        notifyFriendRequests: _notifyFriendRequests,
+        notifyNewChallenges: _notifyNewChallenges,
+      );
+      _applyUser(result['user'] is Map<String, dynamic>
+          ? result['user'] as Map<String, dynamic>
+          : null);
+    } on UnauthorizedException {
+      if (mounted) widget.onUnauthorized();
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          if (name == 'groupMessages') _notifyGroupMessages = previous;
+          if (name == 'challengeReminders') {
+            _notifyChallengeReminders = previous;
+          }
+          if (name == 'friendRequests') _notifyFriendRequests = previous;
+          if (name == 'newChallenges') _notifyNewChallenges = previous;
+        });
+        _showError(e.toString());
+      }
+    } finally {
+      if (mounted) setState(() => _isNotificationsSaving = false);
     }
   }
 
@@ -243,6 +295,40 @@ class _SettingPageState extends State<SettingPage> {
               icon: Icons.block,
               title: l10n.blockedUsers,
               onTap: _openBlockedUsers,
+            ),
+          ]),
+          const SizedBox(height: 16),
+          _SectionHeader(l10n.notifications),
+          _SettingCard(children: [
+            _SwitchTile(
+              icon: Icons.groups_outlined,
+              title: l10n.notificationGroupMessages,
+              value: _notifyGroupMessages,
+              loading: _isNotificationsSaving,
+              onChanged: (value) => _toggleNotification('groupMessages', value),
+            ),
+            _SwitchTile(
+              icon: Icons.alarm_outlined,
+              title: l10n.notificationChallengeReminders,
+              subtitle: l10n.notificationChallengeRemindersDesc,
+              value: _notifyChallengeReminders,
+              loading: _isNotificationsSaving,
+              onChanged: (value) =>
+                  _toggleNotification('challengeReminders', value),
+            ),
+            _SwitchTile(
+              icon: Icons.person_add_outlined,
+              title: l10n.notificationFriendRequests,
+              value: _notifyFriendRequests,
+              loading: _isNotificationsSaving,
+              onChanged: (value) => _toggleNotification('friendRequests', value),
+            ),
+            _SwitchTile(
+              icon: Icons.emoji_events_outlined,
+              title: l10n.notificationNewChallenges,
+              value: _notifyNewChallenges,
+              loading: _isNotificationsSaving,
+              onChanged: (value) => _toggleNotification('newChallenges', value),
             ),
           ]),
           const SizedBox(height: 16),
@@ -420,7 +506,7 @@ class _SettingCard extends StatelessWidget {
           BoxShadow(
             color: context.paper.shadow,
             blurRadius: 18,
-            offset: Offset(0, 10),
+            offset: const Offset(0, 10),
           ),
         ],
       ),

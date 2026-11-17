@@ -5,6 +5,10 @@ export interface AuthUser {
   avatarUrl?: string | null;
   avatarKey?: string | null;
   isPrivate: boolean;
+  notifyGroupMessages?: boolean;
+  notifyChallengeReminders?: boolean;
+  notifyFriendRequests?: boolean;
+  notifyNewChallenges?: boolean;
   emailVerified?: boolean;
   createdAt: Date;
 }

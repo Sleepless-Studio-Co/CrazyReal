@@ -288,6 +288,26 @@ class AuthService {
     return data;
   }
 
+  Future<Map<String, dynamic>> updateNotificationPreferences({
+    required bool notifyGroupMessages,
+    required bool notifyChallengeReminders,
+    required bool notifyFriendRequests,
+    required bool notifyNewChallenges,
+  }) async {
+    final data = await _authedJson(
+      'PATCH',
+      '/users/me/notifications',
+      body: {
+        'notifyGroupMessages': notifyGroupMessages,
+        'notifyChallengeReminders': notifyChallengeReminders,
+        'notifyFriendRequests': notifyFriendRequests,
+        'notifyNewChallenges': notifyNewChallenges,
+      },
+    );
+    await _saveUserIfPresent(data['user']);
+    return data;
+  }
+
   Future<Map<String, dynamic>> uploadAvatarImage({
     required Uint8List bytes,
     required String filename,

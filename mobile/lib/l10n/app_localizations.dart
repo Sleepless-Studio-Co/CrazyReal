@@ -932,6 +932,42 @@ abstract class AppLocalizations {
   /// **'Accessibility'**
   String get accessibility;
 
+  /// Notifications settings section header
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// Group message notification toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Messages in groups'**
+  String get notificationGroupMessages;
+
+  /// Challenge reminder notification toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge reminders'**
+  String get notificationChallengeReminders;
+
+  /// Challenge reminder timing
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders at 24 hours and 1 hour'**
+  String get notificationChallengeRemindersDesc;
+
+  /// Friend request notification toggle
+  ///
+  /// In en, this message translates to:
+  /// **'Friend requests'**
+  String get notificationFriendRequests;
+
+  /// New challenge notification toggle
+  ///
+  /// In en, this message translates to:
+  /// **'New challenges'**
+  String get notificationNewChallenges;
+
   /// Theme selection tile
   ///
   /// In en, this message translates to:

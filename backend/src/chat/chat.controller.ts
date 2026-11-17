@@ -126,7 +126,7 @@ export class ChatController {
     @Body() body: CreateMessageDto,
   ) {
     const message = await this.chatService.sendMessage(conversationId, user.userId, body.content);
-    this.chatGateway.broadcastNewMessage(conversationId, message);
+    await this.chatGateway.broadcastNewMessage(conversationId, message);
     return message;
   }
 
