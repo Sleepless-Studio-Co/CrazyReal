@@ -233,7 +233,7 @@ class _PostCardState extends State<PostCard> {
                         _post.hasReported ? Icons.flag : Icons.flag_outlined,
                         color: _post.hasReported
                             ? const Color(0xFFB85C38)
-                            : _inkMuted,
+                            : context.paper.inkMuted,
                         size: 21,
                       ),
                     ),
