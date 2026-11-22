@@ -61,6 +61,15 @@ model Challenge {
   conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   // Fin explicite pour les défis de groupe ; null => durée dérivée du `type` (global).
   endsAt         DateTime?
+  // Auteur d'un défi de groupe (null pour les défis globaux ou si le compte a été supprimé).
+  creatorId      Int?
+  creator        User?         @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  // Position optionnelle : un défi géolocalisé apparaît sur la carte.
+  latitude       Float?
+  longitude      Float?
+  // Clé d'icône affichée sur la carte (cf. challengeIcons côté mobile).
+  icon           String?
+  registrations  ChallengeRegistration[]
 
   @@unique([date, type, conversationId])
 }
@@ -92,6 +101,31 @@ model PostReport {
 
   @@unique([userId, postId])
   @@index([postId, createdAt])
+  shareLinks   ShareLink[]
+}
+
+model ShareLink {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token, expiresAt])
+}
+
+// Inscription d'un utilisateur à un défi géolocalisé (carte).
+model ChallengeRegistration {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  challengeId Int
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
 }
 
 model UpVote {
@@ -110,7 +144,7 @@ model PostReaction {
   id        Int      @id @default(autoincrement())
   userId    Int
   postId    Int
-  emoji     String   @db.VarChar(16)
+  emoji     String   @db.VarChar(255)
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -118,6 +152,18 @@ model PostReaction {
 
   @@unique([userId, postId, emoji])
   @@index([postId, emoji])
+}
+
+model ChallengeIdea {
+  id        Int                @id @default(autoincrement())
+  content   String             @db.VarChar(500)
+  userId    Int
+  createdAt DateTime           @default(now())
+  status    ChallengeIdeaStatus @default(PENDING)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
 }
 
 model User {
@@ -137,6 +183,7 @@ model User {
   bannedAt      DateTime?
   posts         Post[]
   challengeIdeas ChallengeIdea[]
+  challengeRegistrations ChallengeRegistration[]
   upVotes       UpVote[]
   reactions     PostReaction[]
   postReports   PostReport[]
@@ -146,17 +193,7 @@ model User {
   receivedRequests Friendship[] @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
-}
-
-model ChallengeIdea {
-  id        Int      @id @default(autoincrement())
-  content   String   @db.VarChar(500)
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status    ChallengeIdeaStatus @default(PENDING)
-  createdAt DateTime @default(now())
-
-  @@index([status, createdAt])
+  createdChallenges Challenge[]
 }
 
 model EmailVerificationToken {
