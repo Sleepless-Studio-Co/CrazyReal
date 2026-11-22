@@ -88,6 +88,7 @@ model Post {
   upVotes     UpVote[]
   reactions   PostReaction[]
   reports     PostReport[]
+  shareLinks  ShareLink[]
 }
 
 model PostReport {
@@ -101,7 +102,6 @@ model PostReport {
 
   @@unique([userId, postId])
   @@index([postId, createdAt])
-  shareLinks   ShareLink[]
 }
 
 model ShareLink {
