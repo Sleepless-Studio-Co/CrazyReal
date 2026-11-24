@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ConflictException,
   ForbiddenException,
   Get,
   NotFoundException,
@@ -33,7 +34,7 @@ import { promisify } from 'util';
 import { join } from 'path';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CurrentUser } from './auth/current-user.decorator';
-import { ChallengeType, MediaType } from '@prisma/client';
+import { ChallengeType, MediaType, Prisma } from '@prisma/client';
 import { FeedGateway } from './feed/feed.gateway';
 import type { ValidatedUser } from './auth/interfaces/auth-user.interface';
 import {
@@ -187,7 +188,7 @@ export class AppController {
       orderBy: { endsAt: 'asc' },
     });
 
-    return [
+    const availableChallenges = [
       // Les défis géolocalisés se font depuis la carte.
       ...globalChallenges
         .filter((global) => global.latitude == null)
@@ -201,6 +202,22 @@ export class AppController {
         group: conversation,
       })),
     ];
+
+    const completedPosts = await this.prisma.post.findMany({
+      where: {
+        userId: user.userId,
+        challengeId: { in: availableChallenges.map((challenge) => challenge.id) },
+      },
+      select: { challengeId: true },
+    });
+    const completedChallengeIds = new Set(
+      completedPosts.map((post) => post.challengeId),
+    );
+
+    return availableChallenges.map((challenge) => ({
+      ...challenge,
+      completed: completedChallengeIds.has(challenge.id),
+    }));
   }
 
   @Get('challenges/nearby')
@@ -489,6 +506,7 @@ export class AppController {
       },
     }),
   }))
+
   async uploadPhoto(
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: any,
@@ -510,7 +528,29 @@ export class AppController {
         await this.normalizeVideo(file);
       }
 
-      const currentChallenge = await this.resolveChallengeForPost(user.userId, challengeId);
+      const challengeId = challengeIdRaw == null || challengeIdRaw === ''
+        ? undefined
+        : Number(challengeIdRaw);
+      if (
+        challengeIdRaw != null &&
+        (challengeId == null || !Number.isInteger(challengeId) || challengeId <= 0)
+      ) {
+        throw new BadRequestException('Identifiant de challenge invalide.');
+      }
+
+      const currentChallenge = await this.resolveChallengeForPost(
+        user.userId,
+        challengeId,
+      );
+      const existingPost = await this.prisma.post.findFirst({
+        where: {
+          userId: user.userId,
+          challengeId: currentChallenge.id,
+        },
+      });
+      if (existingPost) {
+        throw new ConflictException('Tu as déjà réalisé ce défi.');
+      }
 
       const post = await this.prisma.post.create({
         data: {
@@ -534,6 +574,12 @@ export class AppController {
     } catch (error) {
       await fs.unlink(file.path).catch(() => undefined);
       console.error('[posts] upload failed', error);
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Tu as déjà réalisé ce défi.');
+      }
       throw error;
     }
   }

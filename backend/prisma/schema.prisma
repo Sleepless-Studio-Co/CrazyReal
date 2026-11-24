@@ -87,6 +87,8 @@ model Post {
   moderationStatus PostModerationStatus @default(PENDING)
   upVotes     UpVote[]
   reactions   PostReaction[]
+
+  @@unique([userId, challengeId])
   reports     PostReport[]
   shareLinks  ShareLink[]
 }

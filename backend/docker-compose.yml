@@ -2,7 +2,7 @@ services:
   # Ton backend (NOUVEAU)
   api:
     build: .
-    command: sh -c "npx prisma db push --accept-data-loss && npm run start:dev"
+    command: sh -c "npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/20261102120000_prevent_duplicate_challenge_posts/migration.sql && npx prisma db push --accept-data-loss && npm run start:dev"
     ports:
       - "3000:3000" # Ajuste si ton backend utilise un autre port
     volumes:
