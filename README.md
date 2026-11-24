@@ -271,6 +271,7 @@ Documentation interactive : **GET** `/api` (Swagger).
 | `GET` | `/challenge/current` | Oui | Challenge actif |
 | `POST` | `/posts` | Oui | Upload photo (`multipart/form-data`, champ `file`) |
 | `GET` | `/posts` | Oui | Liste des posts (avec utilisateur) |
+| `GET` | `/posts/top` | Oui | Meilleurs posts (les plus upvotés) des défis globaux terminés ; `period` = `week`, `month` ou `all` (défaut). Même visibilité que le feed, top 50 |
 
 ### Amis — `/friends`
 
@@ -396,6 +397,8 @@ Workflow GitHub Actions : `.github/workflows/ci.yml`
 
 | Job | Déclencheur | Action |
 |-----|-------------|--------|
+| **Test Backend** | Modifications dans `backend/` | `npm ci` + `npm run test` |
+| **Test Mobile** | Modifications dans `mobile/` | `flutter analyze` + `flutter test` |
 | **Build Backend** | Modifications dans `backend/` | `npm ci` + `npm run build` |
 | **Build Mobile (Android)** | Modifications dans `mobile/` | APK release en artifact |
 | **Semantic Release** | Push sur `main` | Versioning automatique |

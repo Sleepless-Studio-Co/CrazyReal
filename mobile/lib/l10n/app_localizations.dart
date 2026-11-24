@@ -128,11 +128,167 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settings;
 
+  /// No description provided for @reportPostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this post?'**
+  String get reportPostTitle;
+
+  /// No description provided for @reportPostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This report will be reviewed by the moderation team.'**
+  String get reportPostBody;
+
+  /// No description provided for @reportPostAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get reportPostAction;
+
+  /// No description provided for @reportPostSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Post reported'**
+  String get reportPostSuccess;
+
   /// Account tab label
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get account;
+
+  /// No description provided for @adminReportedPostsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported posts'**
+  String get adminReportedPostsTitle;
+
+  /// No description provided for @adminReportedPostsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and moderate reported posts'**
+  String get adminReportedPostsDesc;
+
+  /// No description provided for @adminModerationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderation'**
+  String get adminModerationTitle;
+
+  /// No description provided for @adminReportedUsersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported users'**
+  String get adminReportedUsersTitle;
+
+  /// No description provided for @adminReportedUsersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review users by total reports'**
+  String get adminReportedUsersDesc;
+
+  /// No description provided for @adminReportedUsersLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reported users.'**
+  String get adminReportedUsersLoadError;
+
+  /// No description provided for @adminNoReportedUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'No reported users'**
+  String get adminNoReportedUsers;
+
+  /// No description provided for @adminTotalReports.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} total report(s)'**
+  String adminTotalReports(int count);
+
+  /// No description provided for @adminBanUserTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ban this user'**
+  String get adminBanUserTitle;
+
+  /// No description provided for @adminBanReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get adminBanReasonLabel;
+
+  /// No description provided for @adminBanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ban'**
+  String get adminBanAction;
+
+  /// No description provided for @adminUnbanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Unban'**
+  String get adminUnbanAction;
+
+  /// No description provided for @adminReportedPostsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reported posts.'**
+  String get adminReportedPostsLoadError;
+
+  /// No description provided for @adminNoReportedPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'No reported posts'**
+  String get adminNoReportedPosts;
+
+  /// No description provided for @adminReportCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} report(s)'**
+  String adminReportCount(int count);
+
+  /// No description provided for @accountBannedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account banned'**
+  String get accountBannedTitle;
+
+  /// No description provided for @accountBannedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot access CrazyReal because your account has been banned.'**
+  String get accountBannedMessage;
+
+  /// No description provided for @accountBannedReason.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot access CrazyReal.\n\nReason: {reason}'**
+  String accountBannedReason(String reason);
+
+  /// No description provided for @adminGhosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get adminGhosted;
+
+  /// No description provided for @adminRestorePost.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore post'**
+  String get adminRestorePost;
+
+  /// No description provided for @adminDeletePostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this post?'**
+  String get adminDeletePostTitle;
+
+  /// No description provided for @adminDeletePostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is irreversible.'**
+  String get adminDeletePostBody;
 
   /// Title for current challenge section
   ///
@@ -1315,6 +1471,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load challenges'**
   String get adminLoadError;
+
+  /// Screen reader label for the tappable avatar
+  ///
+  /// In en, this message translates to:
+  /// **'View {username}\'s profile'**
+  String viewProfile(String username);
+
+  /// Label under the completed challenges count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{challenges} =1{challenge} other{challenges}}'**
+  String profilePostsCount(int count);
+
+  /// Label under the followers (friends) count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{followers} =1{follower} other{followers}}'**
+  String profileFriendsCount(int count);
+
+  /// Profile without posts
+  ///
+  /// In en, this message translates to:
+  /// **'No challenges completed yet'**
+  String get profileNoPosts;
+
+  /// Locked private profile
+  ///
+  /// In en, this message translates to:
+  /// **'This account is private'**
+  String get profilePrivateTitle;
+
+  /// Private profile explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Become friends to see their challenges.'**
+  String get profilePrivateMessage;
+
+  /// Profile load error
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the profile'**
+  String get profileLoadError;
+
+  /// Title of a profile's post list
+  ///
+  /// In en, this message translates to:
+  /// **'Challenges'**
+  String get profilePosts;
+
+  /// Title of the page listing the most upvoted posts of completed challenges
+  ///
+  /// In en, this message translates to:
+  /// **'Best challenges'**
+  String get topPostsTitle;
+
+  /// Tooltip of the trophy button in the home app bar
+  ///
+  /// In en, this message translates to:
+  /// **'Best challenges'**
+  String get topPostsTooltip;
+
+  /// Period filter: last 7 days
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get topPeriodWeek;
+
+  /// Period filter: last 30 days
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get topPeriodMonth;
+
+  /// Period filter: no limit
+  ///
+  /// In en, this message translates to:
+  /// **'All time'**
+  String get topPeriodAll;
+
+  /// Shown when the best challenges page is empty
+  ///
+  /// In en, this message translates to:
+  /// **'No completed challenge has been upvoted yet.'**
+  String get topPostsEmpty;
+
+  /// No description provided for @map.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get map;
+
+  /// No description provided for @mapLocationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location denied: showing Paris.'**
+  String get mapLocationDenied;
+
+  /// No description provided for @mapChallengesWithin.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No challenges} =1{1 challenge} other{{count} challenges}} within {radius} km'**
+  String mapChallengesWithin(int count, int radius);
+
+  /// No description provided for @mapDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km away'**
+  String mapDistance(String km);
+
+  /// No description provided for @mapRecenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Recenter on my position'**
+  String get mapRecenter;
+
+  /// No description provided for @adminLatitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude (optional)'**
+  String get adminLatitudeLabel;
+
+  /// No description provided for @adminLongitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude (optional)'**
+  String get adminLongitudeLabel;
+
+  /// No description provided for @adminLocationInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter both latitude and longitude, or neither'**
+  String get adminLocationInvalid;
+
+  /// No description provided for @mapLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Live now'**
+  String get mapLive;
+
+  /// No description provided for @mapUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get mapUpcoming;
+
+  /// No description provided for @mapStartsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts in {time}'**
+  String mapStartsIn(String time);
+
+  /// No description provided for @mapEndsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends in {time}'**
+  String mapEndsIn(String time);
+
+  /// No description provided for @mapRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get mapRegister;
+
+  /// No description provided for @mapJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get mapJoin;
+
+  /// No description provided for @mapRegistered.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed up ✓'**
+  String get mapRegistered;
+
+  /// No description provided for @mapSendChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Send your challenge'**
+  String get mapSendChallenge;
+
+  /// No description provided for @mapParticipants.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No one signed up yet} =1{1 participant} other{{count} participants}}'**
+  String mapParticipants(int count);
+
+  /// No description provided for @mapCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Not completed yet} =1{1 completed it} other{{count} completed it}}'**
+  String mapCompleted(int count);
+
+  /// No description provided for @adminIconLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Map icon'**
+  String get adminIconLabel;
 }
 
 class _AppLocalizationsDelegate

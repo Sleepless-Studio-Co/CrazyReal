@@ -1,20 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:app_links/app_links.dart';
 import 'l10n/app_localizations.dart';
 import 'locale_notifier.dart';
 import 'theme_notifier.dart';
 import 'home_page.dart';
 import 'friend_page.dart';
 import 'new_post_page.dart';
-import 'setting_page.dart';
+import 'map_page.dart';
 import 'account_page.dart';
+import 'banned_page.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
+import 'guest_share_page.dart';
 import 'services/chat_socket_service.dart';
 import 'services/notification_service.dart';
 import 'services/global_notification_service.dart';
+import 'widgets/paper.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -26,11 +32,14 @@ Future<void> main() async {
   appLocale.value = Locale(savedLang, '');
   appThemeMode.value = themeModeFromString(prefs.getString('theme_mode'));
   await NotificationService().init(navKey: navigatorKey);
-  runApp(const MyApp());
+  final initialShareToken = await _readInitialShareToken();
+  runApp(MyApp(initialShareToken: initialShareToken));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.initialShareToken});
+
+  final String? initialShareToken;
 
   @override
   Widget build(BuildContext context) {
@@ -40,32 +49,23 @@ class MyApp extends StatelessWidget {
         return ValueListenableBuilder<ThemeMode>(
           valueListenable: appThemeMode,
           builder: (context, themeMode, _) => MaterialApp(
-          navigatorKey: navigatorKey,
-          title: 'CrazyReal',
-          locale: locale,
-          themeMode: themeMode,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-            scaffoldBackgroundColor: const Color(0xFFF7EBD1),
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: Colors.deepPurple,
-              brightness: Brightness.dark,
-            ),
-            scaffoldBackgroundColor: const Color(0xFF171311),
-          ),
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', ''),
-            Locale('fr', ''),
-          ],
-          home: const AuthGate(),
+            navigatorKey: navigatorKey,
+            title: 'CrazyReal',
+            locale: locale,
+            themeMode: themeMode,
+            theme: paperTheme(Brightness.light),
+            darkTheme: paperTheme(Brightness.dark),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', ''),
+              Locale('fr', ''),
+            ],
+            home: AuthGate(initialShareToken: initialShareToken),
           ),
         );
       },
@@ -74,7 +74,9 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
+  const AuthGate({super.key, this.initialShareToken});
+
+  final String? initialShareToken;
 
   @override
   State<AuthGate> createState() => _AuthGateState();
@@ -85,12 +87,30 @@ class _AuthGateState extends State<AuthGate> {
   final ChatSocketService _chatSocket = ChatSocketService();
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  bool _isBanned = false;
+  String? _banReason;
+  String? _shareToken;
+  StreamSubscription<Uri>? _shareLinkSubscription;
 
   @override
   void initState() {
     super.initState();
+    _shareToken = widget.initialShareToken;
+    _shareLinkSubscription = AppLinks().uriLinkStream.listen((uri) {
+      final token = _shareTokenFromUri(uri);
+      if (token != null && mounted && !_isAuthenticated) {
+        setState(() => _shareToken = token);
+      }
+    });
+    GlobalNotificationService().setUserBannedHandler(_handleUserBanned);
     _checkAuth();
     NotificationService().requestPermissions();
+  }
+
+  @override
+  void dispose() {
+    _shareLinkSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _checkAuth() async {
@@ -98,6 +118,10 @@ class _AuthGateState extends State<AuthGate> {
     if (!mounted) return;
 
     if (isLoggedIn) {
+      final profile = await _authService.fetchProfile();
+      final user = profile ?? await _authService.getUser();
+      _isBanned = user?['isBanned'] == true;
+      _banReason = user?['banReason']?.toString();
       _chatSocket.connect();
       GlobalNotificationService().connect();
     }
@@ -110,10 +134,31 @@ class _AuthGateState extends State<AuthGate> {
 
   void _handleAuthSuccess() {
     if (!mounted) return;
+    _loadBanState();
     _chatSocket.connect();
     GlobalNotificationService().connect();
     setState(() {
       _isAuthenticated = true;
+      _shareToken = null;
+    });
+  }
+
+  void _handleUserBanned(String? reason) {
+    if (!mounted) return;
+    _chatSocket.disconnect();
+    GlobalNotificationService().disconnect();
+    setState(() {
+      _isBanned = true;
+      _banReason = reason;
+    });
+  }
+
+  Future<void> _loadBanState() async {
+    final user = await _authService.getUser();
+    if (!mounted) return;
+    setState(() {
+      _isBanned = user?['isBanned'] == true;
+      _banReason = user?['banReason']?.toString();
     });
   }
 
@@ -140,6 +185,8 @@ class _AuthGateState extends State<AuthGate> {
 
     setState(() {
       _isAuthenticated = false;
+      _isBanned = false;
+      _banReason = null;
     });
   }
 
@@ -153,8 +200,23 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
 
+    if (_shareToken != null) {
+      return GuestSharePage(
+        token: _shareToken!,
+        isAuthenticated: _isAuthenticated,
+        onAuthSuccess: _handleAuthSuccess,
+      );
+    }
+
     if (!_isAuthenticated) {
       return LoginPage(onAuthSuccess: _handleAuthSuccess);
+    }
+
+    if (_isBanned) {
+      return BannedPage(
+        reason: _banReason,
+        onLoggedOut: _handleLogout,
+      );
     }
 
     return MainScreen(
@@ -162,6 +224,22 @@ class _AuthGateState extends State<AuthGate> {
       onUnauthorized: () => _handleUnauthorized(),
     );
   }
+}
+
+Future<String?> _readInitialShareToken() async {
+  final uri = await AppLinks().getInitialLink();
+  return _shareTokenFromUri(uri);
+}
+
+String? _shareTokenFromUri(Uri? uri) {
+  if (uri == null) return null;
+  if (uri.scheme == 'crazyreal' && uri.host == 'share') {
+    return uri.pathSegments.isEmpty ? null : uri.pathSegments.first;
+  }
+  if (uri.pathSegments.length >= 2 && uri.pathSegments.first == 'share') {
+    return uri.pathSegments[1];
+  }
+  return null;
 }
 
 class MainScreen extends StatefulWidget {
@@ -194,13 +272,10 @@ class _MainScreenState extends State<MainScreen> {
         onPublishTap: () => _onItemTapped(2),
       ),
       FriendPage(onUnauthorized: widget.onUnauthorized),
-      NewPage(
+      _buildNewPage(),
+      MapPage(
         onUnauthorized: widget.onUnauthorized,
-        onPostCreated: _onPostCreated,
-      ),
-      SettingPage(
-        onLoggedOut: widget.onLoggedOut,
-        onUnauthorized: widget.onUnauthorized,
+        onSendChallenge: _openCameraFor,
       ),
       AccountPage(
         onLoggedOut: widget.onLoggedOut,
@@ -209,7 +284,20 @@ class _MainScreenState extends State<MainScreen> {
     ];
   }
 
+  Widget _buildNewPage([Map<String, dynamic>? challenge]) => NewPage(
+        onUnauthorized: widget.onUnauthorized,
+        onPostCreated: _onPostCreated,
+        initialChallenge: challenge,
+      );
+
+  // Ouvre la caméra sur un défi précis (depuis la carte).
+  void _openCameraFor(Map<String, dynamic> challenge) {
+    _pages[2] = _buildNewPage(challenge);
+    _onItemTapped(2);
+  }
+
   void _onPostCreated() {
+    _pages[2] = _buildNewPage();
     _homeKey.currentState?.refreshFeed(showLoading: false);
     _onItemTapped(0);
   }
@@ -232,7 +320,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -250,8 +338,8 @@ class _MainScreenState extends State<MainScreen> {
             label: l10n.newPost,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.settings),
-            label: l10n.settings,
+            icon: const Icon(Icons.map),
+            label: l10n.map,
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.account_circle),
@@ -263,7 +351,11 @@ class _MainScreenState extends State<MainScreen> {
         unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
         backgroundColor: Theme.of(context).colorScheme.surface,
         type: BottomNavigationBarType.fixed,
-        onTap: _onItemTapped,
+        onTap: (index) {
+          // Via la barre, la caméra revient sur le défi global.
+          if (index == 2 && _selectedIndex != 2) _pages[2] = _buildNewPage();
+          _onItemTapped(index);
+        },
       ),
     );
   }

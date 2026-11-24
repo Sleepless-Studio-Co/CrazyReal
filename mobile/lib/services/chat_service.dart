@@ -161,6 +161,17 @@ class ChatService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  Future<void> deleteGroupChallenge(int conversationId, int challengeId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/$conversationId/challenges/$challengeId'),
+      headers: await _headers(),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw buildApiException(response);
+    }
+  }
+
   Future<Map<String, dynamic>> sendMessage(int conversationId, String content) async {
     final response = await http.post(
       Uri.parse('$baseUrl/$conversationId/messages'),

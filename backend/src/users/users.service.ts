@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -7,6 +8,10 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import {
+  formatPostWithUpvotes,
+  postIncludeWithUpvotes,
+} from '../posts/post.utils';
 
 const USER_SELECT = {
   id: true,
@@ -15,6 +20,9 @@ const USER_SELECT = {
   avatarUrl: true,
   avatarKey: true,
   isPrivate: true,
+  isBanned: true,
+  banReason: true,
+  bannedAt: true,
   createdAt: true,
 } as const;
 
@@ -26,7 +34,9 @@ export class UsersService {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         const target = error.meta?.target;
-        const fields = Array.isArray(target) ? target.join(',') : String(target ?? '');
+        const fields = Array.isArray(target)
+          ? target.join(',')
+          : String(target ?? '');
 
         if (fields.includes('email')) {
           throw new ConflictException('mail already in use');
@@ -42,6 +52,12 @@ export class UsersService {
       if (error.code === 'P2025') {
         throw new NotFoundException('user not found');
       }
+    }
+
+    // Domain exceptions (e.g. NotFoundException from findPublicProfile) must
+    // propagate as-is instead of being remapped to a 500.
+    if (error instanceof HttpException) {
+      throw error;
     }
 
     throw new InternalServerErrorException('Database operation failed');
@@ -64,6 +80,9 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          isBanned: true,
+          banReason: true,
+          bannedAt: true,
           emailVerified: true,
           createdAt: true,
         },
@@ -84,6 +103,9 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          isBanned: true,
+          banReason: true,
+          bannedAt: true,
           emailVerified: true,
           createdAt: true,
         },
@@ -105,6 +127,9 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          isBanned: true,
+          banReason: true,
+          bannedAt: true,
           emailVerified: true,
           createdAt: true,
         },
@@ -125,6 +150,9 @@ export class UsersService {
           avatarUrl: true,
           avatarKey: true,
           isPrivate: true,
+          isBanned: true,
+          banReason: true,
+          bannedAt: true,
           emailVerified: true,
           createdAt: true,
           role: true,
@@ -278,38 +306,56 @@ export class UsersService {
         throw new NotFoundException('user not found');
       }
 
-      if (target.id === requesterId) {
-        return { ...target, isFriend: true, isSelf: true };
-      }
-
-      if (!target.isPrivate) {
-        return { ...target, isFriend: false, isSelf: false };
-      }
-
-      const friendship = await this.prisma.friendship.findFirst({
+      const isSelf = target.id === requesterId;
+      const isFriend =
+        isSelf ||
+        (await this.prisma.friendship.count({
+          where: {
+            status: 'ACCEPTED',
+            OR: [
+              { userId: requesterId, friendId: targetId },
+              { userId: targetId, friendId: requesterId },
+            ],
+          },
+        })) > 0;
+      // ponytail: "abonnés" = amis acceptés, the app has no follow model.
+      const friendCount = await this.prisma.friendship.count({
         where: {
           status: 'ACCEPTED',
-          OR: [
-            { userId: requesterId, friendId: targetId },
-            { userId: targetId, friendId: requesterId },
-          ],
+          OR: [{ userId: targetId }, { friendId: targetId }],
         },
       });
 
-      if (friendship) {
-        return { ...target, isFriend: true, isSelf: false };
+      if (target.isPrivate && !isFriend) {
+        return {
+          id: target.id,
+          username: target.username,
+          avatarUrl: target.avatarUrl,
+          avatarKey: target.avatarKey,
+          isPrivate: true,
+          isFriend: false,
+          isSelf: false,
+          friendCount,
+          posts: [],
+        };
       }
 
+      // Group-challenge posts stay inside their group feed.
+      const posts = await this.prisma.post.findMany({
+        where: { userId: targetId, challenge: { conversationId: null } },
+        orderBy: { createdAt: 'desc' },
+        include: postIncludeWithUpvotes(requesterId),
+      });
+
       return {
-        id: target.id,
-        username: target.username,
-        avatarUrl: target.avatarUrl,
-        avatarKey: target.avatarKey,
-        isPrivate: true,
-        isFriend: false,
-        isSelf: false,
+        ...target,
+        isFriend,
+        isSelf,
+        friendCount,
+        posts: posts.map(formatPostWithUpvotes),
       };
     } catch (error) {
+      if (error instanceof NotFoundException) throw error;
       this.handlePrismaError(error);
     }
   }

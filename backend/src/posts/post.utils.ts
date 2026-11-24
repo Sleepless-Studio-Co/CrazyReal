@@ -29,6 +29,10 @@ export function postIncludeWithUpvotes(userId: number) {
     reactions: {
       select: { emoji: true, userId: true },
     },
+    reports: {
+      where: { userId },
+      select: { id: true },
+    },
   };
 }
 
@@ -36,6 +40,7 @@ type PostWithUpvoteMeta = {
   _count?: { upVotes: number };
   upVotes?: { id: number }[];
   reactions?: { emoji: string; userId: number }[];
+  reports?: { id: number }[];
   [key: string]: unknown;
 };
 
@@ -43,7 +48,7 @@ export function formatPostWithUpvotes<T extends PostWithUpvoteMeta>(
   post: T,
   userId: number,
 ) {
-  const { _count, upVotes, reactions = [], ...rest } = post;
+  const { _count, upVotes, reactions = [], reports = [], ...rest } = post;
   const reactionMap = new Map<
     string,
     { count: number; reactedByMe: boolean }
@@ -62,6 +67,7 @@ export function formatPostWithUpvotes<T extends PostWithUpvoteMeta>(
     ...rest,
     upvoteCount: _count?.upVotes ?? 0,
     hasUpvoted: (upVotes?.length ?? 0) > 0,
+    hasReported: reports.length > 0,
     reactions: [...reactionMap.entries()]
       .map(([emoji, value]) => ({ emoji, ...value }))
       .sort((a, b) => b.count - a.count),

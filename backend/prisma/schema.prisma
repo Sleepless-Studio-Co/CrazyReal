@@ -37,6 +37,13 @@ enum ChallengeIdeaStatus {
   REJECTED
 }
 
+enum PostModerationStatus {
+  PENDING
+  GHOSTED
+  APPROVED
+  REMOVED
+}
+
 model Challenge {
   id          Int           @id @default(autoincrement())
   title       String        @default("Global Challenge")
@@ -54,6 +61,15 @@ model Challenge {
   conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   // Fin explicite pour les défis de groupe ; null => durée dérivée du `type` (global).
   endsAt         DateTime?
+  // Auteur d'un défi de groupe (null pour les défis globaux ou si le compte a été supprimé).
+  creatorId      Int?
+  creator        User?         @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  // Position optionnelle : un défi géolocalisé apparaît sur la carte.
+  latitude       Float?
+  longitude      Float?
+  // Clé d'icône affichée sur la carte (cf. challengeIcons côté mobile).
+  icon           String?
+  registrations  ChallengeRegistration[]
 
   @@unique([date, type, conversationId])
 }
@@ -67,8 +83,49 @@ model Post {
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId Int
   createdAt   DateTime  @default(now())
+  isGhosted   Boolean   @default(false)
+  moderationStatus PostModerationStatus @default(PENDING)
   upVotes     UpVote[]
   reactions   PostReaction[]
+
+  @@unique([userId, challengeId])
+  reports     PostReport[]
+  shareLinks  ShareLink[]
+}
+
+model PostReport {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId, createdAt])
+}
+
+model ShareLink {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token, expiresAt])
+}
+
+// Inscription d'un utilisateur à un défi géolocalisé (carte).
+model ChallengeRegistration {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  challengeId Int
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, challengeId])
 }
@@ -123,16 +180,22 @@ model User {
   emailVerifiedAt DateTime?
   createdAt     DateTime       @default(now())
   role          Role           @default(USER)
+  isBanned      Boolean       @default(false)
+  banReason     String?
+  bannedAt      DateTime?
   posts         Post[]
   challengeIdeas ChallengeIdea[]
+  challengeRegistrations ChallengeRegistration[]
   upVotes       UpVote[]
   reactions     PostReaction[]
+  postReports   PostReport[]
   refreshTokens RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   sentRequests Friendship[] @relation("SentRequests")
   receivedRequests Friendship[] @relation("ReceivedRequests")
   participants     Participant[]
   messages         Message[]
+  createdChallenges Challenge[]
 }
 
 model EmailVerificationToken {

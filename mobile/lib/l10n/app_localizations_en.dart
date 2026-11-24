@@ -24,7 +24,93 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
+  String get reportPostTitle => 'Report this post?';
+
+  @override
+  String get reportPostBody =>
+      'This report will be reviewed by the moderation team.';
+
+  @override
+  String get reportPostAction => 'Report';
+
+  @override
+  String get reportPostSuccess => 'Post reported';
+
+  @override
   String get account => 'Account';
+
+  @override
+  String get adminReportedPostsTitle => 'Reported posts';
+
+  @override
+  String get adminReportedPostsDesc => 'Review and moderate reported posts';
+
+  @override
+  String get adminModerationTitle => 'Moderation';
+
+  @override
+  String get adminReportedUsersTitle => 'Reported users';
+
+  @override
+  String get adminReportedUsersDesc => 'Review users by total reports';
+
+  @override
+  String get adminReportedUsersLoadError => 'Could not load reported users.';
+
+  @override
+  String get adminNoReportedUsers => 'No reported users';
+
+  @override
+  String adminTotalReports(int count) {
+    return '$count total report(s)';
+  }
+
+  @override
+  String get adminBanUserTitle => 'Ban this user';
+
+  @override
+  String get adminBanReasonLabel => 'Reason (optional)';
+
+  @override
+  String get adminBanAction => 'Ban';
+
+  @override
+  String get adminUnbanAction => 'Unban';
+
+  @override
+  String get adminReportedPostsLoadError => 'Could not load reported posts.';
+
+  @override
+  String get adminNoReportedPosts => 'No reported posts';
+
+  @override
+  String adminReportCount(int count) {
+    return '$count report(s)';
+  }
+
+  @override
+  String get accountBannedTitle => 'Account banned';
+
+  @override
+  String get accountBannedMessage =>
+      'You cannot access CrazyReal because your account has been banned.';
+
+  @override
+  String accountBannedReason(String reason) {
+    return 'You cannot access CrazyReal.\n\nReason: $reason';
+  }
+
+  @override
+  String get adminGhosted => 'Hidden';
+
+  @override
+  String get adminRestorePost => 'Restore post';
+
+  @override
+  String get adminDeletePostTitle => 'Delete this post?';
+
+  @override
+  String get adminDeletePostBody => 'This action is irreversible.';
 
   @override
   String get currentChallenge => 'Current Challenge';
@@ -671,4 +757,157 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminLoadError => 'Could not load challenges';
+
+  @override
+  String viewProfile(String username) {
+    return 'View $username\'s profile';
+  }
+
+  @override
+  String profilePostsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'challenges',
+      one: 'challenge',
+      zero: 'challenges',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String profileFriendsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'followers',
+      one: 'follower',
+      zero: 'followers',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get profileNoPosts => 'No challenges completed yet';
+
+  @override
+  String get profilePrivateTitle => 'This account is private';
+
+  @override
+  String get profilePrivateMessage => 'Become friends to see their challenges.';
+
+  @override
+  String get profileLoadError => 'Couldn\'t load the profile';
+
+  @override
+  String get profilePosts => 'Challenges';
+
+  @override
+  String get topPostsTitle => 'Best challenges';
+
+  @override
+  String get topPostsTooltip => 'Best challenges';
+
+  @override
+  String get topPeriodWeek => 'Week';
+
+  @override
+  String get topPeriodMonth => 'Month';
+
+  @override
+  String get topPeriodAll => 'All time';
+
+  @override
+  String get topPostsEmpty => 'No completed challenge has been upvoted yet.';
+
+  @override
+  String get map => 'Map';
+
+  @override
+  String get mapLocationDenied => 'Location denied: showing Paris.';
+
+  @override
+  String mapChallengesWithin(int count, int radius) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count challenges',
+      one: '1 challenge',
+      zero: 'No challenges',
+    );
+    return '$_temp0 within $radius km';
+  }
+
+  @override
+  String mapDistance(String km) {
+    return '$km km away';
+  }
+
+  @override
+  String get mapRecenter => 'Recenter on my position';
+
+  @override
+  String get adminLatitudeLabel => 'Latitude (optional)';
+
+  @override
+  String get adminLongitudeLabel => 'Longitude (optional)';
+
+  @override
+  String get adminLocationInvalid =>
+      'Enter both latitude and longitude, or neither';
+
+  @override
+  String get mapLive => 'Live now';
+
+  @override
+  String get mapUpcoming => 'Upcoming';
+
+  @override
+  String mapStartsIn(String time) {
+    return 'Starts in $time';
+  }
+
+  @override
+  String mapEndsIn(String time) {
+    return 'Ends in $time';
+  }
+
+  @override
+  String get mapRegister => 'Sign up';
+
+  @override
+  String get mapJoin => 'Join';
+
+  @override
+  String get mapRegistered => 'Signed up ✓';
+
+  @override
+  String get mapSendChallenge => 'Send your challenge';
+
+  @override
+  String mapParticipants(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count participants',
+      one: '1 participant',
+      zero: 'No one signed up yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String mapCompleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count completed it',
+      one: '1 completed it',
+      zero: 'Not completed yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adminIconLabel => 'Map icon';
 }

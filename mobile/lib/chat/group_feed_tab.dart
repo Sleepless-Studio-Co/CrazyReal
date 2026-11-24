@@ -96,18 +96,50 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
     return updated;
   }
 
+  Future<void> _reportPost(int postId) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.reportPostTitle),
+        content: Text(l10n.reportPostBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.cancel)),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.reportPostAction)),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await _feedService.reportPost(postId);
+      await _load();
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.reportPostSuccess)));
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: paperAccent));
+      return Center(
+          child: CircularProgressIndicator(color: context.paper.accent));
     }
 
     if (_posts.isEmpty) {
       return RefreshIndicator(
         onRefresh: _load,
-        color: paperAccent,
+        color: context.paper.accent,
         child: const PaperEmptyState(
           icon: Icons.photo_library_outlined,
           title: 'Aucune photo',
@@ -119,7 +151,7 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: paperAccent,
+      color: context.paper.accent,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
@@ -132,6 +164,7 @@ class _GroupFeedTabState extends State<GroupFeedTab> {
             unknownUserLabel: l10n.unknownUser,
             onUpvote: () => _toggleUpvote(post.id),
             onReaction: (emoji) => _toggleReaction(post.id, emoji),
+            onReport: () => _reportPost(post.id),
           );
         },
       ),

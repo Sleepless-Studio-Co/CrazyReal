@@ -21,15 +21,22 @@ class FeedService {
 
   Future<List<FeedPost>> fetchPostsForChallenge(
     int? challengeId, {
-    bool? global,
+    String? scope, // 'global' | 'friends' | 'map'
   }) async {
     final query = <String, String>{};
     if (challengeId != null) query['challengeId'] = '$challengeId';
-    if (global != null) query['scope'] = global ? 'global' : 'friends';
+    if (scope != null) query['scope'] = scope;
     final path = query.isEmpty
         ? '/posts'
         : '/posts?${query.entries.map((entry) => '${entry.key}=${entry.value}').join('&')}';
     final data = await _authedRequest('GET', path);
+    return FeedPost.listFromJson(data);
+  }
+
+  /// Posts les plus upvotés des défis globaux terminés.
+  /// [period] : `week`, `month` ou `all`.
+  Future<List<FeedPost>> fetchTopPosts(String period) async {
+    final data = await _authedRequest('GET', '/posts/top?period=$period');
     return FeedPost.listFromJson(data);
   }
 
@@ -44,10 +51,44 @@ class FeedService {
         .toList();
   }
 
+  /// Défis géolocalisés en cours ou à venir dans [radiusKm] autour de lat/lng,
+  /// triés du plus proche au plus loin (`distanceKm`, `isLive`, `registered`,
+  /// `participants`).
+  Future<List<Map<String, dynamic>>> fetchNearbyChallenges(
+    double lat,
+    double lng,
+    int radiusKm,
+  ) async {
+    final data = await _authedRequest(
+      'GET',
+      '/challenges/nearby?lat=$lat&lng=$lng&radiusKm=$radiusKm',
+    );
+    if (data is! List) return [];
+    return data.whereType<Map>().map(Map<String, dynamic>.from).toList();
+  }
+
+  /// Inscrit (ou désinscrit) l'utilisateur à un défi de la carte.
+  /// Renvoie `{registered, participants}`.
+  Future<Map<String, dynamic>> setChallengeRegistration(
+    int challengeId, {
+    required bool registered,
+  }) async {
+    final data = await _authedRequest(
+      registered ? 'POST' : 'DELETE',
+      '/challenges/$challengeId/registration',
+    );
+    return Map<String, dynamic>.from(data as Map);
+  }
+
   /// Feed privé d'un groupe : posts réalisés sur les défis de ce groupe.
   Future<List<FeedPost>> fetchGroupPosts(int conversationId) async {
     final data = await _authedRequest('GET', '/chat/$conversationId/feed');
     return FeedPost.listFromJson(data);
+  }
+
+  Future<UserProfile> fetchUserProfile(int userId) async {
+    final data = await _authedRequest('GET', '/users/$userId');
+    return UserProfile.fromJson(data as Map<String, dynamic>);
   }
 
   Future<FeedChallengeSummary?> fetchCurrentChallenge() async {
@@ -100,6 +141,10 @@ class FeedService {
       '/challenge-ideas',
       body: {'content': content},
     );
+  }
+
+  Future<void> reportPost(int postId) async {
+    await _authedRequest('POST', '/posts/$postId/report');
   }
 
   Future<FeedPost> _vote(int postId, {required bool remove}) async {
