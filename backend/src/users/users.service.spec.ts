@@ -360,6 +360,7 @@ describe('UsersService', () => {
         photoUrl: '/uploads/p.jpg',
         upvoteCount: 3,
         hasUpvoted: true,
+        hasReported: false,
         reactions: [],
       });
     });

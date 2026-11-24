@@ -14,6 +14,8 @@ describe('post.utils', () => {
         _count: { select: { upVotes: true } },
         upVotes: { where: { userId: 7 }, select: { id: true } },
         reactions: { select: { emoji: true, userId: true } },
+        // Modération : sert à savoir si l'utilisateur a déjà signalé le post.
+        reports: { where: { userId: 7 }, select: { id: true } },
       });
     });
   });
@@ -39,6 +41,7 @@ describe('post.utils', () => {
         photoUrl: '/uploads/a.jpg',
         upvoteCount: 3,
         hasUpvoted: true,
+        hasReported: false,
         reactions: [
           { emoji: '🔥', count: 2, reactedByMe: true },
           { emoji: '😍', count: 1, reactedByMe: false },
@@ -53,6 +56,7 @@ describe('post.utils', () => {
         id: 2,
         upvoteCount: 0,
         hasUpvoted: false,
+        hasReported: false,
         reactions: [],
       });
     });
