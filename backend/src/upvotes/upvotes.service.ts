@@ -8,6 +8,7 @@ import {
   formatPostWithUpvotes,
   postIncludeWithUpvotes,
 } from '../posts/post.utils';
+import { PostModerationStatus } from '@prisma/client';
 
 @Injectable()
 export class UpVotesService {
@@ -122,5 +123,32 @@ export class UpVotesService {
       where: { userId, postId, emoji },
     });
     return this.getFormattedPost(postId, userId);
+  }
+
+  async reportPost(userId: number, postId: number) {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true, isGhosted: true },
+    });
+    if (!post) throw new NotFoundException('Post introuvable.');
+
+    await this.prisma.postReport.upsert({
+      where: { userId_postId: { userId, postId } },
+      create: { userId, postId },
+      update: {},
+    });
+
+    const reportCount = await this.prisma.postReport.count({ where: { postId } });
+    if (reportCount >= 5 && !post.isGhosted) {
+      await this.prisma.post.update({
+        where: { id: postId },
+        data: {
+          isGhosted: true,
+          moderationStatus: PostModerationStatus.GHOSTED,
+        },
+      });
+    }
+
+    return { reported: true, reportCount, isGhosted: reportCount >= 5 || post.isGhosted };
   }
 }

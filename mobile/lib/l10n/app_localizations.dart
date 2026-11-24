@@ -128,11 +128,167 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settings;
 
+  /// No description provided for @reportPostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this post?'**
+  String get reportPostTitle;
+
+  /// No description provided for @reportPostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This report will be reviewed by the moderation team.'**
+  String get reportPostBody;
+
+  /// No description provided for @reportPostAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get reportPostAction;
+
+  /// No description provided for @reportPostSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Post reported'**
+  String get reportPostSuccess;
+
   /// Account tab label
   ///
   /// In en, this message translates to:
   /// **'Account'**
   String get account;
+
+  /// No description provided for @adminReportedPostsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported posts'**
+  String get adminReportedPostsTitle;
+
+  /// No description provided for @adminReportedPostsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and moderate reported posts'**
+  String get adminReportedPostsDesc;
+
+  /// No description provided for @adminModerationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderation'**
+  String get adminModerationTitle;
+
+  /// No description provided for @adminReportedUsersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported users'**
+  String get adminReportedUsersTitle;
+
+  /// No description provided for @adminReportedUsersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Review users by total reports'**
+  String get adminReportedUsersDesc;
+
+  /// No description provided for @adminReportedUsersLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reported users.'**
+  String get adminReportedUsersLoadError;
+
+  /// No description provided for @adminNoReportedUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'No reported users'**
+  String get adminNoReportedUsers;
+
+  /// No description provided for @adminTotalReports.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} total report(s)'**
+  String adminTotalReports(int count);
+
+  /// No description provided for @adminBanUserTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ban this user'**
+  String get adminBanUserTitle;
+
+  /// No description provided for @adminBanReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get adminBanReasonLabel;
+
+  /// No description provided for @adminBanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Ban'**
+  String get adminBanAction;
+
+  /// No description provided for @adminUnbanAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Unban'**
+  String get adminUnbanAction;
+
+  /// No description provided for @adminReportedPostsLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load reported posts.'**
+  String get adminReportedPostsLoadError;
+
+  /// No description provided for @adminNoReportedPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'No reported posts'**
+  String get adminNoReportedPosts;
+
+  /// No description provided for @adminReportCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} report(s)'**
+  String adminReportCount(int count);
+
+  /// No description provided for @accountBannedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account banned'**
+  String get accountBannedTitle;
+
+  /// No description provided for @accountBannedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot access CrazyReal because your account has been banned.'**
+  String get accountBannedMessage;
+
+  /// No description provided for @accountBannedReason.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot access CrazyReal.\n\nReason: {reason}'**
+  String accountBannedReason(String reason);
+
+  /// No description provided for @adminGhosted.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get adminGhosted;
+
+  /// No description provided for @adminRestorePost.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore post'**
+  String get adminRestorePost;
+
+  /// No description provided for @adminDeletePostTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this post?'**
+  String get adminDeletePostTitle;
+
+  /// No description provided for @adminDeletePostBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This action is irreversible.'**
+  String get adminDeletePostBody;
 
   /// Title for current challenge section
   ///

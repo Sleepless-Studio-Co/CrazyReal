@@ -1,16 +1,21 @@
 import {
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { ChallengeIdeaStatus, ChallengeType, Prisma } from '@prisma/client';
+  ChallengeIdeaStatus,
+  ChallengeType,
+  PostModerationStatus,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 
 @Injectable()
 export class AdminService {
@@ -147,6 +152,117 @@ export class AdminService {
     return this.prisma.challengeIdea.findMany({
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { username: true } } },
+    });
+  }
+
+  async listReportedPosts() {
+    return this.prisma.post.findMany({
+      where: { reports: { some: {} } },
+      orderBy: [{ reports: { _count: 'desc' } }, { createdAt: 'desc' }],
+      include: {
+        user: { select: { id: true, username: true, avatarUrl: true, avatarKey: true } },
+        challenge: { select: { id: true, title: true, type: true } },
+        _count: { select: { reports: true, upVotes: true } },
+      },
+    });
+  }
+
+  async restorePost(id: number) {
+    const post = await this.prisma.post.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException('Post introuvable.');
+    return this.prisma.post.update({
+      where: { id },
+      data: {
+        isGhosted: false,
+        moderationStatus: PostModerationStatus.APPROVED,
+      },
+    });
+  }
+
+  async deletePost(id: number) {
+    const post = await this.prisma.post.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException('Post introuvable.');
+    return this.prisma.post.update({
+      where: { id },
+      data: {
+        isGhosted: true,
+        moderationStatus: PostModerationStatus.REMOVED,
+      },
+    });
+  }
+
+  async listReportedUsers() {
+    const users = await this.prisma.user.findMany({
+      where: {
+        role: 'USER',
+        posts: { some: { reports: { some: {} } } },
+      },
+      select: {
+        id: true,
+        username: true,
+        avatarUrl: true,
+        avatarKey: true,
+        isBanned: true,
+        banReason: true,
+        bannedAt: true,
+        posts: { select: { _count: { select: { reports: true } } } },
+      },
+    });
+
+    return users
+      .map(({ posts, ...user }) => ({
+        ...user,
+        reportCount: posts.reduce((total, post) => total + post._count.reports, 0),
+      }))
+      .sort((a, b) => b.reportCount - a.reportCount);
+  }
+
+  async banUser(id: number, reason?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, role: true },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+    if (user.role === 'ADMIN') {
+      throw new ConflictException('Un administrateur ne peut pas être banni.');
+    }
+
+    const bannedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        isBanned: true,
+        banReason: reason?.trim() || null,
+        bannedAt: new Date(),
+      },
+      select: {
+        id: true,
+        username: true,
+        isBanned: true,
+        banReason: true,
+        bannedAt: true,
+      },
+    });
+
+    this.notificationGateway.sendToUser(id, 'userBanned', {
+      reason: bannedUser.banReason,
+    });
+
+    return bannedUser;
+  }
+
+  async unbanUser(id: number) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+    return this.prisma.user.update({
+      where: { id },
+      data: { isBanned: false, banReason: null, bannedAt: null },
+      select: {
+        id: true,
+        username: true,
+        isBanned: true,
+        banReason: true,
+        bannedAt: true,
+      },
     });
   }
 
