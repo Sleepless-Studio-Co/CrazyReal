@@ -1,0 +1,22 @@
+name: PR translator
+
+on:
+  issue_comment:
+    types: [created, edited]
+  pull_request_review_comment:
+    types: [created, edited]
+  pull_request_target:
+    types: [opened, edited]
+
+jobs:
+  translate:
+    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: lizheming/github-translate-action@1.1.2
+        with:
+          IS_MODIFY_TITLE: true
+          APPEND_TRANSLATION: true
