@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'l10n/app_localizations.dart';
 import 'auth/auth_service.dart';
@@ -58,7 +59,53 @@ class _NewPageState extends State<NewPage> {
     );
   }
 
+  Future<bool> _ensureCapturePermissions({bool needsMicrophone = false}) async {
+    final cameraStatus = await Permission.camera.request();
+    if (!cameraStatus.isGranted) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.cameraPermissionRequired),
+            action: cameraStatus.isPermanentlyDenied
+                ? SnackBarAction(
+                    label: 'Réglages',
+                    onPressed: openAppSettings,
+                  )
+                : null,
+          ),
+        );
+      }
+      return false;
+    }
+
+    if (needsMicrophone) {
+      final microphoneStatus = await Permission.microphone.request();
+      if (!microphoneStatus.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                  'Microphone permission is required to record video'),
+              action: microphoneStatus.isPermanentlyDenied
+                  ? SnackBarAction(
+                      label: 'Réglages',
+                      onPressed: openAppSettings,
+                    )
+                  : null,
+            ),
+          );
+        }
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   Future<void> _initializeCamera() async {
+    if (!await _ensureCapturePermissions()) return;
+
     try {
       _cameras = await availableCameras();
       if (_cameras.isNotEmpty) {
@@ -423,13 +470,21 @@ class _NewPageState extends State<NewPage> {
   Future<void> takeAndUploadPicture() async {
     final l10n = AppLocalizations.of(context)!;
 
-    if (_selectedChallengeCompleted) return;
+    if (_selectedChallengeCompleted) {
+      _showChallengeAlreadyCompletedBanner(l10n);
+      return;
+    }
 
     if (_controller == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.cameraNotAvailable)),
-      );
-      return;
+      if (!await _ensureCapturePermissions()) return;
+      await _initializeCamera();
+      if (!mounted) return;
+      if (_controller == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.cameraNotAvailable)),
+        );
+        return;
+      }
     }
 
     try {
@@ -477,6 +532,13 @@ class _NewPageState extends State<NewPage> {
 
     if (isUploading || isRecording || _selectedChallengeCompleted) return;
 
+    if (!await _ensureCapturePermissions(needsMicrophone: true)) return;
+
+    if (_controller == null || !_controller!.value.isInitialized) {
+      await _initializeCamera();
+    }
+
+    if (!mounted) return;
     if (_controller == null || !_controller!.value.isInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.cameraNotAvailable)),
@@ -545,48 +607,6 @@ class _NewPageState extends State<NewPage> {
     super.dispose();
   }
 
-  Widget _buildShutterButton() {
-    if (isUploading) {
-      return const SizedBox(
-        width: 88,
-        height: 88,
-        child: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFFFE500),
-            strokeWidth: 3,
-          ),
-        ),
-      );
-    }
-
-    return GestureDetector(
-      onTap: isUploading ? null : takeAndUploadPicture,
-      onLongPressStart: isUploading ? null : (_) => _startVideoRecording(),
-      onLongPressEnd: isUploading ? null : (_) => _stopVideoRecording(),
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isRecording ? Colors.red : Colors.white,
-            width: 4,
-          ),
-        ),
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: isRecording ? 34 : 62,
-            height: isRecording ? 34 : 62,
-            decoration: BoxDecoration(
-              color: isRecording ? Colors.red : Colors.white,
-              shape: isRecording ? BoxShape.rectangle : BoxShape.circle,
-              borderRadius: isRecording ? BorderRadius.circular(8) : null,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildChallengePicker(AppLocalizations l10n) {
     if (challengeError != null) {
       return Text(
@@ -599,7 +619,9 @@ class _NewPageState extends State<NewPage> {
       return Text(
         l10n.loadingChallenge,
         style: TextStyle(
-            fontSize: 18, fontWeight: FontWeight.bold, color: context.paper.ink),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: context.paper.ink),
         textAlign: TextAlign.center,
       );
     }
@@ -808,17 +830,23 @@ class _NewPageState extends State<NewPage> {
                           width: 88,
                           height: 88,
                           child: GestureDetector(
-                            onTap: isUploading || _selectedChallengeCompleted
+                            onTap: isUploading
                                 ? null
-                                : takeAndUploadPicture,
-                            onLongPressStart:
-                                isUploading || _selectedChallengeCompleted
-                                    ? null
+                                : _selectedChallengeCompleted
+                                    ? () =>
+                                        _showChallengeAlreadyCompletedBanner(
+                                            l10n)
+                                    : takeAndUploadPicture,
+                            onLongPressStart: isUploading
+                                ? null
+                                : _selectedChallengeCompleted
+                                    ? (_) =>
+                                        _showChallengeAlreadyCompletedBanner(
+                                            l10n)
                                     : (_) => _startVideoRecording(),
-                            onLongPressEnd:
-                                isUploading || _selectedChallengeCompleted
-                                    ? null
-                                    : (_) => _stopVideoRecording(),
+                            onLongPressEnd: isUploading
+                                ? null
+                                : (_) => _stopVideoRecording(),
                             child: Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -872,6 +900,33 @@ class _NewPageState extends State<NewPage> {
         ],
       ),
     );
+  }
+
+  void _showChallengeAlreadyCompletedBanner(AppLocalizations l10n) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.block, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.challengeAlreadyCompleted,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFFC62828),
+          behavior: SnackBarBehavior.fixed,
+          duration: const Duration(seconds: 3),
+        ),
+      );
   }
 }
 
