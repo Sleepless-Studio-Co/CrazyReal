@@ -584,9 +584,16 @@ describe('ChatService', () => {
       const posts = await service.getGroupFeed(7, 1);
 
       const query = prismaService.post.findMany.mock.calls[0][0];
-      expect(query.where).toEqual({ challenge: { is: { conversationId: 7 } } });
+      // Les posts masqués ou retirés par la modération n'apparaissent pas.
+      expect(query.where).toEqual({
+        challenge: { is: { conversationId: 7 } },
+        isGhosted: false,
+        moderationStatus: { not: 'REMOVED' },
+      });
       expect(query.include.upVotes.where).toEqual({ userId: 1 });
-      expect(posts).toEqual([{ id: 5, upvoteCount: 2, hasUpvoted: false, reactions: [] }]);
+      expect(posts).toEqual([
+        { id: 5, upvoteCount: 2, hasUpvoted: false, hasReported: false, reactions: [] },
+      ]);
     });
   });
 

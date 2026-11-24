@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AdminService } from './admin.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationGateway } from '../bootstrap/notification.gateway';
+import { ChallengeTranslationService } from '../translation/challenge-translation.service';
 import * as fs from 'fs';
 
 jest.mock('fs', () => {
@@ -54,6 +55,15 @@ describe('AdminService', () => {
         AdminService,
         { provide: PrismaService, useValue: prismaService },
         { provide: NotificationGateway, useValue: notificationGateway },
+        // Sans DeepL : les traductions sont couvertes par admin.service.translations.spec.ts.
+        {
+          provide: ChallengeTranslationService,
+          useValue: {
+            buildTranslations: jest.fn().mockResolvedValue(null),
+            translateOne: jest.fn().mockResolvedValue(null),
+            translateMissing: jest.fn().mockResolvedValue(0),
+          },
+        },
       ],
     }).compile();
 
@@ -141,7 +151,9 @@ describe('AdminService', () => {
 
       expect(prismaService.challenge.update).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { title: 'New', isActive: false },
+        // Le titre change : les anciennes traductions sont effacées (DeepL
+        // désactivé ici, donc rien ne les remplace).
+        data: { title: 'New', isActive: false, translations: Prisma.DbNull },
       });
     });
   });

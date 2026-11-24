@@ -26,6 +26,7 @@ describe('UpVotesService', () => {
     photoUrl: '/uploads/a.jpg',
     upvoteCount: 1,
     hasUpvoted: true,
+    hasReported: false,
     reactions: [],
   };
 

@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateChallengeDto } from './dto/create-challenge.dto';
 import { UpdateChallengeDto } from './dto/update-challenge.dto';
 import { UpdateChallengeIdeaStatusDto } from './dto/update-challenge-idea-status.dto';
+import { UpdateChallengeTranslationDto } from './dto/update-challenge-translation.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -54,6 +56,30 @@ export class AdminController {
   @ApiOperation({ summary: 'Supprimer un défi global' })
   async deleteChallenge(@Param('id', ParseIntPipe) id: number) {
     return this.adminService.deleteChallenge(id);
+  }
+
+  @Put('challenges/:id/translations/:locale')
+  @ApiOperation({
+    summary:
+      'Corriger à la main la traduction d’un défi (jamais écrasée par DeepL)',
+  })
+  async setChallengeTranslation(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('locale') locale: string,
+    @Body() dto: UpdateChallengeTranslationDto,
+  ) {
+    return this.adminService.setManualTranslation(id, locale, dto);
+  }
+
+  @Delete('challenges/:id/translations/:locale')
+  @ApiOperation({
+    summary: 'Abandonner la correction manuelle et retraduire avec DeepL',
+  })
+  async resetChallengeTranslation(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('locale') locale: string,
+  ) {
+    return this.adminService.resetTranslation(id, locale);
   }
 
   @Get('challenge-ideas')

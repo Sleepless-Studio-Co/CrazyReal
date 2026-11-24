@@ -988,5 +988,14 @@
   "@mapParticipants": {"placeholders": {"count": {"type": "int"}}},
   "mapCompleted": "{count, plural, =0{Pas encore réalisé} =1{1 l'a réalisé} other{{count} l'ont réalisé}}",
   "@mapCompleted": {"placeholders": {"count": {"type": "int"}}},
-  "adminIconLabel": "Icône sur la carte"
+  "adminIconLabel": "Icône sur la carte",
+  "adminTranslationsTitle": "Traductions",
+  "adminTranslationOriginal": "Original (français)",
+  "adminTranslationAuto": "Automatique",
+  "adminTranslationManual": "Corrigée à la main",
+  "adminTranslationMissing": "Pas traduit : le français est affiché",
+  "adminTranslationHint": "Les traductions sont faites par DeepL. Une traduction que tu corriges n'est jamais écrasée, même si le texte français change.",
+  "adminTranslationResetAuto": "Revenir à l'auto",
+  "adminTranslationSaved": "Traduction enregistrée",
+  "adminTranslationResetDone": "Traduction automatique rétablie"
 }

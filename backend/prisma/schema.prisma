@@ -69,6 +69,9 @@ model Challenge {
   longitude      Float?
   // Clé d'icône affichée sur la carte (cf. challengeIcons côté mobile).
   icon           String?
+  // Traductions DeepL des défis globaux : { "en": { "title", "description", "manual" }, ... }.
+  // null pour les défis de groupe ; le français d'origine reste dans title/description.
+  translations   Json?
   registrations  ChallengeRegistration[]
 
   @@unique([date, type, conversationId])

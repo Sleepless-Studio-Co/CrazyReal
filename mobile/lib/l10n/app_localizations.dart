@@ -1645,6 +1645,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Map icon'**
   String get adminIconLabel;
+
+  /// Title of the challenge translations screen and button tooltip
+  ///
+  /// In en, this message translates to:
+  /// **'Translations'**
+  String get adminTranslationsTitle;
+
+  /// Header of the original French text on the translations screen
+  ///
+  /// In en, this message translates to:
+  /// **'Original (French)'**
+  String get adminTranslationOriginal;
+
+  /// Status of a DeepL translation
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get adminTranslationAuto;
+
+  /// Status of a translation corrected by an admin
+  ///
+  /// In en, this message translates to:
+  /// **'Edited by hand'**
+  String get adminTranslationManual;
+
+  /// Status when a language has no translation
+  ///
+  /// In en, this message translates to:
+  /// **'Not translated: French is shown'**
+  String get adminTranslationMissing;
+
+  /// Explanation at the top of the translations screen
+  ///
+  /// In en, this message translates to:
+  /// **'Translations are made by DeepL. A translation you edit is never overwritten, even if the French text changes.'**
+  String get adminTranslationHint;
+
+  /// Button that drops a manual translation and asks DeepL again
+  ///
+  /// In en, this message translates to:
+  /// **'Back to automatic'**
+  String get adminTranslationResetAuto;
+
+  /// Snackbar after saving a manual translation
+  ///
+  /// In en, this message translates to:
+  /// **'Translation saved'**
+  String get adminTranslationSaved;
+
+  /// Snackbar after resetting a translation
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic translation restored'**
+  String get adminTranslationResetDone;
 }
 
 class _AppLocalizationsDelegate

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../auth/auth_service.dart';
 import '../utils/media_url.dart';
 import 'api_exception.dart';
+import '../locale_notifier.dart';
 
 class ChatService {
   final String baseUrl = '$apiBaseUrl/chat';
@@ -18,6 +19,7 @@ class ChatService {
     return {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
+      ...localeHeaders(),
     };
   }
 

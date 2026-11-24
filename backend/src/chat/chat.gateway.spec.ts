@@ -36,7 +36,7 @@ describe('ChatGateway', () => {
   const makeClient = (overrides: Record<string, unknown> = {}) => ({
     id: 's1',
     handshake: { headers: {}, auth: {} },
-    data: {},
+    data: {} as { user?: unknown },
     disconnect: jest.fn(),
     join: jest.fn(),
     emit: jest.fn(),

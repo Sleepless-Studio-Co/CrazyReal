@@ -897,4 +897,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminIconLabel => 'Map icon';
+
+  @override
+  String get adminTranslationsTitle => 'Translations';
+
+  @override
+  String get adminTranslationOriginal => 'Original (French)';
+
+  @override
+  String get adminTranslationAuto => 'Automatic';
+
+  @override
+  String get adminTranslationManual => 'Edited by hand';
+
+  @override
+  String get adminTranslationMissing => 'Not translated: French is shown';
+
+  @override
+  String get adminTranslationHint =>
+      'Translations are made by DeepL. A translation you edit is never overwritten, even if the French text changes.';
+
+  @override
+  String get adminTranslationResetAuto => 'Back to automatic';
+
+  @override
+  String get adminTranslationSaved => 'Translation saved';
+
+  @override
+  String get adminTranslationResetDone => 'Automatic translation restored';
 }
