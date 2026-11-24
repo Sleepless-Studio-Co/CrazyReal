@@ -338,124 +338,6 @@ export class AppController {
     return { registered: registered > 0, participants };
   }
 
-  @Get('challenges/nearby')
-  @ApiOperation({
-    summary:
-      'Défis géolocalisés en cours ou à venir dans un rayon (km, max 30) autour de lat/lng',
-  })
-  async getNearbyChallenges(
-    @CurrentUser() user: ValidatedUser,
-    @Query('lat') latRaw: string,
-    @Query('lng') lngRaw: string,
-    @Query('radiusKm') radiusRaw?: string,
-  ) {
-    const lat = Number(latRaw);
-    const lng = Number(lngRaw);
-    const radiusKm = radiusRaw === undefined ? 10 : Number(radiusRaw);
-    if (
-      !Number.isFinite(lat) || Math.abs(lat) > 90 ||
-      !Number.isFinite(lng) || Math.abs(lng) > 180 ||
-      !Number.isFinite(radiusKm) || radiusKm <= 0 || radiusKm > 30
-    ) {
-      throw new BadRequestException('lat, lng ou radiusKm invalide.');
-    }
-
-    const now = new Date();
-    const maxDurationMs = 8760 * 60 * 60 * 1000;
-    // ponytail: filtre haversine en JS sur les défis géolocalisés ; passer à PostGIS si le volume explose.
-    const challenges = await this.prisma.challenge.findMany({
-      where: {
-        isActive: true,
-        conversationId: null,
-        latitude: { not: null },
-        longitude: { not: null },
-        // En cours ou à venir dans les 30 prochains jours.
-        date: {
-          gte: new Date(now.getTime() - maxDurationMs),
-          lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-        },
-      },
-      include: {
-        registrations: { where: { userId: user.userId }, select: { id: true } },
-        _count: { select: { registrations: true, posts: true } },
-      },
-    });
-
-    return challenges
-      .map(({ registrations, _count, ...c }) => ({
-        ...c,
-        endsAt: this.getChallengeEndsAt(c),
-        isLive: this.isChallengeActiveNow(c, now),
-        registered: registrations.length > 0,
-        participants: _count.registrations,
-        // ponytail: nb de posts ≈ nb de personnes l'ayant réalisé (1 post / user / défi).
-        completed: _count.posts,
-        distanceKm: haversineKm(lat, lng, c.latitude!, c.longitude!),
-      }))
-      .filter((c) => c.endsAt > now && c.distanceKm <= radiusKm)
-      .sort((a, b) => a.distanceKm - b.distanceKm);
-  }
-
-  @Post('challenges/:id/registration')
-  @ApiOperation({ summary: "S'inscrire à un défi géolocalisé" })
-  async registerToChallenge(
-    @CurrentUser() user: ValidatedUser,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    await this.getRegistrableChallenge(id);
-    await this.prisma.challengeRegistration.upsert({
-      where: { userId_challengeId: { userId: user.userId, challengeId: id } },
-      create: { userId: user.userId, challengeId: id },
-      update: {},
-    });
-    return this.getRegistrationState(user.userId, id);
-  }
-
-  @Delete('challenges/:id/registration')
-  @ApiOperation({ summary: "Se désinscrire d'un défi géolocalisé" })
-  async unregisterFromChallenge(
-    @CurrentUser() user: ValidatedUser,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    await this.prisma.challengeRegistration.deleteMany({
-      where: { userId: user.userId, challengeId: id },
-    });
-    return this.getRegistrationState(user.userId, id);
-  }
-
-  private getChallengeEndsAt(challenge: {
-    date: Date;
-    type: ChallengeType;
-    durationHours: number | null;
-    endsAt: Date | null;
-  }): Date {
-    const durationHours =
-      challenge.durationHours ?? (challenge.type === 'SPECIAL' ? 24 : 84);
-    return (
-      challenge.endsAt ??
-      new Date(challenge.date.getTime() + durationHours * 60 * 60 * 1000)
-    );
-  }
-
-  private async getRegistrableChallenge(id: number) {
-    const challenge = await this.prisma.challenge.findUnique({ where: { id } });
-    if (!challenge || challenge.latitude == null || challenge.conversationId != null) {
-      throw new NotFoundException('Défi introuvable.');
-    }
-    if (!challenge.isActive || this.getChallengeEndsAt(challenge) <= new Date()) {
-      throw new BadRequestException('Ce défi est terminé.');
-    }
-    return challenge;
-  }
-
-  private async getRegistrationState(userId: number, challengeId: number) {
-    const [registered, participants] = await Promise.all([
-      this.prisma.challengeRegistration.count({ where: { userId, challengeId } }),
-      this.prisma.challengeRegistration.count({ where: { challengeId } }),
-    ]);
-    return { registered: registered > 0, participants };
-  }
-
   // Valide qu'un utilisateur peut poster sur un challenge, et le renvoie.
   // challengeId absent => challenge global courant (rétrocompat caméra).
   private async resolveChallengeForPost(userId: number, challengeId?: number) {
@@ -660,12 +542,10 @@ export class AppController {
         user.userId,
         challengeId,
       );
-      const existingPost = await this.prisma.post.findUnique({
+      const existingPost = await this.prisma.post.findFirst({
         where: {
-          userId_challengeId: {
-            userId: user.userId,
-            challengeId: currentChallenge.id,
-          },
+          userId: user.userId,
+          challengeId: currentChallenge.id,
         },
       });
       if (existingPost) {
