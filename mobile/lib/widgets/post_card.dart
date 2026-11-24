@@ -23,6 +23,7 @@ class PostCard extends StatefulWidget {
     this.onUpvote,
     this.linkAvatarToProfile = true,
     this.onReaction,
+    this.onReport,
   });
 
   final FeedPost post;
@@ -34,6 +35,7 @@ class PostCard extends StatefulWidget {
   static final ShareService _shareService = ShareService();
 
   final Future<FeedPost> Function(String emoji)? onReaction;
+  final Future<void> Function()? onReport;
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -214,6 +216,29 @@ class _PostCardState extends State<PostCard> {
                     ),
                   ),
                 ),
+                if (widget.onReport != null) ...[
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: () async {
+                      await widget.onReport!();
+                      if (mounted) {
+                        setState(
+                            () => _post = _post.copyWith(hasReported: true));
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: Icon(
+                        _post.hasReported ? Icons.flag : Icons.flag_outlined,
+                        color: _post.hasReported
+                            ? const Color(0xFFB85C38)
+                            : context.paper.inkMuted,
+                        size: 21,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(width: 4),
                 InkWell(
                   onTap: widget.onUpvote,

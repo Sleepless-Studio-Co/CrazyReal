@@ -1,127 +1,236 @@
-import { BadRequestException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { NotificationGateway } from '../bootstrap/notification.gateway';
-import { PrismaService } from '../prisma/prisma.service';
-import { ChallengeTranslationService } from '../translation/challenge-translation.service';
+import { Test, TestingModule } from '@nestjs/testing';
 import { AdminService } from './admin.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { NotificationGateway } from '../bootstrap/notification.gateway';
+import { ChallengeTranslationService } from '../translation/challenge-translation.service';
+import * as fs from 'fs';
 
-describe('AdminService (traductions)', () => {
-  const existing = {
-    id: 1,
-    title: 'Selfie',
-    description: 'Au soleil',
-    conversationId: null,
-    translations: {
-      en: { title: 'Selfie', description: 'In the sun' },
-      es: { title: 'Selfi', description: 'Al sol', manual: true },
-    },
+jest.mock('fs', () => {
+  const actual = jest.requireActual('fs');
+  return {
+    ...actual,
+    existsSync: jest.fn((...args: any[]) => actual.existsSync(...args)),
+    readFileSync: jest.fn((...args: any[]) => actual.readFileSync(...args)),
   };
+});
 
-  let prisma: { challenge: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock } };
-  let gateway: { broadcast: jest.Mock };
-  let translation: { buildTranslations: jest.Mock; translateOne: jest.Mock };
+const mockedExistsSync = fs.existsSync as jest.Mock;
+const mockedReadFileSync = fs.readFileSync as jest.Mock;
+
+describe('AdminService', () => {
   let service: AdminService;
+  let prismaService: {
+    challenge: {
+      findMany: jest.Mock;
+      create: jest.Mock;
+      createMany: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+      findUnique: jest.Mock;
+    };
+    post: { count: jest.Mock };
+  };
+  let notificationGateway: { broadcast: jest.Mock };
 
-  beforeEach(() => {
-    prisma = {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+
+    prismaService = {
       challenge: {
-        findUnique: jest.fn().mockResolvedValue(existing),
-        create: jest.fn(async ({ data }) => ({ id: 1, ...data })),
-        update: jest.fn(async ({ data }) => ({ ...existing, ...data })),
+        findMany: jest.fn(),
+        create: jest.fn(),
+        createMany: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+        findUnique: jest.fn(),
       },
+      post: { count: jest.fn() },
     };
-    gateway = { broadcast: jest.fn() };
-    translation = {
-      buildTranslations: jest.fn().mockResolvedValue({ en: { title: 'T', description: '' } }),
-      translateOne: jest.fn().mockResolvedValue({ title: 'Auto', description: 'auto' }),
-    };
-    service = new AdminService(
-      prisma as unknown as PrismaService,
-      gateway as unknown as NotificationGateway,
-      translation as unknown as ChallengeTranslationService,
-    );
+    notificationGateway = { broadcast: jest.fn() };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AdminService,
+        { provide: PrismaService, useValue: prismaService },
+        { provide: NotificationGateway, useValue: notificationGateway },
+        // Sans DeepL : les traductions sont couvertes par admin.service.translations.spec.ts.
+        {
+          provide: ChallengeTranslationService,
+          useValue: {
+            buildTranslations: jest.fn().mockResolvedValue(null),
+            translateOne: jest.fn().mockResolvedValue(null),
+            translateMissing: jest.fn().mockResolvedValue(0),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<AdminService>(AdminService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('listChallenges', () => {
+    it('lists global challenges ordered by date desc with post count', async () => {
+      prismaService.challenge.findMany.mockResolvedValue([{ id: 1 }]);
+      await expect(service.listChallenges()).resolves.toEqual([{ id: 1 }]);
+      expect(prismaService.challenge.findMany).toHaveBeenCalledWith({
+        where: { conversationId: null },
+        orderBy: { date: 'desc' },
+        include: { _count: { select: { posts: true } } },
+      });
+    });
   });
 
   describe('createChallenge', () => {
-    it('should store the translations and send them with the notification', async () => {
-      await service.createChallenge({ title: ' Selfie ', description: '' } as never);
-
-      expect(translation.buildTranslations).toHaveBeenCalledWith('Selfie', '');
-      expect(prisma.challenge.create.mock.calls[0][0].data.translations).toEqual({
-        en: { title: 'T', description: '' },
+    it('creates a challenge and broadcasts the event', async () => {
+      prismaService.challenge.create.mockResolvedValue({
+        id: 1,
+        title: 'Défi',
       });
-      expect(gateway.broadcast).toHaveBeenCalledWith(
-        'challengeCreated',
-        expect.objectContaining({
-          challengeTranslations: { en: { title: 'T', description: '' } },
+      await expect(
+        service.createChallenge({ title: 'Défi', type: 'WEEKLY_A' }),
+      ).resolves.toEqual({ id: 1, title: 'Défi' });
+
+      expect(prismaService.challenge.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          title: 'Défi',
+          type: 'WEEKLY_A',
+          isActive: true,
         }),
+      });
+      expect(notificationGateway.broadcast).toHaveBeenCalledWith(
+        'challengeCreated',
+        expect.objectContaining({ isGlobal: true }),
       );
     });
 
-    it('should store SQL NULL when nothing could be translated', async () => {
-      translation.buildTranslations.mockResolvedValue(null);
-
-      await service.createChallenge({ title: 'Selfie' } as never);
-
-      expect(prisma.challenge.create.mock.calls[0][0].data.translations).toBe(Prisma.DbNull);
+    it('maps a P2002 to a ConflictException', async () => {
+      prismaService.challenge.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('dup', {
+          code: 'P2002',
+          clientVersion: 'test',
+        }),
+      );
+      await expect(
+        service.createChallenge({ title: 'Défi' }),
+      ).rejects.toBeInstanceOf(ConflictException);
     });
   });
 
   describe('updateChallenge', () => {
-    it('should retranslate when the French text changes, keeping manual ones', async () => {
-      await service.updateChallenge(1, { title: 'Nouveau' });
-
-      expect(translation.buildTranslations).toHaveBeenCalledWith(
-        'Nouveau',
-        'Au soleil',
-        existing.translations,
+    it('throws NotFoundException when the challenge does not exist', async () => {
+      prismaService.challenge.findUnique.mockResolvedValue(null);
+      await expect(service.updateChallenge(1, {})).rejects.toBeInstanceOf(
+        NotFoundException,
       );
     });
 
-    it('should not call DeepL when only other fields change', async () => {
-      await service.updateChallenge(1, { isActive: false, title: 'Selfie' });
+    it('throws ConflictException for a group challenge', async () => {
+      prismaService.challenge.findUnique.mockResolvedValue({
+        id: 1,
+        conversationId: 5,
+      });
+      await expect(service.updateChallenge(1, {})).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+    });
 
-      expect(translation.buildTranslations).not.toHaveBeenCalled();
-      expect(prisma.challenge.update.mock.calls[0][0].data).not.toHaveProperty('translations');
+    it('updates only the provided fields', async () => {
+      prismaService.challenge.findUnique.mockResolvedValue({
+        id: 1,
+        conversationId: null,
+      });
+      prismaService.challenge.update.mockResolvedValue({ id: 1, title: 'New' });
+
+      await service.updateChallenge(1, { title: 'New', isActive: false });
+
+      expect(prismaService.challenge.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        // Le titre change : les anciennes traductions sont effacées (DeepL
+        // désactivé ici, donc rien ne les remplace).
+        data: { title: 'New', isActive: false, translations: Prisma.DbNull },
+      });
     });
   });
 
-  describe('setManualTranslation', () => {
-    it('should save the translation as manual without touching the others', async () => {
-      await service.setManualTranslation(1, 'en', { title: ' Sunny selfie ', description: 'Sun' });
-
-      expect(prisma.challenge.update.mock.calls[0][0].data.translations).toEqual({
-        en: { title: 'Sunny selfie', description: 'Sun', manual: true },
-        es: existing.translations.es,
-      });
+  describe('deleteChallenge', () => {
+    it('throws NotFoundException when the challenge does not exist', async () => {
+      prismaService.challenge.findUnique.mockResolvedValue(null);
+      await expect(service.deleteChallenge(1)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
-    it('should reject an unknown locale', async () => {
-      await expect(
-        service.setManualTranslation(1, 'it', { title: 'Ciao' }),
-      ).rejects.toBeInstanceOf(BadRequestException);
-      expect(prisma.challenge.update).not.toHaveBeenCalled();
+    it('refuses to delete a challenge that still has posts', async () => {
+      prismaService.challenge.findUnique.mockResolvedValue({
+        id: 1,
+        conversationId: null,
+      });
+      prismaService.post.count.mockResolvedValue(2);
+      await expect(service.deleteChallenge(1)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
+      expect(prismaService.challenge.delete).not.toHaveBeenCalled();
+    });
+
+    it('deletes an empty global challenge', async () => {
+      prismaService.challenge.findUnique.mockResolvedValue({
+        id: 1,
+        conversationId: null,
+      });
+      prismaService.post.count.mockResolvedValue(0);
+      prismaService.challenge.delete.mockResolvedValue({ id: 1 });
+
+      await expect(service.deleteChallenge(1)).resolves.toEqual({
+        deleted: true,
+      });
+      expect(prismaService.challenge.delete).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
     });
   });
 
-  describe('resetTranslation', () => {
-    it('should replace a manual translation by a fresh DeepL one', async () => {
-      await service.resetTranslation(1, 'es');
-
-      expect(translation.translateOne).toHaveBeenCalledWith('Selfie', 'Au soleil', 'es');
-      expect(prisma.challenge.update.mock.calls[0][0].data.translations).toEqual({
-        en: existing.translations.en,
-        es: { title: 'Auto', description: 'auto' },
-      });
+  describe('importChallengesFromFile', () => {
+    it('throws NotFoundException when the file is missing', async () => {
+      mockedExistsSync.mockReturnValue(false);
+      await expect(service.importChallengesFromFile()).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
-    it('should fall back to French when DeepL fails', async () => {
-      translation.translateOne.mockResolvedValue(null);
+    it('imports nothing for an empty list', async () => {
+      mockedExistsSync.mockReturnValue(true);
+      mockedReadFileSync.mockReturnValue('[]');
+      await expect(service.importChallengesFromFile()).resolves.toEqual({
+        imported: 0,
+      });
+      expect(prismaService.challenge.createMany).not.toHaveBeenCalled();
+    });
 
-      await service.resetTranslation(1, 'es');
+    it('imports the parsed challenges with defaults', async () => {
+      mockedExistsSync.mockReturnValue(true);
+      mockedReadFileSync.mockReturnValue(
+        JSON.stringify([{ title: 'A', type: 'SPECIAL' }]),
+      );
+      prismaService.challenge.createMany.mockResolvedValue({ count: 1 });
 
-      expect(prisma.challenge.update.mock.calls[0][0].data.translations).toEqual({
-        en: existing.translations.en,
+      await expect(service.importChallengesFromFile()).resolves.toEqual({
+        imported: 1,
+      });
+      expect(prismaService.challenge.createMany).toHaveBeenCalledWith({
+        data: [
+          expect.objectContaining({
+            title: 'A',
+            type: 'SPECIAL',
+            isActive: true,
+          }),
+        ],
+        skipDuplicates: true,
       });
     });
   });

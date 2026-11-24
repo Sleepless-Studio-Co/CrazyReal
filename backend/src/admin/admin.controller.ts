@@ -88,6 +88,45 @@ export class AdminController {
     return this.adminService.listChallengeIdeas();
   }
 
+  @Get('reported-posts')
+  @ApiOperation({ summary: 'Lister les posts signalés' })
+  async listReportedPosts() {
+    return this.adminService.listReportedPosts();
+  }
+
+  @Patch('reported-posts/:id/restore')
+  @ApiOperation({ summary: 'Remettre un post signalé en ligne' })
+  async restorePost(@Param('id', ParseIntPipe) id: number) {
+    return this.adminService.restorePost(id);
+  }
+
+  @Delete('reported-posts/:id')
+  @ApiOperation({ summary: 'Supprimer définitivement un post signalé' })
+  async deletePost(@Param('id', ParseIntPipe) id: number) {
+    return this.adminService.deletePost(id);
+  }
+
+  @Get('reported-users')
+  @ApiOperation({ summary: 'Lister les utilisateurs signalés' })
+  async listReportedUsers() {
+    return this.adminService.listReportedUsers();
+  }
+
+  @Patch('reported-users/:id/ban')
+  @ApiOperation({ summary: 'Bannir un utilisateur signalé' })
+  async banUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('reason') reason?: string,
+  ) {
+    return this.adminService.banUser(id, reason);
+  }
+
+  @Patch('reported-users/:id/unban')
+  @ApiOperation({ summary: 'Lever le bannissement d’un utilisateur' })
+  async unbanUser(@Param('id', ParseIntPipe) id: number) {
+    return this.adminService.unbanUser(id);
+  }
+
   @Patch('challenge-ideas/:id/status')
   @ApiOperation({ summary: 'Modifier le statut d’une idée de défi' })
   async updateChallengeIdeaStatus(

@@ -24,7 +24,96 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settings => 'Paramètres';
 
   @override
+  String get reportPostTitle => 'Signaler ce post ?';
+
+  @override
+  String get reportPostBody =>
+      'Ce signalement sera examiné par l\'équipe de modération.';
+
+  @override
+  String get reportPostAction => 'Signaler';
+
+  @override
+  String get reportPostSuccess => 'Post signalé';
+
+  @override
   String get account => 'Compte';
+
+  @override
+  String get adminReportedPostsTitle => 'Posts signalés';
+
+  @override
+  String get adminReportedPostsDesc => 'Examiner et modérer les posts signalés';
+
+  @override
+  String get adminModerationTitle => 'Modération';
+
+  @override
+  String get adminReportedUsersTitle => 'Utilisateurs signalés';
+
+  @override
+  String get adminReportedUsersDesc =>
+      'Classer les utilisateurs par signalements';
+
+  @override
+  String get adminReportedUsersLoadError =>
+      'Impossible de charger les utilisateurs signalés.';
+
+  @override
+  String get adminNoReportedUsers => 'Aucun utilisateur signalé';
+
+  @override
+  String adminTotalReports(int count) {
+    return '$count signalement(s) au total';
+  }
+
+  @override
+  String get adminBanUserTitle => 'Bannir cet utilisateur';
+
+  @override
+  String get adminBanReasonLabel => 'Raison (optionnelle)';
+
+  @override
+  String get adminBanAction => 'Bannir';
+
+  @override
+  String get adminUnbanAction => 'Débannir';
+
+  @override
+  String get adminReportedPostsLoadError =>
+      'Impossible de charger les posts signalés.';
+
+  @override
+  String get adminNoReportedPosts => 'Aucun post signalé';
+
+  @override
+  String adminReportCount(int count) {
+    return '$count signalement(s)';
+  }
+
+  @override
+  String get accountBannedTitle => 'Compte banni';
+
+  @override
+  String get accountBannedMessage =>
+      'Tu ne peux plus accéder à CrazyReal car ton compte a été banni.';
+
+  @override
+  String accountBannedReason(String reason) {
+    return 'Tu ne peux plus accéder à CrazyReal.\n\nRaison : $reason';
+  }
+
+  @override
+  String get adminGhosted => 'Masqué';
+
+  @override
+  String get adminRestorePost => 'Remettre en ligne';
+
+  @override
+  String get adminDeletePostTitle => 'Supprimer ce post ?';
+
+  @override
+  String get adminDeletePostBody => 'Cette action est irréversible.';
 
   @override
   String get currentChallenge => 'Challenge Actuel';

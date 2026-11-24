@@ -13,6 +13,7 @@ import 'friend_page.dart';
 import 'new_post_page.dart';
 import 'map_page.dart';
 import 'account_page.dart';
+import 'banned_page.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_page.dart';
 import 'guest_share_page.dart';
@@ -86,6 +87,8 @@ class _AuthGateState extends State<AuthGate> {
   final ChatSocketService _chatSocket = ChatSocketService();
   bool _isLoading = true;
   bool _isAuthenticated = false;
+  bool _isBanned = false;
+  String? _banReason;
   String? _shareToken;
   StreamSubscription<Uri>? _shareLinkSubscription;
 
@@ -99,6 +102,7 @@ class _AuthGateState extends State<AuthGate> {
         setState(() => _shareToken = token);
       }
     });
+    GlobalNotificationService().setUserBannedHandler(_handleUserBanned);
     _checkAuth();
     NotificationService().requestPermissions();
   }
@@ -114,6 +118,10 @@ class _AuthGateState extends State<AuthGate> {
     if (!mounted) return;
 
     if (isLoggedIn) {
+      final profile = await _authService.fetchProfile();
+      final user = profile ?? await _authService.getUser();
+      _isBanned = user?['isBanned'] == true;
+      _banReason = user?['banReason']?.toString();
       _chatSocket.connect();
       GlobalNotificationService().connect();
     }
@@ -126,11 +134,31 @@ class _AuthGateState extends State<AuthGate> {
 
   void _handleAuthSuccess() {
     if (!mounted) return;
+    _loadBanState();
     _chatSocket.connect();
     GlobalNotificationService().connect();
     setState(() {
       _isAuthenticated = true;
       _shareToken = null;
+    });
+  }
+
+  void _handleUserBanned(String? reason) {
+    if (!mounted) return;
+    _chatSocket.disconnect();
+    GlobalNotificationService().disconnect();
+    setState(() {
+      _isBanned = true;
+      _banReason = reason;
+    });
+  }
+
+  Future<void> _loadBanState() async {
+    final user = await _authService.getUser();
+    if (!mounted) return;
+    setState(() {
+      _isBanned = user?['isBanned'] == true;
+      _banReason = user?['banReason']?.toString();
     });
   }
 
@@ -157,6 +185,8 @@ class _AuthGateState extends State<AuthGate> {
 
     setState(() {
       _isAuthenticated = false;
+      _isBanned = false;
+      _banReason = null;
     });
   }
 
@@ -180,6 +210,13 @@ class _AuthGateState extends State<AuthGate> {
 
     if (!_isAuthenticated) {
       return LoginPage(onAuthSuccess: _handleAuthSuccess);
+    }
+
+    if (_isBanned) {
+      return BannedPage(
+        reason: _banReason,
+        onLoggedOut: _handleLogout,
+      );
     }
 
     return MainScreen(
