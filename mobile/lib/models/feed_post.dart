@@ -235,6 +235,7 @@ class UserProfile {
     required this.isPrivate,
     required this.isFriend,
     required this.isSelf,
+    this.friendshipStatus,
     required this.friendCount,
     required this.posts,
   });
@@ -243,6 +244,9 @@ class UserProfile {
   final bool isPrivate;
   final bool isFriend;
   final bool isSelf;
+
+  /// Relation viewer↔target: null, PENDING, ACCEPTED or BLOCKED.
+  final String? friendshipStatus;
   final int friendCount;
   final List<FeedPost> posts;
 
@@ -254,6 +258,7 @@ class UserProfile {
       isPrivate: json['isPrivate'] == true,
       isFriend: json['isFriend'] == true,
       isSelf: json['isSelf'] == true,
+      friendshipStatus: json['friendshipStatus'] as String?,
       friendCount: json['friendCount'] is int ? json['friendCount'] as int : 0,
       posts: FeedPost.listFromJson(json['posts']),
     );

@@ -1484,6 +1484,30 @@ abstract class AppLocalizations {
   /// **'Become friends to see their challenges.'**
   String get profilePrivateMessage;
 
+  /// No description provided for @profileFollow.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow'**
+  String get profileFollow;
+
+  /// No description provided for @profileFollowing.
+  ///
+  /// In en, this message translates to:
+  /// **'Following'**
+  String get profileFollowing;
+
+  /// No description provided for @profileRequestFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Add friend'**
+  String get profileRequestFriend;
+
+  /// No description provided for @profileRequestPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent'**
+  String get profileRequestPending;
+
   /// Profile load error
   ///
   /// In en, this message translates to:

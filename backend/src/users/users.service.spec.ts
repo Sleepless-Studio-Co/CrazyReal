@@ -20,6 +20,7 @@ describe('UsersService', () => {
     };
     friendship: {
       count: jest.Mock;
+      findFirst: jest.Mock;
     };
     post: {
       findMany: jest.Mock;
@@ -41,24 +42,21 @@ describe('UsersService', () => {
     upVotes: [{ id: 1 }],
   };
 
-  /// Le service appelle `friendship.count` deux fois : lien d'amitié
-  /// viewer↔cible (sauf pour soi-même), puis nombre d'amis de la cible.
+  /// `friendship.findFirst` = lien viewer↔cible, `friendship.count` = amis de la cible.
   function mockFriendship({
     isFriend,
     friendCount,
+    status,
   }: {
     isFriend: boolean;
     friendCount: number;
+    status?: string;
   }) {
-    prismaService.friendship.count.mockImplementation(({ where }) =>
-      Promise.resolve(
-        where.OR.length === 2 &&
-          'friendId' in where.OR[0] &&
-          'userId' in where.OR[0]
-          ? Number(isFriend)
-          : friendCount,
-      ),
+    const relStatus = status ?? (isFriend ? 'ACCEPTED' : null);
+    prismaService.friendship.findFirst.mockResolvedValue(
+      relStatus ? { status: relStatus } : null,
     );
+    prismaService.friendship.count.mockResolvedValue(friendCount);
   }
 
   beforeEach(async () => {
@@ -72,6 +70,7 @@ describe('UsersService', () => {
       },
       friendship: {
         count: jest.fn().mockResolvedValue(0),
+        findFirst: jest.fn().mockResolvedValue(null),
       },
       post: {
         findMany: jest.fn().mockResolvedValue([rawPost]),
@@ -265,6 +264,7 @@ describe('UsersService', () => {
         isPrivate: true,
         isFriend: false,
         isSelf: false,
+        friendshipStatus: null,
         friendCount: 4,
         posts: [],
       });
@@ -322,14 +322,30 @@ describe('UsersService', () => {
       expect(prismaService.friendship.count).toHaveBeenCalledWith({
         where: { status: 'ACCEPTED', OR: [{ userId: 2 }, { friendId: 2 }] },
       });
-      expect(prismaService.friendship.count).toHaveBeenCalledWith({
+      expect(prismaService.friendship.findFirst).toHaveBeenCalledWith({
+        select: { status: true },
         where: {
-          status: 'ACCEPTED',
           OR: [
             { userId: 1, friendId: 2 },
             { userId: 2, friendId: 1 },
           ],
         },
+      });
+    });
+
+    it('keeps a private profile locked while a request is pending', async () => {
+      prismaService.user.findUnique.mockResolvedValue({
+        ...bob,
+        isPrivate: true,
+      });
+      mockFriendship({ isFriend: false, friendCount: 0, status: 'PENDING' });
+
+      const profile = await service.findPublicProfile(2, 1);
+
+      expect(profile).toMatchObject({
+        isFriend: false,
+        friendshipStatus: 'PENDING',
+        posts: [],
       });
     });
 

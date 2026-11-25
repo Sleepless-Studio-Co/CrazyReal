@@ -924,6 +924,11 @@
   "profilePrivateMessage": "Deviens ami avec cette personne pour voir ses défis.",
   "@profilePrivateMessage": {"description": "Explication profil privé"},
 
+  "profileFollow": "S'abonner",
+  "profileFollowing": "Abonné",
+  "profileRequestFriend": "Demander en ami",
+  "profileRequestPending": "Demande envoyée",
+
   "profileLoadError": "Impossible de charger le profil",
   "@profileLoadError": {"description": "Erreur de chargement du profil"},
 

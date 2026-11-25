@@ -44,12 +44,12 @@ export class FriendsService {
       throw new BadRequestException("Une demande ou une relation existe déjà.");
     }
 
-    // Étape C : Créer la demande
+    // Étape C : Créer la demande. Compte public = abonnement immédiat.
     const friendship = await this.prisma.friendship.create({
       data: {
         userId: currentUserId,
         friendId: friendId,
-        status: 'PENDING',
+        status: targetUser.isPrivate ? 'PENDING' : 'ACCEPTED',
       },
       include: {
         requester: { select: { username: true } },
@@ -57,7 +57,7 @@ export class FriendsService {
     });
 
     // Notify target user
-    this.notificationGateway.sendToUser(friendId, 'friendRequestReceived', {
+    if (friendship.status === 'PENDING') this.notificationGateway.sendToUser(friendId, 'friendRequestReceived', {
       requesterUsername: friendship.requester.username,
     });
 

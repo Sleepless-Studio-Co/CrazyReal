@@ -85,10 +85,34 @@ describe('FriendsService', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('should create a pending request when target is valid and no relation exists', async () => {
+    it('follows a public account immediately, without a request notification', async () => {
       prismaService.user.findUnique.mockResolvedValue({
         id: 2,
         username: 'bob',
+        isPrivate: false,
+      });
+      prismaService.friendship.findFirst.mockResolvedValue(null);
+      prismaService.friendship.create.mockResolvedValue({
+        id: 10,
+        status: 'ACCEPTED',
+        requester: { username: 'alice' },
+      });
+
+      await service.sendFriendRequest(1, 'bob');
+
+      expect(prismaService.friendship.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { userId: 1, friendId: 2, status: 'ACCEPTED' },
+        }),
+      );
+      expect(notificationGateway.sendToUser).not.toHaveBeenCalled();
+    });
+
+    it('should create a pending request when target is private and no relation exists', async () => {
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 2,
+        username: 'bob',
+        isPrivate: true,
       });
       prismaService.friendship.findFirst.mockResolvedValue(null);
       prismaService.friendship.create.mockResolvedValue({

@@ -307,17 +307,19 @@ export class UsersService {
       }
 
       const isSelf = target.id === requesterId;
-      const isFriend =
-        isSelf ||
-        (await this.prisma.friendship.count({
-          where: {
-            status: 'ACCEPTED',
-            OR: [
-              { userId: requesterId, friendId: targetId },
-              { userId: targetId, friendId: requesterId },
-            ],
-          },
-        })) > 0;
+      const relation = isSelf
+        ? null
+        : await this.prisma.friendship.findFirst({
+            where: {
+              OR: [
+                { userId: requesterId, friendId: targetId },
+                { userId: targetId, friendId: requesterId },
+              ],
+            },
+            select: { status: true },
+          });
+      const friendshipStatus = relation?.status ?? null;
+      const isFriend = isSelf || friendshipStatus === 'ACCEPTED';
       // ponytail: "abonnés" = amis acceptés, the app has no follow model.
       const friendCount = await this.prisma.friendship.count({
         where: {
@@ -335,6 +337,7 @@ export class UsersService {
           isPrivate: true,
           isFriend: false,
           isSelf: false,
+          friendshipStatus,
           friendCount,
           posts: [],
         };
@@ -351,6 +354,7 @@ export class UsersService {
         ...target,
         isFriend,
         isSelf,
+        friendshipStatus,
         friendCount,
         posts: posts.map(formatPostWithUpvotes),
       };
