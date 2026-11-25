@@ -4,6 +4,7 @@ import 'l10n/app_localizations.dart';
 import 'models/feed_post.dart';
 import 'services/api_exception.dart';
 import 'services/feed_service.dart';
+import 'services/friend_service.dart';
 import 'utils/media_url.dart';
 import 'widgets/feed_avatar.dart';
 import 'widgets/paper.dart';
@@ -82,7 +83,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(child: _ProfileHeader(profile: profile)),
+                  SliverToBoxAdapter(
+                    child: _ProfileHeader(profile: profile, onChanged: _load),
+                  ),
                   ..._buildContent(context, l10n, profile),
                 ],
               ),
@@ -163,9 +166,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.profile});
+  const _ProfileHeader({required this.profile, required this.onChanged});
 
   final UserProfile profile;
+  final Future<void> Function() onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -244,10 +248,78 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (!profile.isSelf && profile.friendshipStatus != 'BLOCKED')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child:
+                        _FollowButton(profile: profile, onChanged: onChanged),
+                  ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Public account: follow at once. Private account: friend request.
+/// ponytail: no unfollow yet, add a DELETE /friends endpoint when needed.
+class _FollowButton extends StatefulWidget {
+  const _FollowButton({required this.profile, required this.onChanged});
+
+  final UserProfile profile;
+  final Future<void> Function() onChanged;
+
+  @override
+  State<_FollowButton> createState() => _FollowButtonState();
+}
+
+class _FollowButtonState extends State<_FollowButton> {
+  bool _busy = false;
+
+  Future<void> _send() async {
+    setState(() => _busy = true);
+    try {
+      await FriendService().sendRequest(widget.profile.user.username);
+      await widget.onChanged();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e is ApiException ? e.message : e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final profile = widget.profile;
+
+    if (profile.isFriend) {
+      return OutlinedButton.icon(
+        onPressed: null,
+        icon: const Icon(Icons.check),
+        label: Text(l10n.profileFollowing),
+      );
+    }
+    if (profile.friendshipStatus == 'PENDING') {
+      return OutlinedButton.icon(
+        onPressed: null,
+        icon: const Icon(Icons.schedule),
+        label: Text(l10n.profileRequestPending),
+      );
+    }
+    return FilledButton.icon(
+      onPressed: _busy ? null : _send,
+      style: FilledButton.styleFrom(backgroundColor: context.paper.accent),
+      icon: Icon(
+        profile.isPrivate ? Icons.person_add_alt_1 : Icons.add,
+      ),
+      label: Text(
+        profile.isPrivate ? l10n.profileRequestFriend : l10n.profileFollow,
       ),
     );
   }

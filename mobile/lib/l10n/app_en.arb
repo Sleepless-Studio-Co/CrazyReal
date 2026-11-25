@@ -924,6 +924,11 @@
   "profilePrivateMessage": "Become friends to see their challenges.",
   "@profilePrivateMessage": {"description": "Private profile explanation"},
 
+  "profileFollow": "Follow",
+  "profileFollowing": "Following",
+  "profileRequestFriend": "Add friend",
+  "profileRequestPending": "Request sent",
+
   "profileLoadError": "Couldn't load the profile",
   "@profileLoadError": {"description": "Profile load error"},
 

@@ -795,6 +795,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Deviens ami avec cette personne pour voir ses défis.';
 
   @override
+  String get profileFollow => 'S\'abonner';
+
+  @override
+  String get profileFollowing => 'Abonné';
+
+  @override
+  String get profileRequestFriend => 'Demander en ami';
+
+  @override
+  String get profileRequestPending => 'Demande envoyée';
+
+  @override
   String get profileLoadError => 'Impossible de charger le profil';
 
   @override

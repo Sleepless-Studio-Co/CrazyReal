@@ -784,6 +784,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profilePrivateMessage => 'Become friends to see their challenges.';
 
   @override
+  String get profileFollow => 'Follow';
+
+  @override
+  String get profileFollowing => 'Following';
+
+  @override
+  String get profileRequestFriend => 'Add friend';
+
+  @override
+  String get profileRequestPending => 'Request sent';
+
+  @override
   String get profileLoadError => 'Couldn\'t load the profile';
 
   @override
